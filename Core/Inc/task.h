@@ -8,6 +8,9 @@
 
 #define INITIAL_XPSR            ( 0x01000000 )
 #define START_ADDRESS_MASK      ( 0xfffffffeUL )
+#define vPortSVCHandler SVC_Handler
+#define xPortPendSVHandler PendSV_Handler
+#define task_switch()  *( ( volatile uint32_t * ) 0xe000ed04 ) = 1UL << 28UL
 
 
 typedef struct tcb{
@@ -18,11 +21,12 @@ typedef struct tcb{
 typedef void (* task_func_t)( void * );
 typedef tcb_t *task_handler_t;
 
-void create_task_static(task_func_t func, void *func_parameters,
+void task_create_static(task_func_t func, void *func_parameters,
                        uint32_t stack_depth, uint32_t stack, tcb_t *tcb);
-void create_task(task_func_t func, void *func_parameters, uint32_t stack_depth,
+void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
                  uint32_t priority, task_handler_t * handler);
-void initialize_task();
-uint32_t* initialize_stack(uint32_t* stack_top, task_func_t func,void* parameters);
+uint32_t* stack_init(uint32_t* stack_top, task_func_t func,void* parameters);
 
+void scheduler_init(void);
+void scheduler_start(void);
 #endif

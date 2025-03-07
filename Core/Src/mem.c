@@ -1,6 +1,9 @@
 #include "mem.h"
 #include "config.h"
 
+
+//the size of the heap node struct
+const size_t node_struct_size = (sizeof(heap_node) + alignment_byte) & ~alignment_byte;
 //alloc mem for the heap ifself
 static uint8_t heap_mem[configHeapSize];
 //init the heap struct
@@ -38,9 +41,9 @@ void heap_init(void){
 void* halloc(size_t size){
     heap_node* pre_node;
     heap_node* cur_node;
-    heap_node* nxt_node;
     heap_node* new_node;
     heap_node* best_fit = NULL;
+    heap_node* best_fit_pre_node;
     size_t alignment_required;
 
     size += node_struct_size;
@@ -58,8 +61,10 @@ void* halloc(size_t size){
     cur_node = heap.head.next;
     while(cur_node != heap.tail){
         if(cur_node->node_size >= size){
-            if(best_fit == NULL || cur_node->node_size < best_fit->node_size)
+            if(best_fit == NULL || cur_node->node_size < best_fit->node_size){
+                best_fit_pre_node = pre_node;
                 best_fit = cur_node;
+            }
         }
         pre_node = cur_node;
         cur_node = cur_node->next;
@@ -67,17 +72,17 @@ void* halloc(size_t size){
     if(best_fit == NULL)
         return NULL;
     //remove the node from the list
-    pre_node->next = best_fit->next;
-    nxt_node = best_fit->next;
+    best_fit_pre_node->next = best_fit->next;
     best_fit->next = NULL;
     //if the node we found have enough mem for a heap node
     //after the allocation, make a new node and put it in the list;
+
     if(best_fit->node_size - size >= MIN_NODE_SIZE){
         new_node = (heap_node*)(best_fit + size);
         new_node->node_size = best_fit->node_size - size;
         best_fit->node_size = size;
-        pre_node->next = new_node;
-        new_node->next = nxt_node;
+        new_node->next = best_fit_pre_node->next;
+        best_fit_pre_node->next = new_node;
     }
 
     heap.heap_size -= best_fit->node_size;

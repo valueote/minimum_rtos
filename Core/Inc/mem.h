@@ -16,7 +16,6 @@ typedef struct heap{
     size_t heap_size;
 }heap_t;
 
-const size_t node_struct_size = (sizeof(heap_node) + alignment_byte) & ~alignment_byte;
 #define MIN_NODE_SIZE (node_struct_size << 1)
 
 void heap_init(void);

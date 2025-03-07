@@ -1,4 +1,4 @@
-ARM GAS  /tmp//cc0oL9Fy.s 			page 1
+ARM GAS  /tmp//cc19zoGY.s 			page 1
 
 
    1              		.cpu cortex-m3
@@ -29,177 +29,182 @@ ARM GAS  /tmp//cc0oL9Fy.s 			page 1
    1:Core/Src/mem.c **** #include "mem.h"
    2:Core/Src/mem.c **** #include "config.h"
    3:Core/Src/mem.c **** 
-   4:Core/Src/mem.c **** //alloc mem for the heap ifself
-   5:Core/Src/mem.c **** static uint8_t heap_mem[configHeapSize];
-   6:Core/Src/mem.c **** //init the heap struct
-   7:Core/Src/mem.c **** static heap_t heap = {.tail = NULL, .heap_size = configHeapSize};
-   8:Core/Src/mem.c **** 
-   9:Core/Src/mem.c **** void heap_init(void){
-  10:Core/Src/mem.c ****     heap_node* first_node;
-  11:Core/Src/mem.c ****     uint32_t heap_start;
-  12:Core/Src/mem.c ****     uint32_t heap_end;
-  13:Core/Src/mem.c ****     heap_start = (uint32_t)heap_mem;
-  14:Core/Src/mem.c ****     //make sure the start addr is 8-byte aligned
-  15:Core/Src/mem.c ****     if((heap_start & alignment_byte) != 0){
-  16:Core/Src/mem.c ****         heap_start += alignment_byte;
-  17:Core/Src/mem.c ****         heap_start &= ~alignment_byte;
-  18:Core/Src/mem.c ****         heap.heap_size -= (size_t)(heap_start - (uint32_t)heap_mem);
-  19:Core/Src/mem.c ****     }
-  20:Core/Src/mem.c ****     //set the tail node
-  21:Core/Src/mem.c ****     heap_end = heap_start + heap.heap_size - node_struct_size;
-  22:Core/Src/mem.c ****     //make sure the heap_end is 8-byte aligned
-  23:Core/Src/mem.c ****     if((heap_end & alignment_byte) != 0){
-  24:Core/Src/mem.c ****         heap_end += alignment_byte;
-  25:Core/Src/mem.c ****         heap_end &= alignment_byte;
-  26:Core/Src/mem.c ****         heap.heap_size = (size_t)(heap_end - heap_start);
-  27:Core/Src/mem.c ****     }
-  28:Core/Src/mem.c ****     //set the first heap mem node
-  29:Core/Src/mem.c ****     first_node = (heap_node*)heap_start;
-  30:Core/Src/mem.c ****     first_node->node_size = heap.heap_size;
-  31:Core/Src/mem.c ****     first_node->next = (heap_node*)heap_end;
-  32:Core/Src/mem.c ****     //adjust the heap struct
-ARM GAS  /tmp//cc0oL9Fy.s 			page 2
+   4:Core/Src/mem.c **** 
+   5:Core/Src/mem.c **** //the size of the heap node struct
+   6:Core/Src/mem.c **** const size_t node_struct_size = (sizeof(heap_node) + alignment_byte) & ~alignment_byte;
+   7:Core/Src/mem.c **** //alloc mem for the heap ifself
+   8:Core/Src/mem.c **** static uint8_t heap_mem[configHeapSize];
+   9:Core/Src/mem.c **** //init the heap struct
+  10:Core/Src/mem.c **** static heap_t heap = {.tail = NULL, .heap_size = configHeapSize};
+  11:Core/Src/mem.c **** 
+  12:Core/Src/mem.c **** void heap_init(void){
+  13:Core/Src/mem.c ****     heap_node* first_node;
+  14:Core/Src/mem.c ****     uint32_t heap_start;
+  15:Core/Src/mem.c ****     uint32_t heap_end;
+  16:Core/Src/mem.c ****     heap_start = (uint32_t)heap_mem;
+  17:Core/Src/mem.c ****     //make sure the start addr is 8-byte aligned
+  18:Core/Src/mem.c ****     if((heap_start & alignment_byte) != 0){
+  19:Core/Src/mem.c ****         heap_start += alignment_byte;
+  20:Core/Src/mem.c ****         heap_start &= ~alignment_byte;
+  21:Core/Src/mem.c ****         heap.heap_size -= (size_t)(heap_start - (uint32_t)heap_mem);
+  22:Core/Src/mem.c ****     }
+  23:Core/Src/mem.c ****     //set the tail node
+  24:Core/Src/mem.c ****     heap_end = heap_start + heap.heap_size - node_struct_size;
+  25:Core/Src/mem.c ****     //make sure the heap_end is 8-byte aligned
+  26:Core/Src/mem.c ****     if((heap_end & alignment_byte) != 0){
+  27:Core/Src/mem.c ****         heap_end += alignment_byte;
+  28:Core/Src/mem.c ****         heap_end &= alignment_byte;
+  29:Core/Src/mem.c ****         heap.heap_size = (size_t)(heap_end - heap_start);
+  30:Core/Src/mem.c ****     }
+  31:Core/Src/mem.c ****     //set the first heap mem node
+  32:Core/Src/mem.c ****     first_node = (heap_node*)heap_start;
+ARM GAS  /tmp//cc19zoGY.s 			page 2
 
 
-  33:Core/Src/mem.c ****     heap.head.node_size = 0;
-  34:Core/Src/mem.c ****     heap.head.next = first_node;
-  35:Core/Src/mem.c ****     heap.tail = (heap_node*)heap_end;
-  36:Core/Src/mem.c **** }
-  37:Core/Src/mem.c **** 
-  38:Core/Src/mem.c **** void* halloc(size_t size){
-  39:Core/Src/mem.c ****     heap_node* pre_node;
-  40:Core/Src/mem.c ****     heap_node* cur_node;
-  41:Core/Src/mem.c ****     heap_node* nxt_node;
-  42:Core/Src/mem.c ****     heap_node* new_node;
-  43:Core/Src/mem.c ****     heap_node* best_fit = NULL;
-  44:Core/Src/mem.c ****     size_t alignment_required;
-  45:Core/Src/mem.c **** 
-  46:Core/Src/mem.c ****     size += node_struct_size;
-  47:Core/Src/mem.c ****     //make sure the mem size is 8-byte aligned
-  48:Core/Src/mem.c ****     if((size & alignment_byte) != 0){
-  49:Core/Src/mem.c ****         alignment_required = (alignment_byte + 1) - (size & alignment_byte);
-  50:Core/Src/mem.c ****         size += alignment_byte;
-  51:Core/Src/mem.c ****     }
-  52:Core/Src/mem.c ****     //make sure the heap is initialized
-  53:Core/Src/mem.c ****     if(heap.tail == NULL){
-  54:Core/Src/mem.c ****         heap_init();
-  55:Core/Src/mem.c ****     }
-  56:Core/Src/mem.c ****     //find the best fit node
-  57:Core/Src/mem.c ****     pre_node = &heap.head;
-  58:Core/Src/mem.c ****     cur_node = heap.head.next;
-  59:Core/Src/mem.c ****     while(cur_node != heap.tail){
-  60:Core/Src/mem.c ****         if(cur_node->node_size >= size){
-  61:Core/Src/mem.c ****             if(best_fit == NULL || cur_node->node_size < best_fit->node_size)
-  62:Core/Src/mem.c ****                 best_fit = cur_node;
-  63:Core/Src/mem.c ****         }
-  64:Core/Src/mem.c ****         pre_node = cur_node;
-  65:Core/Src/mem.c ****         cur_node = cur_node->next;
-  66:Core/Src/mem.c ****     }
-  67:Core/Src/mem.c ****     if(best_fit == NULL)
-  68:Core/Src/mem.c ****         return NULL;
-  69:Core/Src/mem.c ****     //remove the node from the list
-  70:Core/Src/mem.c ****     pre_node->next = best_fit->next;
-  71:Core/Src/mem.c ****     nxt_node = best_fit->next;
-  72:Core/Src/mem.c ****     best_fit->next = NULL;
-  73:Core/Src/mem.c ****     //if the node we found have enough mem for a heap node
-  74:Core/Src/mem.c ****     //after the allocation, make a new node and put it in the list;
-  75:Core/Src/mem.c ****     if(best_fit->node_size - size >= MIN_NODE_SIZE){
-  76:Core/Src/mem.c ****         new_node = (heap_node*)(best_fit + size);
-  77:Core/Src/mem.c ****         new_node->node_size = best_fit->node_size - size;
-  78:Core/Src/mem.c ****         best_fit->node_size = size;
-  79:Core/Src/mem.c ****         pre_node->next = new_node;
-  80:Core/Src/mem.c ****         new_node->next = nxt_node;
-  81:Core/Src/mem.c ****     }
-  82:Core/Src/mem.c **** 
-  83:Core/Src/mem.c ****     heap.heap_size -= best_fit->node_size;
-  84:Core/Src/mem.c ****     return (void*)(best_fit + node_struct_size);
-  85:Core/Src/mem.c **** }
-  86:Core/Src/mem.c **** 
-  87:Core/Src/mem.c **** static void heap_insert_list(heap_node* inserted_node){
-  27              		.loc 1 87 55 view -0
+  33:Core/Src/mem.c ****     first_node->node_size = heap.heap_size;
+  34:Core/Src/mem.c ****     first_node->next = (heap_node*)heap_end;
+  35:Core/Src/mem.c ****     //adjust the heap struct
+  36:Core/Src/mem.c ****     heap.head.node_size = 0;
+  37:Core/Src/mem.c ****     heap.head.next = first_node;
+  38:Core/Src/mem.c ****     heap.tail = (heap_node*)heap_end;
+  39:Core/Src/mem.c **** }
+  40:Core/Src/mem.c **** 
+  41:Core/Src/mem.c **** void* halloc(size_t size){
+  42:Core/Src/mem.c ****     heap_node* pre_node;
+  43:Core/Src/mem.c ****     heap_node* cur_node;
+  44:Core/Src/mem.c ****     heap_node* new_node;
+  45:Core/Src/mem.c ****     heap_node* best_fit = NULL;
+  46:Core/Src/mem.c ****     heap_node* best_fit_pre_node;
+  47:Core/Src/mem.c ****     size_t alignment_required;
+  48:Core/Src/mem.c **** 
+  49:Core/Src/mem.c ****     size += node_struct_size;
+  50:Core/Src/mem.c ****     //make sure the mem size is 8-byte aligned
+  51:Core/Src/mem.c ****     if((size & alignment_byte) != 0){
+  52:Core/Src/mem.c ****         alignment_required = (alignment_byte + 1) - (size & alignment_byte);
+  53:Core/Src/mem.c ****         size += alignment_byte;
+  54:Core/Src/mem.c ****     }
+  55:Core/Src/mem.c ****     //make sure the heap is initialized
+  56:Core/Src/mem.c ****     if(heap.tail == NULL){
+  57:Core/Src/mem.c ****         heap_init();
+  58:Core/Src/mem.c ****     }
+  59:Core/Src/mem.c ****     //find the best fit node
+  60:Core/Src/mem.c ****     pre_node = &heap.head;
+  61:Core/Src/mem.c ****     cur_node = heap.head.next;
+  62:Core/Src/mem.c ****     while(cur_node != heap.tail){
+  63:Core/Src/mem.c ****         if(cur_node->node_size >= size){
+  64:Core/Src/mem.c ****             if(best_fit == NULL || cur_node->node_size < best_fit->node_size){
+  65:Core/Src/mem.c ****                 best_fit_pre_node = pre_node;
+  66:Core/Src/mem.c ****                 best_fit = cur_node;
+  67:Core/Src/mem.c ****             }
+  68:Core/Src/mem.c ****         }
+  69:Core/Src/mem.c ****         pre_node = cur_node;
+  70:Core/Src/mem.c ****         cur_node = cur_node->next;
+  71:Core/Src/mem.c ****     }
+  72:Core/Src/mem.c ****     if(best_fit == NULL)
+  73:Core/Src/mem.c ****         return NULL;
+  74:Core/Src/mem.c ****     //remove the node from the list
+  75:Core/Src/mem.c ****     best_fit_pre_node->next = best_fit->next;
+  76:Core/Src/mem.c ****     best_fit->next = NULL;
+  77:Core/Src/mem.c ****     //if the node we found have enough mem for a heap node
+  78:Core/Src/mem.c ****     //after the allocation, make a new node and put it in the list;
+  79:Core/Src/mem.c **** 
+  80:Core/Src/mem.c ****     if(best_fit->node_size - size >= MIN_NODE_SIZE){
+  81:Core/Src/mem.c ****         new_node = (heap_node*)(best_fit + size);
+  82:Core/Src/mem.c ****         new_node->node_size = best_fit->node_size - size;
+  83:Core/Src/mem.c ****         best_fit->node_size = size;
+  84:Core/Src/mem.c ****         new_node->next = best_fit_pre_node->next;
+  85:Core/Src/mem.c ****         best_fit_pre_node->next = new_node;
+  86:Core/Src/mem.c ****     }
+  87:Core/Src/mem.c **** 
+  88:Core/Src/mem.c ****     heap.heap_size -= best_fit->node_size;
+  89:Core/Src/mem.c ****     return (void*)(best_fit + node_struct_size);
+ARM GAS  /tmp//cc19zoGY.s 			page 3
+
+
+  90:Core/Src/mem.c **** }
+  91:Core/Src/mem.c **** 
+  92:Core/Src/mem.c **** static void heap_insert_list(heap_node* inserted_node){
+  27              		.loc 1 92 55 view -0
   28              		.cfi_startproc
-ARM GAS  /tmp//cc0oL9Fy.s 			page 3
-
-
   29              		@ args = 0, pretend = 0, frame = 0
   30              		@ frame_needed = 0, uses_anonymous_args = 0
   31              		@ link register save eliminated.
-  32              		.loc 1 87 55 is_stmt 0 view .LVU1
+  32              		.loc 1 92 55 is_stmt 0 view .LVU1
   33 0000 10B4     		push	{r4}
   34              	.LCFI0:
   35              		.cfi_def_cfa_offset 4
   36              		.cfi_offset 4, -4
-  88:Core/Src/mem.c ****     heap_node* iter_node;
-  37              		.loc 1 88 5 is_stmt 1 view .LVU2
-  89:Core/Src/mem.c **** 
-  90:Core/Src/mem.c ****     iter_node = heap.head.next;
-  38              		.loc 1 90 5 view .LVU3
-  39              		.loc 1 90 15 is_stmt 0 view .LVU4
+  93:Core/Src/mem.c ****     heap_node* iter_node;
+  37              		.loc 1 93 5 is_stmt 1 view .LVU2
+  94:Core/Src/mem.c **** 
+  95:Core/Src/mem.c ****     iter_node = heap.head.next;
+  38              		.loc 1 95 5 view .LVU3
+  39              		.loc 1 95 15 is_stmt 0 view .LVU4
   40 0002 124B     		ldr	r3, .L9
   41 0004 1B68     		ldr	r3, [r3]
   42              	.LVL1:
-  91:Core/Src/mem.c ****     while(iter_node < inserted_node){
-  43              		.loc 1 91 5 is_stmt 1 view .LVU5
-  44              		.loc 1 91 10 is_stmt 0 view .LVU6
+  96:Core/Src/mem.c ****     while(iter_node < inserted_node){
+  43              		.loc 1 96 5 is_stmt 1 view .LVU5
+  44              		.loc 1 96 10 is_stmt 0 view .LVU6
   45 0006 00E0     		b	.L2
   46              	.L3:
-  92:Core/Src/mem.c ****         iter_node = iter_node->next;
-  47              		.loc 1 92 9 is_stmt 1 view .LVU7
-  48              		.loc 1 92 19 is_stmt 0 view .LVU8
+  97:Core/Src/mem.c ****         iter_node = iter_node->next;
+  47              		.loc 1 97 9 is_stmt 1 view .LVU7
+  48              		.loc 1 97 19 is_stmt 0 view .LVU8
   49 0008 1B68     		ldr	r3, [r3]
   50              	.LVL2:
   51              	.L2:
-  91:Core/Src/mem.c ****     while(iter_node < inserted_node){
-  52              		.loc 1 91 21 is_stmt 1 view .LVU9
+  96:Core/Src/mem.c ****     while(iter_node < inserted_node){
+  52              		.loc 1 96 21 is_stmt 1 view .LVU9
   53 000a 8342     		cmp	r3, r0
   54 000c FCD3     		bcc	.L3
-  93:Core/Src/mem.c ****     }
-  94:Core/Src/mem.c **** 
-  95:Core/Src/mem.c ****     inserted_node->next = iter_node->next;
-  55              		.loc 1 95 5 view .LVU10
-  56              		.loc 1 95 36 is_stmt 0 view .LVU11
+  98:Core/Src/mem.c ****     }
+  99:Core/Src/mem.c **** 
+ 100:Core/Src/mem.c ****     inserted_node->next = iter_node->next;
+  55              		.loc 1 100 5 view .LVU10
+  56              		.loc 1 100 36 is_stmt 0 view .LVU11
   57 000e 1A68     		ldr	r2, [r3]
-  58              		.loc 1 95 25 view .LVU12
+  58              		.loc 1 100 25 view .LVU12
   59 0010 0260     		str	r2, [r0]
-  96:Core/Src/mem.c ****     iter_node->next = inserted_node;
-  60              		.loc 1 96 5 is_stmt 1 view .LVU13
-  61              		.loc 1 96 21 is_stmt 0 view .LVU14
+ 101:Core/Src/mem.c ****     iter_node->next = inserted_node;
+  60              		.loc 1 101 5 is_stmt 1 view .LVU13
+  61              		.loc 1 101 21 is_stmt 0 view .LVU14
   62 0012 1860     		str	r0, [r3]
-  97:Core/Src/mem.c ****     if(((uint8_t*)inserted_node + inserted_node->node_size == (uint8_t*)inserted_node->next)){
-  63              		.loc 1 97 5 is_stmt 1 view .LVU15
-  64              		.loc 1 97 48 is_stmt 0 view .LVU16
+ 102:Core/Src/mem.c ****     if(((uint8_t*)inserted_node + inserted_node->node_size == (uint8_t*)inserted_node->next)){
+  63              		.loc 1 102 5 is_stmt 1 view .LVU15
+  64              		.loc 1 102 48 is_stmt 0 view .LVU16
   65 0014 4168     		ldr	r1, [r0, #4]
-  66              		.loc 1 97 33 view .LVU17
+  66              		.loc 1 102 33 view .LVU17
   67 0016 00EB010C 		add	ip, r0, r1
-  68              		.loc 1 97 86 view .LVU18
+  68              		.loc 1 102 86 view .LVU18
   69 001a 0268     		ldr	r2, [r0]
-  70              		.loc 1 97 7 view .LVU19
+ARM GAS  /tmp//cc19zoGY.s 			page 4
+
+
+  70              		.loc 1 102 7 view .LVU19
   71 001c 9445     		cmp	ip, r2
   72 001e 05D0     		beq	.L7
   73              	.L4:
-  98:Core/Src/mem.c ****         if(inserted_node->next != heap.tail){
-ARM GAS  /tmp//cc0oL9Fy.s 			page 4
-
-
-  99:Core/Src/mem.c ****             inserted_node->next->node_size += inserted_node->node_size;
- 100:Core/Src/mem.c ****             iter_node->next = inserted_node->next;
- 101:Core/Src/mem.c ****         }
- 102:Core/Src/mem.c ****     }
- 103:Core/Src/mem.c ****     if((uint8_t*)iter_node + iter_node->node_size == (uint8_t*)inserted_node){
-  74              		.loc 1 103 5 is_stmt 1 view .LVU20
-  75              		.loc 1 103 39 is_stmt 0 view .LVU21
+ 103:Core/Src/mem.c ****         if(inserted_node->next != heap.tail){
+ 104:Core/Src/mem.c ****             inserted_node->next->node_size += inserted_node->node_size;
+ 105:Core/Src/mem.c ****             iter_node->next = inserted_node->next;
+ 106:Core/Src/mem.c ****         }
+ 107:Core/Src/mem.c ****     }
+ 108:Core/Src/mem.c ****     if((uint8_t*)iter_node + iter_node->node_size == (uint8_t*)inserted_node){
+  74              		.loc 1 108 5 is_stmt 1 view .LVU20
+  75              		.loc 1 108 39 is_stmt 0 view .LVU21
   76 0020 5A68     		ldr	r2, [r3, #4]
-  77              		.loc 1 103 28 view .LVU22
+  77              		.loc 1 108 28 view .LVU22
   78 0022 9918     		adds	r1, r3, r2
-  79              		.loc 1 103 7 view .LVU23
+  79              		.loc 1 108 7 view .LVU23
   80 0024 8142     		cmp	r1, r0
   81 0026 0BD0     		beq	.L8
   82              	.L1:
- 104:Core/Src/mem.c ****        iter_node->node_size += inserted_node->node_size;
- 105:Core/Src/mem.c ****        iter_node->next = inserted_node->next;
- 106:Core/Src/mem.c ****     }
- 107:Core/Src/mem.c **** }
-  83              		.loc 1 107 1 view .LVU24
+ 109:Core/Src/mem.c ****        iter_node->node_size += inserted_node->node_size;
+ 110:Core/Src/mem.c ****        iter_node->next = inserted_node->next;
+ 111:Core/Src/mem.c ****     }
+ 112:Core/Src/mem.c **** }
+  83              		.loc 1 112 1 view .LVU24
   84 0028 10BC     		pop	{r4}
   85              	.LCFI1:
   86              		.cfi_remember_state
@@ -209,56 +214,56 @@ ARM GAS  /tmp//cc0oL9Fy.s 			page 1
   90              	.L7:
   91              	.LCFI2:
   92              		.cfi_restore_state
-  98:Core/Src/mem.c ****         if(inserted_node->next != heap.tail){
-  93              		.loc 1 98 9 is_stmt 1 view .LVU25
-  98:Core/Src/mem.c ****         if(inserted_node->next != heap.tail){
-  94              		.loc 1 98 39 is_stmt 0 view .LVU26
+ 103:Core/Src/mem.c ****         if(inserted_node->next != heap.tail){
+  93              		.loc 1 103 9 is_stmt 1 view .LVU25
+ 103:Core/Src/mem.c ****         if(inserted_node->next != heap.tail){
+  94              		.loc 1 103 39 is_stmt 0 view .LVU26
   95 002c 074C     		ldr	r4, .L9
   96 002e A468     		ldr	r4, [r4, #8]
-  98:Core/Src/mem.c ****         if(inserted_node->next != heap.tail){
-  97              		.loc 1 98 11 view .LVU27
+ 103:Core/Src/mem.c ****         if(inserted_node->next != heap.tail){
+  97              		.loc 1 103 11 view .LVU27
   98 0030 A242     		cmp	r2, r4
   99 0032 F5D0     		beq	.L4
-  99:Core/Src/mem.c ****             iter_node->next = inserted_node->next;
- 100              		.loc 1 99 13 is_stmt 1 view .LVU28
-  99:Core/Src/mem.c ****             iter_node->next = inserted_node->next;
- 101              		.loc 1 99 32 is_stmt 0 view .LVU29
+ 104:Core/Src/mem.c ****             iter_node->next = inserted_node->next;
+ 100              		.loc 1 104 13 is_stmt 1 view .LVU28
+ 104:Core/Src/mem.c ****             iter_node->next = inserted_node->next;
+ 101              		.loc 1 104 32 is_stmt 0 view .LVU29
  102 0034 5468     		ldr	r4, [r2, #4]
-  99:Core/Src/mem.c ****             iter_node->next = inserted_node->next;
- 103              		.loc 1 99 44 view .LVU30
+ 104:Core/Src/mem.c ****             iter_node->next = inserted_node->next;
+ 103              		.loc 1 104 44 view .LVU30
  104 0036 2144     		add	r1, r1, r4
  105 0038 5160     		str	r1, [r2, #4]
- 100:Core/Src/mem.c ****         }
- 106              		.loc 1 100 13 is_stmt 1 view .LVU31
- 100:Core/Src/mem.c ****         }
- 107              		.loc 1 100 44 is_stmt 0 view .LVU32
+ 105:Core/Src/mem.c ****         }
+ 106              		.loc 1 105 13 is_stmt 1 view .LVU31
+ 105:Core/Src/mem.c ****         }
+ 107              		.loc 1 105 44 is_stmt 0 view .LVU32
  108 003a 0268     		ldr	r2, [r0]
- 100:Core/Src/mem.c ****         }
- 109              		.loc 1 100 29 view .LVU33
+ARM GAS  /tmp//cc19zoGY.s 			page 5
+
+
+ 105:Core/Src/mem.c ****         }
+ 109              		.loc 1 105 29 view .LVU33
  110 003c 1A60     		str	r2, [r3]
  111 003e EFE7     		b	.L4
  112              	.L8:
-ARM GAS  /tmp//cc0oL9Fy.s 			page 5
-
-
- 104:Core/Src/mem.c ****        iter_node->node_size += inserted_node->node_size;
- 113              		.loc 1 104 8 is_stmt 1 view .LVU34
- 104:Core/Src/mem.c ****        iter_node->node_size += inserted_node->node_size;
- 114              		.loc 1 104 45 is_stmt 0 view .LVU35
+ 109:Core/Src/mem.c ****        iter_node->node_size += inserted_node->node_size;
+ 113              		.loc 1 109 8 is_stmt 1 view .LVU34
+ 109:Core/Src/mem.c ****        iter_node->node_size += inserted_node->node_size;
+ 114              		.loc 1 109 45 is_stmt 0 view .LVU35
  115 0040 4168     		ldr	r1, [r0, #4]
- 104:Core/Src/mem.c ****        iter_node->node_size += inserted_node->node_size;
- 116              		.loc 1 104 29 view .LVU36
+ 109:Core/Src/mem.c ****        iter_node->node_size += inserted_node->node_size;
+ 116              		.loc 1 109 29 view .LVU36
  117 0042 0A44     		add	r2, r2, r1
  118 0044 5A60     		str	r2, [r3, #4]
- 105:Core/Src/mem.c ****     }
- 119              		.loc 1 105 8 is_stmt 1 view .LVU37
- 105:Core/Src/mem.c ****     }
- 120              		.loc 1 105 39 is_stmt 0 view .LVU38
+ 110:Core/Src/mem.c ****     }
+ 119              		.loc 1 110 8 is_stmt 1 view .LVU37
+ 110:Core/Src/mem.c ****     }
+ 120              		.loc 1 110 39 is_stmt 0 view .LVU38
  121 0046 0268     		ldr	r2, [r0]
- 105:Core/Src/mem.c ****     }
- 122              		.loc 1 105 24 view .LVU39
+ 110:Core/Src/mem.c ****     }
+ 122              		.loc 1 110 24 view .LVU39
  123 0048 1A60     		str	r2, [r3]
- 124              		.loc 1 107 1 view .LVU40
+ 124              		.loc 1 112 1 view .LVU40
  125 004a EDE7     		b	.L1
  126              	.L10:
  127              		.align	2
@@ -274,153 +279,153 @@ ARM GAS  /tmp//cc0oL9Fy.s 			page 1
  138              		.thumb_func
  140              	heap_init:
  141              	.LFB0:
-   9:Core/Src/mem.c ****     heap_node* first_node;
- 142              		.loc 1 9 21 is_stmt 1 view -0
+  12:Core/Src/mem.c ****     heap_node* first_node;
+ 142              		.loc 1 12 21 is_stmt 1 view -0
  143              		.cfi_startproc
  144              		@ args = 0, pretend = 0, frame = 0
  145              		@ frame_needed = 0, uses_anonymous_args = 0
  146              		@ link register save eliminated.
-  10:Core/Src/mem.c ****     uint32_t heap_start;
- 147              		.loc 1 10 5 view .LVU42
-  11:Core/Src/mem.c ****     uint32_t heap_end;
- 148              		.loc 1 11 5 view .LVU43
-  12:Core/Src/mem.c ****     heap_start = (uint32_t)heap_mem;
- 149              		.loc 1 12 5 view .LVU44
-  13:Core/Src/mem.c ****     //make sure the start addr is 8-byte aligned
- 150              		.loc 1 13 5 view .LVU45
-  13:Core/Src/mem.c ****     //make sure the start addr is 8-byte aligned
- 151              		.loc 1 13 16 is_stmt 0 view .LVU46
+  13:Core/Src/mem.c ****     uint32_t heap_start;
+ 147              		.loc 1 13 5 view .LVU42
+  14:Core/Src/mem.c ****     uint32_t heap_end;
+ 148              		.loc 1 14 5 view .LVU43
+  15:Core/Src/mem.c ****     heap_start = (uint32_t)heap_mem;
+ 149              		.loc 1 15 5 view .LVU44
+  16:Core/Src/mem.c ****     //make sure the start addr is 8-byte aligned
+ 150              		.loc 1 16 5 view .LVU45
+  16:Core/Src/mem.c ****     //make sure the start addr is 8-byte aligned
+ 151              		.loc 1 16 16 is_stmt 0 view .LVU46
  152 0000 114B     		ldr	r3, .L14
  153              	.LVL3:
-  15:Core/Src/mem.c ****         heap_start += alignment_byte;
- 154              		.loc 1 15 5 is_stmt 1 view .LVU47
-  15:Core/Src/mem.c ****         heap_start += alignment_byte;
- 155              		.loc 1 15 7 is_stmt 0 view .LVU48
+  18:Core/Src/mem.c ****         heap_start += alignment_byte;
+ARM GAS  /tmp//cc19zoGY.s 			page 6
+
+
+ 154              		.loc 1 18 5 is_stmt 1 view .LVU47
+  18:Core/Src/mem.c ****         heap_start += alignment_byte;
+ 155              		.loc 1 18 7 is_stmt 0 view .LVU48
  156 0002 13F0070F 		tst	r3, #7
  157 0006 08D0     		beq	.L12
-ARM GAS  /tmp//cc0oL9Fy.s 			page 6
-
-
-  16:Core/Src/mem.c ****         heap_start &= ~alignment_byte;
- 158              		.loc 1 16 9 is_stmt 1 view .LVU49
-  16:Core/Src/mem.c ****         heap_start &= ~alignment_byte;
- 159              		.loc 1 16 20 is_stmt 0 view .LVU50
+  19:Core/Src/mem.c ****         heap_start &= ~alignment_byte;
+ 158              		.loc 1 19 9 is_stmt 1 view .LVU49
+  19:Core/Src/mem.c ****         heap_start &= ~alignment_byte;
+ 159              		.loc 1 19 20 is_stmt 0 view .LVU50
  160 0008 D91D     		adds	r1, r3, #7
  161              	.LVL4:
-  17:Core/Src/mem.c ****         heap.heap_size -= (size_t)(heap_start - (uint32_t)heap_mem);
- 162              		.loc 1 17 9 is_stmt 1 view .LVU51
-  17:Core/Src/mem.c ****         heap.heap_size -= (size_t)(heap_start - (uint32_t)heap_mem);
- 163              		.loc 1 17 20 is_stmt 0 view .LVU52
+  20:Core/Src/mem.c ****         heap.heap_size -= (size_t)(heap_start - (uint32_t)heap_mem);
+ 162              		.loc 1 20 9 is_stmt 1 view .LVU51
+  20:Core/Src/mem.c ****         heap.heap_size -= (size_t)(heap_start - (uint32_t)heap_mem);
+ 163              		.loc 1 20 20 is_stmt 0 view .LVU52
  164 000a 21F00701 		bic	r1, r1, #7
  165              	.LVL5:
-  18:Core/Src/mem.c ****     }
- 166              		.loc 1 18 9 is_stmt 1 view .LVU53
-  18:Core/Src/mem.c ****     }
- 167              		.loc 1 18 13 is_stmt 0 view .LVU54
+  21:Core/Src/mem.c ****     }
+ 166              		.loc 1 21 9 is_stmt 1 view .LVU53
+  21:Core/Src/mem.c ****     }
+ 167              		.loc 1 21 13 is_stmt 0 view .LVU54
  168 000e 0F48     		ldr	r0, .L14+4
  169 0010 C268     		ldr	r2, [r0, #12]
-  18:Core/Src/mem.c ****     }
- 170              		.loc 1 18 24 view .LVU55
+  21:Core/Src/mem.c ****     }
+ 170              		.loc 1 21 24 view .LVU55
  171 0012 521A     		subs	r2, r2, r1
  172 0014 1A44     		add	r2, r2, r3
  173 0016 C260     		str	r2, [r0, #12]
-  17:Core/Src/mem.c ****         heap.heap_size -= (size_t)(heap_start - (uint32_t)heap_mem);
- 174              		.loc 1 17 20 view .LVU56
+  20:Core/Src/mem.c ****         heap.heap_size -= (size_t)(heap_start - (uint32_t)heap_mem);
+ 174              		.loc 1 20 20 view .LVU56
  175 0018 0B46     		mov	r3, r1
  176              	.LVL6:
  177              	.L12:
-  21:Core/Src/mem.c ****     //make sure the heap_end is 8-byte aligned
- 178              		.loc 1 21 5 is_stmt 1 view .LVU57
-  21:Core/Src/mem.c ****     //make sure the heap_end is 8-byte aligned
- 179              		.loc 1 21 33 is_stmt 0 view .LVU58
+  24:Core/Src/mem.c ****     //make sure the heap_end is 8-byte aligned
+ 178              		.loc 1 24 5 is_stmt 1 view .LVU57
+  24:Core/Src/mem.c ****     //make sure the heap_end is 8-byte aligned
+ 179              		.loc 1 24 33 is_stmt 0 view .LVU58
  180 001a 0C4A     		ldr	r2, .L14+4
  181 001c D268     		ldr	r2, [r2, #12]
-  21:Core/Src/mem.c ****     //make sure the heap_end is 8-byte aligned
- 182              		.loc 1 21 27 view .LVU59
+  24:Core/Src/mem.c ****     //make sure the heap_end is 8-byte aligned
+ 182              		.loc 1 24 27 view .LVU59
  183 001e 1A44     		add	r2, r2, r3
-  21:Core/Src/mem.c ****     //make sure the heap_end is 8-byte aligned
- 184              		.loc 1 21 14 view .LVU60
+  24:Core/Src/mem.c ****     //make sure the heap_end is 8-byte aligned
+ 184              		.loc 1 24 14 view .LVU60
  185 0020 A2F10801 		sub	r1, r2, #8
  186              	.LVL7:
-  23:Core/Src/mem.c ****         heap_end += alignment_byte;
- 187              		.loc 1 23 5 is_stmt 1 view .LVU61
-  23:Core/Src/mem.c ****         heap_end += alignment_byte;
- 188              		.loc 1 23 7 is_stmt 0 view .LVU62
+  26:Core/Src/mem.c ****         heap_end += alignment_byte;
+ 187              		.loc 1 26 5 is_stmt 1 view .LVU61
+  26:Core/Src/mem.c ****         heap_end += alignment_byte;
+ 188              		.loc 1 26 7 is_stmt 0 view .LVU62
  189 0024 12F0070F 		tst	r2, #7
  190 0028 05D0     		beq	.L13
-  24:Core/Src/mem.c ****         heap_end &= alignment_byte;
- 191              		.loc 1 24 9 is_stmt 1 view .LVU63
-  24:Core/Src/mem.c ****         heap_end &= alignment_byte;
- 192              		.loc 1 24 18 is_stmt 0 view .LVU64
+  27:Core/Src/mem.c ****         heap_end &= alignment_byte;
+ 191              		.loc 1 27 9 is_stmt 1 view .LVU63
+  27:Core/Src/mem.c ****         heap_end &= alignment_byte;
+ 192              		.loc 1 27 18 is_stmt 0 view .LVU64
  193 002a 013A     		subs	r2, r2, #1
+ARM GAS  /tmp//cc19zoGY.s 			page 7
+
+
  194              	.LVL8:
-  25:Core/Src/mem.c ****         heap.heap_size = (size_t)(heap_end - heap_start);
- 195              		.loc 1 25 9 is_stmt 1 view .LVU65
-  25:Core/Src/mem.c ****         heap.heap_size = (size_t)(heap_end - heap_start);
- 196              		.loc 1 25 18 is_stmt 0 view .LVU66
-ARM GAS  /tmp//cc0oL9Fy.s 			page 7
-
-
+  28:Core/Src/mem.c ****         heap.heap_size = (size_t)(heap_end - heap_start);
+ 195              		.loc 1 28 9 is_stmt 1 view .LVU65
+  28:Core/Src/mem.c ****         heap.heap_size = (size_t)(heap_end - heap_start);
+ 196              		.loc 1 28 18 is_stmt 0 view .LVU66
  197 002c 02F00701 		and	r1, r2, #7
  198              	.LVL9:
-  26:Core/Src/mem.c ****     }
- 199              		.loc 1 26 9 is_stmt 1 view .LVU67
-  26:Core/Src/mem.c ****     }
- 200              		.loc 1 26 44 is_stmt 0 view .LVU68
+  29:Core/Src/mem.c ****     }
+ 199              		.loc 1 29 9 is_stmt 1 view .LVU67
+  29:Core/Src/mem.c ****     }
+ 200              		.loc 1 29 44 is_stmt 0 view .LVU68
  201 0030 C81A     		subs	r0, r1, r3
-  26:Core/Src/mem.c ****     }
- 202              		.loc 1 26 24 view .LVU69
+  29:Core/Src/mem.c ****     }
+ 202              		.loc 1 29 24 view .LVU69
  203 0032 064A     		ldr	r2, .L14+4
  204 0034 D060     		str	r0, [r2, #12]
  205              	.L13:
-  29:Core/Src/mem.c ****     first_node->node_size = heap.heap_size;
- 206              		.loc 1 29 5 is_stmt 1 view .LVU70
+  32:Core/Src/mem.c ****     first_node->node_size = heap.heap_size;
+ 206              		.loc 1 32 5 is_stmt 1 view .LVU70
  207              	.LVL10:
-  30:Core/Src/mem.c ****     first_node->next = (heap_node*)heap_end;
- 208              		.loc 1 30 5 view .LVU71
-  30:Core/Src/mem.c ****     first_node->next = (heap_node*)heap_end;
- 209              		.loc 1 30 33 is_stmt 0 view .LVU72
+  33:Core/Src/mem.c ****     first_node->next = (heap_node*)heap_end;
+ 208              		.loc 1 33 5 view .LVU71
+  33:Core/Src/mem.c ****     first_node->next = (heap_node*)heap_end;
+ 209              		.loc 1 33 33 is_stmt 0 view .LVU72
  210 0036 054A     		ldr	r2, .L14+4
  211 0038 D068     		ldr	r0, [r2, #12]
-  30:Core/Src/mem.c ****     first_node->next = (heap_node*)heap_end;
- 212              		.loc 1 30 27 view .LVU73
+  33:Core/Src/mem.c ****     first_node->next = (heap_node*)heap_end;
+ 212              		.loc 1 33 27 view .LVU73
  213 003a 5860     		str	r0, [r3, #4]
-  31:Core/Src/mem.c ****     //adjust the heap struct
- 214              		.loc 1 31 5 is_stmt 1 view .LVU74
-  31:Core/Src/mem.c ****     //adjust the heap struct
- 215              		.loc 1 31 22 is_stmt 0 view .LVU75
+  34:Core/Src/mem.c ****     //adjust the heap struct
+ 214              		.loc 1 34 5 is_stmt 1 view .LVU74
+  34:Core/Src/mem.c ****     //adjust the heap struct
+ 215              		.loc 1 34 22 is_stmt 0 view .LVU75
  216 003c 1960     		str	r1, [r3]
-  33:Core/Src/mem.c ****     heap.head.next = first_node;
- 217              		.loc 1 33 5 is_stmt 1 view .LVU76
-  33:Core/Src/mem.c ****     heap.head.next = first_node;
- 218              		.loc 1 33 25 is_stmt 0 view .LVU77
+  36:Core/Src/mem.c ****     heap.head.next = first_node;
+ 217              		.loc 1 36 5 is_stmt 1 view .LVU76
+  36:Core/Src/mem.c ****     heap.head.next = first_node;
+ 218              		.loc 1 36 25 is_stmt 0 view .LVU77
  219 003e 0020     		movs	r0, #0
  220 0040 5060     		str	r0, [r2, #4]
-  34:Core/Src/mem.c ****     heap.tail = (heap_node*)heap_end;
- 221              		.loc 1 34 5 is_stmt 1 view .LVU78
-  34:Core/Src/mem.c ****     heap.tail = (heap_node*)heap_end;
- 222              		.loc 1 34 20 is_stmt 0 view .LVU79
+  37:Core/Src/mem.c ****     heap.tail = (heap_node*)heap_end;
+ 221              		.loc 1 37 5 is_stmt 1 view .LVU78
+  37:Core/Src/mem.c ****     heap.tail = (heap_node*)heap_end;
+ 222              		.loc 1 37 20 is_stmt 0 view .LVU79
  223 0042 1360     		str	r3, [r2]
-  35:Core/Src/mem.c **** }
- 224              		.loc 1 35 5 is_stmt 1 view .LVU80
-  35:Core/Src/mem.c **** }
- 225              		.loc 1 35 15 is_stmt 0 view .LVU81
+  38:Core/Src/mem.c **** }
+ 224              		.loc 1 38 5 is_stmt 1 view .LVU80
+  38:Core/Src/mem.c **** }
+ 225              		.loc 1 38 15 is_stmt 0 view .LVU81
  226 0044 9160     		str	r1, [r2, #8]
-  36:Core/Src/mem.c **** 
- 227              		.loc 1 36 1 view .LVU82
+  39:Core/Src/mem.c **** 
+ 227              		.loc 1 39 1 view .LVU82
  228 0046 7047     		bx	lr
  229              	.L15:
  230              		.align	2
  231              	.L14:
  232 0048 00000000 		.word	heap_mem
+ARM GAS  /tmp//cc19zoGY.s 			page 8
+
+
  233 004c 00000000 		.word	heap
  234              		.cfi_endproc
  235              	.LFE0:
  237              		.section	.text.halloc,"ax",%progbits
  238              		.align	1
-ARM GAS  /tmp//cc0oL9Fy.s 			page 8
-
-
  239              		.global	halloc
  240              		.syntax unified
  241              		.thumb
@@ -428,13 +433,13 @@ ARM GAS  /tmp//cc0oL9Fy.s 			page 1
  244              	halloc:
  245              	.LVL11:
  246              	.LFB1:
-  38:Core/Src/mem.c ****     heap_node* pre_node;
- 247              		.loc 1 38 26 is_stmt 1 view -0
+  41:Core/Src/mem.c ****     heap_node* pre_node;
+ 247              		.loc 1 41 26 is_stmt 1 view -0
  248              		.cfi_startproc
  249              		@ args = 0, pretend = 0, frame = 0
  250              		@ frame_needed = 0, uses_anonymous_args = 0
-  38:Core/Src/mem.c ****     heap_node* pre_node;
- 251              		.loc 1 38 26 is_stmt 0 view .LVU84
+  41:Core/Src/mem.c ****     heap_node* pre_node;
+ 251              		.loc 1 41 26 is_stmt 0 view .LVU84
  252 0000 38B5     		push	{r3, r4, r5, lr}
  253              	.LCFI3:
  254              		.cfi_def_cfa_offset 16
@@ -442,353 +447,353 @@ ARM GAS  /tmp//cc0oL9Fy.s 			page 1
  256              		.cfi_offset 4, -12
  257              		.cfi_offset 5, -8
  258              		.cfi_offset 14, -4
-  39:Core/Src/mem.c ****     heap_node* cur_node;
- 259              		.loc 1 39 5 is_stmt 1 view .LVU85
-  40:Core/Src/mem.c ****     heap_node* nxt_node;
- 260              		.loc 1 40 5 view .LVU86
-  41:Core/Src/mem.c ****     heap_node* new_node;
- 261              		.loc 1 41 5 view .LVU87
-  42:Core/Src/mem.c ****     heap_node* best_fit = NULL;
- 262              		.loc 1 42 5 view .LVU88
-  43:Core/Src/mem.c ****     size_t alignment_required;
- 263              		.loc 1 43 5 view .LVU89
- 264              	.LVL12:
-  44:Core/Src/mem.c **** 
- 265              		.loc 1 44 5 view .LVU90
-  46:Core/Src/mem.c ****     //make sure the mem size is 8-byte aligned
- 266              		.loc 1 46 5 view .LVU91
-  46:Core/Src/mem.c ****     //make sure the mem size is 8-byte aligned
- 267              		.loc 1 46 10 is_stmt 0 view .LVU92
+  42:Core/Src/mem.c ****     heap_node* cur_node;
+ 259              		.loc 1 42 5 is_stmt 1 view .LVU85
+  43:Core/Src/mem.c ****     heap_node* new_node;
+ 260              		.loc 1 43 5 view .LVU86
+  44:Core/Src/mem.c ****     heap_node* best_fit = NULL;
+ 261              		.loc 1 44 5 view .LVU87
+  45:Core/Src/mem.c ****     heap_node* best_fit_pre_node;
+ 262              		.loc 1 45 5 view .LVU88
+ 263              	.LVL12:
+  46:Core/Src/mem.c ****     size_t alignment_required;
+ 264              		.loc 1 46 5 view .LVU89
+  47:Core/Src/mem.c **** 
+ 265              		.loc 1 47 5 view .LVU90
+  49:Core/Src/mem.c ****     //make sure the mem size is 8-byte aligned
+ 266              		.loc 1 49 5 view .LVU91
+  49:Core/Src/mem.c ****     //make sure the mem size is 8-byte aligned
+ 267              		.loc 1 49 10 is_stmt 0 view .LVU92
  268 0002 00F10804 		add	r4, r0, #8
  269              	.LVL13:
-  48:Core/Src/mem.c ****         alignment_required = (alignment_byte + 1) - (size & alignment_byte);
- 270              		.loc 1 48 5 is_stmt 1 view .LVU93
-  48:Core/Src/mem.c ****         alignment_required = (alignment_byte + 1) - (size & alignment_byte);
- 271              		.loc 1 48 7 is_stmt 0 view .LVU94
+  51:Core/Src/mem.c ****         alignment_required = (alignment_byte + 1) - (size & alignment_byte);
+ 270              		.loc 1 51 5 is_stmt 1 view .LVU93
+  51:Core/Src/mem.c ****         alignment_required = (alignment_byte + 1) - (size & alignment_byte);
+ 271              		.loc 1 51 7 is_stmt 0 view .LVU94
  272 0006 10F0070F 		tst	r0, #7
  273 000a 01D0     		beq	.L17
-  49:Core/Src/mem.c ****         size += alignment_byte;
- 274              		.loc 1 49 9 is_stmt 1 view .LVU95
+  52:Core/Src/mem.c ****         size += alignment_byte;
+ 274              		.loc 1 52 9 is_stmt 1 view .LVU95
  275              	.LVL14:
-  50:Core/Src/mem.c ****     }
- 276              		.loc 1 50 9 view .LVU96
-  50:Core/Src/mem.c ****     }
- 277              		.loc 1 50 14 is_stmt 0 view .LVU97
+  53:Core/Src/mem.c ****     }
+ 276              		.loc 1 53 9 view .LVU96
+  53:Core/Src/mem.c ****     }
+ARM GAS  /tmp//cc19zoGY.s 			page 9
+
+
+ 277              		.loc 1 53 14 is_stmt 0 view .LVU97
  278 000c 00F10F04 		add	r4, r0, #15
  279              	.LVL15:
  280              	.L17:
-  53:Core/Src/mem.c ****         heap_init();
-ARM GAS  /tmp//cc0oL9Fy.s 			page 9
-
-
- 281              		.loc 1 53 5 is_stmt 1 view .LVU98
-  53:Core/Src/mem.c ****         heap_init();
- 282              		.loc 1 53 12 is_stmt 0 view .LVU99
- 283 0010 184B     		ldr	r3, .L29
+  56:Core/Src/mem.c ****         heap_init();
+ 281              		.loc 1 56 5 is_stmt 1 view .LVU98
+  56:Core/Src/mem.c ****         heap_init();
+ 282              		.loc 1 56 12 is_stmt 0 view .LVU99
+ 283 0010 1A4B     		ldr	r3, .L29
  284 0012 9B68     		ldr	r3, [r3, #8]
-  53:Core/Src/mem.c ****         heap_init();
- 285              		.loc 1 53 7 view .LVU100
+  56:Core/Src/mem.c ****         heap_init();
+ 285              		.loc 1 56 7 view .LVU100
  286 0014 1BB1     		cbz	r3, .L27
  287              	.L18:
-  57:Core/Src/mem.c ****     cur_node = heap.head.next;
- 288              		.loc 1 57 5 is_stmt 1 view .LVU101
+  60:Core/Src/mem.c ****     cur_node = heap.head.next;
+ 288              		.loc 1 60 5 is_stmt 1 view .LVU101
  289              	.LVL16:
-  58:Core/Src/mem.c ****     while(cur_node != heap.tail){
- 290              		.loc 1 58 5 view .LVU102
-  58:Core/Src/mem.c ****     while(cur_node != heap.tail){
- 291              		.loc 1 58 14 is_stmt 0 view .LVU103
- 292 0016 1749     		ldr	r1, .L29
+  61:Core/Src/mem.c ****     while(cur_node != heap.tail){
+ 290              		.loc 1 61 5 view .LVU102
+  61:Core/Src/mem.c ****     while(cur_node != heap.tail){
+ 291              		.loc 1 61 14 is_stmt 0 view .LVU103
+ 292 0016 1949     		ldr	r1, .L29
  293 0018 0B68     		ldr	r3, [r1]
  294              	.LVL17:
-  59:Core/Src/mem.c ****         if(cur_node->node_size >= size){
- 295              		.loc 1 59 5 is_stmt 1 view .LVU104
-  43:Core/Src/mem.c ****     size_t alignment_required;
- 296              		.loc 1 43 16 is_stmt 0 view .LVU105
+  62:Core/Src/mem.c ****         if(cur_node->node_size >= size){
+ 295              		.loc 1 62 5 is_stmt 1 view .LVU104
+  45:Core/Src/mem.c ****     heap_node* best_fit_pre_node;
+ 296              		.loc 1 45 16 is_stmt 0 view .LVU105
  297 001a 0020     		movs	r0, #0
-  59:Core/Src/mem.c ****         if(cur_node->node_size >= size){
- 298              		.loc 1 59 10 view .LVU106
- 299 001c 05E0     		b	.L19
+  62:Core/Src/mem.c ****         if(cur_node->node_size >= size){
+ 298              		.loc 1 62 10 view .LVU106
+ 299 001c 06E0     		b	.L19
  300              	.LVL18:
  301              	.L27:
-  54:Core/Src/mem.c ****     }
- 302              		.loc 1 54 9 is_stmt 1 view .LVU107
+  57:Core/Src/mem.c ****     }
+ 302              		.loc 1 57 9 is_stmt 1 view .LVU107
  303 001e FFF7FEFF 		bl	heap_init
  304              	.LVL19:
  305 0022 F8E7     		b	.L18
  306              	.LVL20:
  307              	.L24:
-  62:Core/Src/mem.c ****         }
- 308              		.loc 1 62 26 is_stmt 0 view .LVU108
- 309 0024 1846     		mov	r0, r3
+  65:Core/Src/mem.c ****                 best_fit = cur_node;
+ 308              		.loc 1 65 35 is_stmt 0 view .LVU108
+ 309 0024 0D46     		mov	r5, r1
  310              	.LVL21:
- 311              	.L20:
-  64:Core/Src/mem.c ****         cur_node = cur_node->next;
- 312              		.loc 1 64 9 is_stmt 1 view .LVU109
-  65:Core/Src/mem.c ****     }
- 313              		.loc 1 65 9 view .LVU110
-  64:Core/Src/mem.c ****         cur_node = cur_node->next;
- 314              		.loc 1 64 18 is_stmt 0 view .LVU111
- 315 0026 1946     		mov	r1, r3
-  65:Core/Src/mem.c ****     }
- 316              		.loc 1 65 18 view .LVU112
- 317 0028 1B68     		ldr	r3, [r3]
- 318              	.LVL22:
- 319              	.L19:
-  59:Core/Src/mem.c ****         if(cur_node->node_size >= size){
- 320              		.loc 1 59 20 is_stmt 1 view .LVU113
-  59:Core/Src/mem.c ****         if(cur_node->node_size >= size){
- 321              		.loc 1 59 27 is_stmt 0 view .LVU114
-ARM GAS  /tmp//cc0oL9Fy.s 			page 10
+  66:Core/Src/mem.c ****             }
+ 311              		.loc 1 66 26 view .LVU109
+ 312 0026 1846     		mov	r0, r3
+ 313              	.LVL22:
+ 314              	.L20:
+  69:Core/Src/mem.c ****         cur_node = cur_node->next;
+ 315              		.loc 1 69 9 is_stmt 1 view .LVU110
+  70:Core/Src/mem.c ****     }
+ 316              		.loc 1 70 9 view .LVU111
+  69:Core/Src/mem.c ****         cur_node = cur_node->next;
+ 317              		.loc 1 69 18 is_stmt 0 view .LVU112
+ 318 0028 1946     		mov	r1, r3
+ARM GAS  /tmp//cc19zoGY.s 			page 10
 
 
- 322 002a 124A     		ldr	r2, .L29
- 323 002c 9268     		ldr	r2, [r2, #8]
-  59:Core/Src/mem.c ****         if(cur_node->node_size >= size){
- 324              		.loc 1 59 20 view .LVU115
- 325 002e 9A42     		cmp	r2, r3
- 326 0030 09D0     		beq	.L28
-  60:Core/Src/mem.c ****             if(best_fit == NULL || cur_node->node_size < best_fit->node_size)
- 327              		.loc 1 60 9 is_stmt 1 view .LVU116
-  60:Core/Src/mem.c ****             if(best_fit == NULL || cur_node->node_size < best_fit->node_size)
- 328              		.loc 1 60 20 is_stmt 0 view .LVU117
- 329 0032 5A68     		ldr	r2, [r3, #4]
-  60:Core/Src/mem.c ****             if(best_fit == NULL || cur_node->node_size < best_fit->node_size)
- 330              		.loc 1 60 11 view .LVU118
- 331 0034 A242     		cmp	r2, r4
- 332 0036 F6D3     		bcc	.L20
-  61:Core/Src/mem.c ****                 best_fit = cur_node;
- 333              		.loc 1 61 13 is_stmt 1 view .LVU119
-  61:Core/Src/mem.c ****                 best_fit = cur_node;
- 334              		.loc 1 61 15 is_stmt 0 view .LVU120
- 335 0038 0028     		cmp	r0, #0
- 336 003a F3D0     		beq	.L24
-  61:Core/Src/mem.c ****                 best_fit = cur_node;
- 337              		.loc 1 61 66 discriminator 1 view .LVU121
- 338 003c 4168     		ldr	r1, [r0, #4]
- 339              	.LVL23:
-  61:Core/Src/mem.c ****                 best_fit = cur_node;
- 340              		.loc 1 61 33 discriminator 1 view .LVU122
- 341 003e 8A42     		cmp	r2, r1
- 342 0040 F1D2     		bcs	.L20
-  62:Core/Src/mem.c ****         }
- 343              		.loc 1 62 26 view .LVU123
- 344 0042 1846     		mov	r0, r3
- 345              	.LVL24:
-  62:Core/Src/mem.c ****         }
- 346              		.loc 1 62 26 view .LVU124
- 347 0044 EFE7     		b	.L20
- 348              	.LVL25:
- 349              	.L28:
-  67:Core/Src/mem.c ****         return NULL;
- 350              		.loc 1 67 5 is_stmt 1 view .LVU125
-  67:Core/Src/mem.c ****         return NULL;
- 351              		.loc 1 67 7 is_stmt 0 view .LVU126
- 352 0046 A0B1     		cbz	r0, .L16
-  70:Core/Src/mem.c ****     nxt_node = best_fit->next;
- 353              		.loc 1 70 5 is_stmt 1 view .LVU127
-  70:Core/Src/mem.c ****     nxt_node = best_fit->next;
- 354              		.loc 1 70 30 is_stmt 0 view .LVU128
- 355 0048 0268     		ldr	r2, [r0]
-  70:Core/Src/mem.c ****     nxt_node = best_fit->next;
- 356              		.loc 1 70 20 view .LVU129
- 357 004a 0A60     		str	r2, [r1]
-  71:Core/Src/mem.c ****     best_fit->next = NULL;
- 358              		.loc 1 71 5 is_stmt 1 view .LVU130
- 359              	.LVL26:
-  72:Core/Src/mem.c ****     //if the node we found have enough mem for a heap node
- 360              		.loc 1 72 5 view .LVU131
-  72:Core/Src/mem.c ****     //if the node we found have enough mem for a heap node
-ARM GAS  /tmp//cc0oL9Fy.s 			page 11
+  70:Core/Src/mem.c ****     }
+ 319              		.loc 1 70 18 view .LVU113
+ 320 002a 1B68     		ldr	r3, [r3]
+ 321              	.LVL23:
+ 322              	.L19:
+  62:Core/Src/mem.c ****         if(cur_node->node_size >= size){
+ 323              		.loc 1 62 20 is_stmt 1 view .LVU114
+  62:Core/Src/mem.c ****         if(cur_node->node_size >= size){
+ 324              		.loc 1 62 27 is_stmt 0 view .LVU115
+ 325 002c 134A     		ldr	r2, .L29
+ 326 002e 9268     		ldr	r2, [r2, #8]
+  62:Core/Src/mem.c ****         if(cur_node->node_size >= size){
+ 327              		.loc 1 62 20 view .LVU116
+ 328 0030 9A42     		cmp	r2, r3
+ 329 0032 0BD0     		beq	.L28
+  63:Core/Src/mem.c ****             if(best_fit == NULL || cur_node->node_size < best_fit->node_size){
+ 330              		.loc 1 63 9 is_stmt 1 view .LVU117
+  63:Core/Src/mem.c ****             if(best_fit == NULL || cur_node->node_size < best_fit->node_size){
+ 331              		.loc 1 63 20 is_stmt 0 view .LVU118
+ 332 0034 5A68     		ldr	r2, [r3, #4]
+  63:Core/Src/mem.c ****             if(best_fit == NULL || cur_node->node_size < best_fit->node_size){
+ 333              		.loc 1 63 11 view .LVU119
+ 334 0036 A242     		cmp	r2, r4
+ 335 0038 F6D3     		bcc	.L20
+  64:Core/Src/mem.c ****                 best_fit_pre_node = pre_node;
+ 336              		.loc 1 64 13 is_stmt 1 view .LVU120
+  64:Core/Src/mem.c ****                 best_fit_pre_node = pre_node;
+ 337              		.loc 1 64 15 is_stmt 0 view .LVU121
+ 338 003a 0028     		cmp	r0, #0
+ 339 003c F2D0     		beq	.L24
+  64:Core/Src/mem.c ****                 best_fit_pre_node = pre_node;
+ 340              		.loc 1 64 33 discriminator 1 view .LVU122
+ 341 003e D0F804C0 		ldr	ip, [r0, #4]
+ 342 0042 6245     		cmp	r2, ip
+ 343 0044 F0D2     		bcs	.L20
+  65:Core/Src/mem.c ****                 best_fit = cur_node;
+ 344              		.loc 1 65 35 view .LVU123
+ 345 0046 0D46     		mov	r5, r1
+ 346              	.LVL24:
+  66:Core/Src/mem.c ****             }
+ 347              		.loc 1 66 26 view .LVU124
+ 348 0048 1846     		mov	r0, r3
+ 349              	.LVL25:
+  66:Core/Src/mem.c ****             }
+ 350              		.loc 1 66 26 view .LVU125
+ 351 004a EDE7     		b	.L20
+ 352              	.LVL26:
+ 353              	.L28:
+  72:Core/Src/mem.c ****         return NULL;
+ 354              		.loc 1 72 5 is_stmt 1 view .LVU126
+  72:Core/Src/mem.c ****         return NULL;
+ 355              		.loc 1 72 7 is_stmt 0 view .LVU127
+ 356 004c A8B1     		cbz	r0, .L16
+  75:Core/Src/mem.c ****     best_fit->next = NULL;
+ 357              		.loc 1 75 5 is_stmt 1 view .LVU128
+  75:Core/Src/mem.c ****     best_fit->next = NULL;
+ 358              		.loc 1 75 39 is_stmt 0 view .LVU129
+ARM GAS  /tmp//cc19zoGY.s 			page 11
 
 
- 361              		.loc 1 72 20 is_stmt 0 view .LVU132
- 362 004c 0023     		movs	r3, #0
- 363              	.LVL27:
-  72:Core/Src/mem.c ****     //if the node we found have enough mem for a heap node
- 364              		.loc 1 72 20 view .LVU133
- 365 004e 0360     		str	r3, [r0]
-  75:Core/Src/mem.c ****         new_node = (heap_node*)(best_fit + size);
- 366              		.loc 1 75 5 is_stmt 1 view .LVU134
-  75:Core/Src/mem.c ****         new_node = (heap_node*)(best_fit + size);
- 367              		.loc 1 75 16 is_stmt 0 view .LVU135
- 368 0050 4368     		ldr	r3, [r0, #4]
-  75:Core/Src/mem.c ****         new_node = (heap_node*)(best_fit + size);
- 369              		.loc 1 75 28 view .LVU136
- 370 0052 1B1B     		subs	r3, r3, r4
-  75:Core/Src/mem.c ****         new_node = (heap_node*)(best_fit + size);
- 371              		.loc 1 75 7 view .LVU137
- 372 0054 0F2B     		cmp	r3, #15
- 373 0056 06D9     		bls	.L23
-  76:Core/Src/mem.c ****         new_node->node_size = best_fit->node_size - size;
- 374              		.loc 1 76 9 is_stmt 1 view .LVU138
-  76:Core/Src/mem.c ****         new_node->node_size = best_fit->node_size - size;
- 375              		.loc 1 76 18 is_stmt 0 view .LVU139
- 376 0058 00EBC405 		add	r5, r0, r4, lsl #3
- 377              	.LVL28:
-  77:Core/Src/mem.c ****         best_fit->node_size = size;
- 378              		.loc 1 77 9 is_stmt 1 view .LVU140
-  77:Core/Src/mem.c ****         best_fit->node_size = size;
- 379              		.loc 1 77 29 is_stmt 0 view .LVU141
- 380 005c 6B60     		str	r3, [r5, #4]
-  78:Core/Src/mem.c ****         pre_node->next = new_node;
- 381              		.loc 1 78 9 is_stmt 1 view .LVU142
-  78:Core/Src/mem.c ****         pre_node->next = new_node;
- 382              		.loc 1 78 29 is_stmt 0 view .LVU143
- 383 005e 4460     		str	r4, [r0, #4]
-  79:Core/Src/mem.c ****         new_node->next = nxt_node;
- 384              		.loc 1 79 9 is_stmt 1 view .LVU144
-  79:Core/Src/mem.c ****         new_node->next = nxt_node;
- 385              		.loc 1 79 24 is_stmt 0 view .LVU145
- 386 0060 0D60     		str	r5, [r1]
-  80:Core/Src/mem.c ****     }
- 387              		.loc 1 80 9 is_stmt 1 view .LVU146
-  80:Core/Src/mem.c ****     }
- 388              		.loc 1 80 24 is_stmt 0 view .LVU147
- 389 0062 40F83420 		str	r2, [r0, r4, lsl #3]
- 390              	.LVL29:
- 391              	.L23:
-  83:Core/Src/mem.c ****     return (void*)(best_fit + node_struct_size);
- 392              		.loc 1 83 5 is_stmt 1 view .LVU148
-  83:Core/Src/mem.c ****     return (void*)(best_fit + node_struct_size);
- 393              		.loc 1 83 9 is_stmt 0 view .LVU149
- 394 0066 034A     		ldr	r2, .L29
- 395              	.LVL30:
-  83:Core/Src/mem.c ****     return (void*)(best_fit + node_struct_size);
- 396              		.loc 1 83 9 view .LVU150
- 397 0068 D368     		ldr	r3, [r2, #12]
-  83:Core/Src/mem.c ****     return (void*)(best_fit + node_struct_size);
- 398              		.loc 1 83 31 view .LVU151
-ARM GAS  /tmp//cc0oL9Fy.s 			page 12
+ 359 004e 0368     		ldr	r3, [r0]
+ 360              	.LVL27:
+  75:Core/Src/mem.c ****     best_fit->next = NULL;
+ 361              		.loc 1 75 29 view .LVU130
+ 362 0050 2B60     		str	r3, [r5]
+  76:Core/Src/mem.c ****     //if the node we found have enough mem for a heap node
+ 363              		.loc 1 76 5 is_stmt 1 view .LVU131
+  76:Core/Src/mem.c ****     //if the node we found have enough mem for a heap node
+ 364              		.loc 1 76 20 is_stmt 0 view .LVU132
+ 365 0052 0023     		movs	r3, #0
+ 366 0054 0360     		str	r3, [r0]
+  80:Core/Src/mem.c ****         new_node = (heap_node*)(best_fit + size);
+ 367              		.loc 1 80 5 is_stmt 1 view .LVU133
+  80:Core/Src/mem.c ****         new_node = (heap_node*)(best_fit + size);
+ 368              		.loc 1 80 16 is_stmt 0 view .LVU134
+ 369 0056 4368     		ldr	r3, [r0, #4]
+  80:Core/Src/mem.c ****         new_node = (heap_node*)(best_fit + size);
+ 370              		.loc 1 80 28 view .LVU135
+ 371 0058 1B1B     		subs	r3, r3, r4
+  80:Core/Src/mem.c ****         new_node = (heap_node*)(best_fit + size);
+ 372              		.loc 1 80 7 view .LVU136
+ 373 005a 0F2B     		cmp	r3, #15
+ 374 005c 07D9     		bls	.L23
+  81:Core/Src/mem.c ****         new_node->node_size = best_fit->node_size - size;
+ 375              		.loc 1 81 9 is_stmt 1 view .LVU137
+  81:Core/Src/mem.c ****         new_node->node_size = best_fit->node_size - size;
+ 376              		.loc 1 81 18 is_stmt 0 view .LVU138
+ 377 005e 00EBC402 		add	r2, r0, r4, lsl #3
+ 378              	.LVL28:
+  82:Core/Src/mem.c ****         best_fit->node_size = size;
+ 379              		.loc 1 82 9 is_stmt 1 view .LVU139
+  82:Core/Src/mem.c ****         best_fit->node_size = size;
+ 380              		.loc 1 82 29 is_stmt 0 view .LVU140
+ 381 0062 5360     		str	r3, [r2, #4]
+  83:Core/Src/mem.c ****         new_node->next = best_fit_pre_node->next;
+ 382              		.loc 1 83 9 is_stmt 1 view .LVU141
+  83:Core/Src/mem.c ****         new_node->next = best_fit_pre_node->next;
+ 383              		.loc 1 83 29 is_stmt 0 view .LVU142
+ 384 0064 4460     		str	r4, [r0, #4]
+  84:Core/Src/mem.c ****         best_fit_pre_node->next = new_node;
+ 385              		.loc 1 84 9 is_stmt 1 view .LVU143
+  84:Core/Src/mem.c ****         best_fit_pre_node->next = new_node;
+ 386              		.loc 1 84 43 is_stmt 0 view .LVU144
+ 387 0066 2B68     		ldr	r3, [r5]
+  84:Core/Src/mem.c ****         best_fit_pre_node->next = new_node;
+ 388              		.loc 1 84 24 view .LVU145
+ 389 0068 40F83430 		str	r3, [r0, r4, lsl #3]
+  85:Core/Src/mem.c ****     }
+ 390              		.loc 1 85 9 is_stmt 1 view .LVU146
+  85:Core/Src/mem.c ****     }
+ 391              		.loc 1 85 33 is_stmt 0 view .LVU147
+ 392 006c 2A60     		str	r2, [r5]
+ 393              	.LVL29:
+ 394              	.L23:
+  88:Core/Src/mem.c ****     return (void*)(best_fit + node_struct_size);
+ 395              		.loc 1 88 5 is_stmt 1 view .LVU148
+  88:Core/Src/mem.c ****     return (void*)(best_fit + node_struct_size);
+ARM GAS  /tmp//cc19zoGY.s 			page 12
 
 
- 399 006a 4168     		ldr	r1, [r0, #4]
- 400              	.LVL31:
-  83:Core/Src/mem.c ****     return (void*)(best_fit + node_struct_size);
- 401              		.loc 1 83 20 view .LVU152
- 402 006c 5B1A     		subs	r3, r3, r1
- 403 006e D360     		str	r3, [r2, #12]
-  84:Core/Src/mem.c **** }
- 404              		.loc 1 84 5 is_stmt 1 view .LVU153
-  84:Core/Src/mem.c **** }
- 405              		.loc 1 84 12 is_stmt 0 view .LVU154
- 406 0070 4030     		adds	r0, r0, #64
- 407              	.LVL32:
- 408              	.L16:
-  85:Core/Src/mem.c **** 
- 409              		.loc 1 85 1 view .LVU155
- 410 0072 38BD     		pop	{r3, r4, r5, pc}
- 411              	.LVL33:
- 412              	.L30:
-  85:Core/Src/mem.c **** 
- 413              		.loc 1 85 1 view .LVU156
- 414              		.align	2
- 415              	.L29:
- 416 0074 00000000 		.word	heap
- 417              		.cfi_endproc
- 418              	.LFE1:
- 420              		.section	.text.hfree,"ax",%progbits
- 421              		.align	1
- 422              		.global	hfree
- 423              		.syntax unified
- 424              		.thumb
- 425              		.thumb_func
- 427              	hfree:
- 428              	.LVL34:
- 429              	.LFB3:
- 108:Core/Src/mem.c **** 
- 109:Core/Src/mem.c **** void hfree(void* addr){
- 430              		.loc 1 109 23 is_stmt 1 view -0
- 431              		.cfi_startproc
- 432              		@ args = 0, pretend = 0, frame = 0
- 433              		@ frame_needed = 0, uses_anonymous_args = 0
- 434              		.loc 1 109 23 is_stmt 0 view .LVU158
- 435 0000 08B5     		push	{r3, lr}
- 436              	.LCFI4:
- 437              		.cfi_def_cfa_offset 8
- 438              		.cfi_offset 3, -8
- 439              		.cfi_offset 14, -4
- 110:Core/Src/mem.c ****   heap_node* addr_node;
- 440              		.loc 1 110 3 is_stmt 1 view .LVU159
- 111:Core/Src/mem.c ****   addr_node = (heap_node*)(addr - node_struct_size);
- 441              		.loc 1 111 3 view .LVU160
- 442              	.LVL35:
- 112:Core/Src/mem.c ****   heap.heap_size += addr_node->node_size;
- 443              		.loc 1 112 3 view .LVU161
- 444              		.loc 1 112 7 is_stmt 0 view .LVU162
- 445 0002 054A     		ldr	r2, .L33
- 446 0004 D368     		ldr	r3, [r2, #12]
- 447              		.loc 1 112 30 view .LVU163
-ARM GAS  /tmp//cc0oL9Fy.s 			page 13
+ 396              		.loc 1 88 9 is_stmt 0 view .LVU149
+ 397 006e 034A     		ldr	r2, .L29
+ 398 0070 D368     		ldr	r3, [r2, #12]
+  88:Core/Src/mem.c ****     return (void*)(best_fit + node_struct_size);
+ 399              		.loc 1 88 31 view .LVU150
+ 400 0072 4168     		ldr	r1, [r0, #4]
+ 401              	.LVL30:
+  88:Core/Src/mem.c ****     return (void*)(best_fit + node_struct_size);
+ 402              		.loc 1 88 20 view .LVU151
+ 403 0074 5B1A     		subs	r3, r3, r1
+ 404 0076 D360     		str	r3, [r2, #12]
+  89:Core/Src/mem.c **** }
+ 405              		.loc 1 89 5 is_stmt 1 view .LVU152
+  89:Core/Src/mem.c **** }
+ 406              		.loc 1 89 12 is_stmt 0 view .LVU153
+ 407 0078 4030     		adds	r0, r0, #64
+ 408              	.LVL31:
+ 409              	.L16:
+  90:Core/Src/mem.c **** 
+ 410              		.loc 1 90 1 view .LVU154
+ 411 007a 38BD     		pop	{r3, r4, r5, pc}
+ 412              	.LVL32:
+ 413              	.L30:
+  90:Core/Src/mem.c **** 
+ 414              		.loc 1 90 1 view .LVU155
+ 415              		.align	2
+ 416              	.L29:
+ 417 007c 00000000 		.word	heap
+ 418              		.cfi_endproc
+ 419              	.LFE1:
+ 421              		.section	.text.hfree,"ax",%progbits
+ 422              		.align	1
+ 423              		.global	hfree
+ 424              		.syntax unified
+ 425              		.thumb
+ 426              		.thumb_func
+ 428              	hfree:
+ 429              	.LVL33:
+ 430              	.LFB3:
+ 113:Core/Src/mem.c **** 
+ 114:Core/Src/mem.c **** void hfree(void* addr){
+ 431              		.loc 1 114 23 is_stmt 1 view -0
+ 432              		.cfi_startproc
+ 433              		@ args = 0, pretend = 0, frame = 0
+ 434              		@ frame_needed = 0, uses_anonymous_args = 0
+ 435              		.loc 1 114 23 is_stmt 0 view .LVU157
+ 436 0000 08B5     		push	{r3, lr}
+ 437              	.LCFI4:
+ 438              		.cfi_def_cfa_offset 8
+ 439              		.cfi_offset 3, -8
+ 440              		.cfi_offset 14, -4
+ 115:Core/Src/mem.c ****   heap_node* addr_node;
+ 441              		.loc 1 115 3 is_stmt 1 view .LVU158
+ 116:Core/Src/mem.c ****   addr_node = (heap_node*)(addr - node_struct_size);
+ 442              		.loc 1 116 3 view .LVU159
+ 443              	.LVL34:
+ 117:Core/Src/mem.c ****   heap.heap_size += addr_node->node_size;
+ARM GAS  /tmp//cc19zoGY.s 			page 13
 
 
- 448 0006 50F8041C 		ldr	r1, [r0, #-4]
- 449              		.loc 1 112 18 view .LVU164
- 450 000a 0B44     		add	r3, r3, r1
- 451 000c D360     		str	r3, [r2, #12]
- 113:Core/Src/mem.c ****   heap_insert_list(addr_node);
- 452              		.loc 1 113 3 is_stmt 1 view .LVU165
- 453 000e 0838     		subs	r0, r0, #8
- 454              	.LVL36:
- 455              		.loc 1 113 3 is_stmt 0 view .LVU166
- 456 0010 FFF7FEFF 		bl	heap_insert_list
- 457              	.LVL37:
- 114:Core/Src/mem.c **** }
- 458              		.loc 1 114 1 view .LVU167
- 459 0014 08BD     		pop	{r3, pc}
- 460              	.L34:
- 461 0016 00BF     		.align	2
- 462              	.L33:
- 463 0018 00000000 		.word	heap
- 464              		.cfi_endproc
- 465              	.LFE3:
- 467              		.section	.data.heap,"aw"
- 468              		.align	2
- 471              	heap:
- 472 0000 00000000 		.space	8
- 472      00000000 
- 473 0008 00000000 		.word	0
- 474 000c 00400000 		.word	16384
- 475              		.section	.bss.heap_mem,"aw",%nobits
- 476              		.align	2
- 479              	heap_mem:
- 480 0000 00000000 		.space	16384
- 480      00000000 
- 480      00000000 
- 480      00000000 
- 480      00000000 
- 481              		.global	node_struct_size
- 482              		.section	.rodata.node_struct_size,"a"
- 483              		.align	2
- 486              	node_struct_size:
- 487 0000 08000000 		.word	8
- 488              		.text
- 489              	.Letext0:
- 490              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
- 491              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
- 492              		.file 4 "/usr/lib/gcc/arm-none-eabi/14.2.0/include/stddef.h"
- 493              		.file 5 "Core/Inc/mem.h"
-ARM GAS  /tmp//cc0oL9Fy.s 			page 14
+ 444              		.loc 1 117 3 view .LVU160
+ 445              		.loc 1 117 7 is_stmt 0 view .LVU161
+ 446 0002 054A     		ldr	r2, .L33
+ 447 0004 D368     		ldr	r3, [r2, #12]
+ 448              		.loc 1 117 30 view .LVU162
+ 449 0006 50F8041C 		ldr	r1, [r0, #-4]
+ 450              		.loc 1 117 18 view .LVU163
+ 451 000a 0B44     		add	r3, r3, r1
+ 452 000c D360     		str	r3, [r2, #12]
+ 118:Core/Src/mem.c ****   heap_insert_list(addr_node);
+ 453              		.loc 1 118 3 is_stmt 1 view .LVU164
+ 454 000e 0838     		subs	r0, r0, #8
+ 455              	.LVL35:
+ 456              		.loc 1 118 3 is_stmt 0 view .LVU165
+ 457 0010 FFF7FEFF 		bl	heap_insert_list
+ 458              	.LVL36:
+ 119:Core/Src/mem.c **** }
+ 459              		.loc 1 119 1 view .LVU166
+ 460 0014 08BD     		pop	{r3, pc}
+ 461              	.L34:
+ 462 0016 00BF     		.align	2
+ 463              	.L33:
+ 464 0018 00000000 		.word	heap
+ 465              		.cfi_endproc
+ 466              	.LFE3:
+ 468              		.section	.data.heap,"aw"
+ 469              		.align	2
+ 472              	heap:
+ 473 0000 00000000 		.space	8
+ 473      00000000 
+ 474 0008 00000000 		.word	0
+ 475 000c 00400000 		.word	16384
+ 476              		.section	.bss.heap_mem,"aw",%nobits
+ 477              		.align	2
+ 480              	heap_mem:
+ 481 0000 00000000 		.space	16384
+ 481      00000000 
+ 481      00000000 
+ 481      00000000 
+ 481      00000000 
+ 482              		.global	node_struct_size
+ 483              		.section	.rodata.node_struct_size,"a"
+ 484              		.align	2
+ 487              	node_struct_size:
+ 488 0000 08000000 		.word	8
+ 489              		.text
+ 490              	.Letext0:
+ 491              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
+ 492              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
+ 493              		.file 4 "/usr/lib/gcc/arm-none-eabi/14.2.0/include/stddef.h"
+ 494              		.file 5 "Core/Inc/mem.h"
+ARM GAS  /tmp//cc19zoGY.s 			page 14
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 mem.c
-    /tmp//cc0oL9Fy.s:19     .text.heap_insert_list:00000000 $t
-    /tmp//cc0oL9Fy.s:24     .text.heap_insert_list:00000000 heap_insert_list
-    /tmp//cc0oL9Fy.s:129    .text.heap_insert_list:0000004c $d
-    /tmp//cc0oL9Fy.s:471    .data.heap:00000000 heap
-    /tmp//cc0oL9Fy.s:134    .text.heap_init:00000000 $t
-    /tmp//cc0oL9Fy.s:140    .text.heap_init:00000000 heap_init
-    /tmp//cc0oL9Fy.s:232    .text.heap_init:00000048 $d
-    /tmp//cc0oL9Fy.s:479    .bss.heap_mem:00000000 heap_mem
-    /tmp//cc0oL9Fy.s:238    .text.halloc:00000000 $t
-    /tmp//cc0oL9Fy.s:244    .text.halloc:00000000 halloc
-    /tmp//cc0oL9Fy.s:416    .text.halloc:00000074 $d
-    /tmp//cc0oL9Fy.s:421    .text.hfree:00000000 $t
-    /tmp//cc0oL9Fy.s:427    .text.hfree:00000000 hfree
-    /tmp//cc0oL9Fy.s:463    .text.hfree:00000018 $d
-    /tmp//cc0oL9Fy.s:468    .data.heap:00000000 $d
-    /tmp//cc0oL9Fy.s:476    .bss.heap_mem:00000000 $d
-    /tmp//cc0oL9Fy.s:486    .rodata.node_struct_size:00000000 node_struct_size
-    /tmp//cc0oL9Fy.s:483    .rodata.node_struct_size:00000000 $d
+    /tmp//cc19zoGY.s:19     .text.heap_insert_list:00000000 $t
+    /tmp//cc19zoGY.s:24     .text.heap_insert_list:00000000 heap_insert_list
+    /tmp//cc19zoGY.s:129    .text.heap_insert_list:0000004c $d
+    /tmp//cc19zoGY.s:472    .data.heap:00000000 heap
+    /tmp//cc19zoGY.s:134    .text.heap_init:00000000 $t
+    /tmp//cc19zoGY.s:140    .text.heap_init:00000000 heap_init
+    /tmp//cc19zoGY.s:232    .text.heap_init:00000048 $d
+    /tmp//cc19zoGY.s:480    .bss.heap_mem:00000000 heap_mem
+    /tmp//cc19zoGY.s:238    .text.halloc:00000000 $t
+    /tmp//cc19zoGY.s:244    .text.halloc:00000000 halloc
+    /tmp//cc19zoGY.s:417    .text.halloc:0000007c $d
+    /tmp//cc19zoGY.s:422    .text.hfree:00000000 $t
+    /tmp//cc19zoGY.s:428    .text.hfree:00000000 hfree
+    /tmp//cc19zoGY.s:464    .text.hfree:00000018 $d
+    /tmp//cc19zoGY.s:469    .data.heap:00000000 $d
+    /tmp//cc19zoGY.s:477    .bss.heap_mem:00000000 $d
+    /tmp//cc19zoGY.s:487    .rodata.node_struct_size:00000000 node_struct_size
+    /tmp//cc19zoGY.s:484    .rodata.node_struct_size:00000000 $d
 
 NO UNDEFINED SYMBOLS
