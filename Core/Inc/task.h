@@ -25,8 +25,12 @@ void task_create_static(task_func_t func, void *func_parameters,
                        uint32_t stack_depth, uint32_t stack, tcb_t *tcb);
 void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
                  uint32_t priority, task_handler_t * handler);
+
+void add_to_ready_list(task_handler_t* handler, uint32_t priority);
 uint32_t* stack_init(uint32_t* stack_top, task_func_t func,void* parameters);
 
 void scheduler_init(void);
 void scheduler_start(void);
+uint32_t enter_critical(void);
+void exit_critical(uint32_t ret);
 #endif

@@ -1,14 +1,17 @@
 #include "task.h"
 #include "config.h"
 
+//The current running task
 __attribute__((used)) volatile tcb_t* current_tcb = NULL;
+//handler for the idle task
+static task_handler_t idle_task_handler = NULL;
+// task table
+static task_handler_t ready_list[configMaxPriority];
 
-task_handler_t idle_task_handler = NULL;
+static uint32_t max_priority = 0;
+static uint32_t priority_bits = 0;
 
-task_handler_t task_table[configMaxPriority];
-
-
-//from freertos
+//used for context switch, from freertos
 __attribute__((naked)) void xPortPendSVHandler( void )
 {
     __asm volatile
@@ -42,7 +45,7 @@ __attribute__((naked)) void xPortPendSVHandler( void )
         ::"i" ( configMAX_SYSCALL_INTERRUPT_PRIORITY )
     );
 }
-
+//SCV handler
 __attribute__((naked)) void vPortSVCHandler( void )
 {
     __asm volatile (
@@ -61,7 +64,7 @@ __attribute__((naked)) void vPortSVCHandler( void )
         "pxCurrentTCBConst2: .word current_tcb             \n"
         );
 }
-
+//start the first task
 __attribute__((always_inline)) inline static void StartFirstTask( void )
 {
     ( *( ( volatile uint32_t * ) 0xe000ed20 ) ) |= ( ( ( uint32_t ) 255UL ) << 16UL );
@@ -95,7 +98,14 @@ void task_create(task_func_t func, void* func_parameters, uint32_t stack_depth,
     //set the task handler
     *handler = (task_handler_t)new_tcb;
     //put the tcb into task table
-    task_table[priority] = new_tcb;
+    ready_list[priority] = new_tcb;
+    //add_to_ready_list(handler);
+}
+
+void add_to_ready_list(task_handler_t* handler, uint32_t priority){
+    if(priority < max_priority)
+        max_priority = priority;
+    ready_list[priority] = *handler;
 }
 
 static void task_exit_error(){
@@ -142,5 +152,37 @@ void scheduler_start(void){
 uint32_t x = 0;
 void vTaskSwitchContext(void){
     x++;
-    current_tcb = task_table[x % 3];
+    current_tcb = ready_list[x % 3];
+}
+
+__attribute__((always_inline)) inline uint32_t  enter_critical( void )
+{
+    uint32_t ret;
+    uint32_t temp;
+    __asm volatile(
+            " cpsid i               \n"
+            " mrs %0, basepri       \n"
+            " mov %1, %2            \n"
+            " msr basepri, %1       \n"
+            " dsb                   \n"
+            " isb                   \n"
+            " cpsie i               \n"
+            : "=r" (ret), "=r"(temp)
+            : "r" (configMAX_SYSCALL_INTERRUPT_PRIORITY)
+            : "memory"
+            );
+    return ret;
+}
+
+__attribute__((always_inline)) inline void exit_critical(uint32_t ret)
+{
+    __asm volatile(
+            " cpsid i               \n"
+            " msr basepri, %0       \n"
+            " dsb                   \n"
+            " isb                   \n"
+            " cpsie i               \n"
+            :: "r" (ret)
+            : "memory"
+            );
 }
