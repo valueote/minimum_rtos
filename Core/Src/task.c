@@ -7,10 +7,15 @@ __attribute__((used)) volatile tcb_t* current_tcb = NULL;
 static task_handler_t idle_task_handler = NULL;
 // task table
 static task_handler_t ready_list[configMaxPriority];
+// ready bits for task table
 static uint32_t ready_bits = 0;
+//delay lists
+static uint32_t delay_lst[configMaxPriority];
+static uint32_t delay_overflow_lst[configMaxPriority];
+static uint32_t* delay_list;
+static uint32_t* delay_overflow_list;
 
 static uint32_t max_priority = 0;
-static uint32_t priority_bits = 0;
 static uint32_t current_tick_count;
 
 //used for context switch, from freertos
@@ -66,6 +71,14 @@ __attribute__((naked)) void vPortSVCHandler( void )
         "pxCurrentTCBConst2: .word current_tcb             \n"
         );
 }
+void SysTick_Handler(void)
+{
+    uint32_t ret = critical_enter();
+    //increment_ticks();
+    critical_exit(ret);
+}
+
+
 //start the first task
 __attribute__((always_inline)) inline static void StartFirstTask( void )
 {
@@ -85,6 +98,15 @@ __attribute__((always_inline)) inline static void StartFirstTask( void )
 }
 
 
+void add_to_ready_list(task_handler_t* handler, uint32_t priority){
+    if(priority < max_priority)
+        max_priority = priority;
+    ready_bits |= priority;
+    ready_list[priority] = *handler;
+}
+
+
+
 void task_create(task_func_t func, void* func_parameters, uint32_t stack_depth,
                  uint32_t priority, task_handler_t* handler) {
     tcb_t* new_tcb;
@@ -100,15 +122,7 @@ void task_create(task_func_t func, void* func_parameters, uint32_t stack_depth,
     //set the task handler
     *handler = (task_handler_t)new_tcb;
     //put the tcb into task table
-    //
-    add_to_ready_list(handler);
-}
-
-void add_to_ready_list(task_handler_t* handler, uint32_t priority){
-    if(priority < max_priority)
-        max_priority = priority;
-    ready_bits |= priority;
-    ready_list[priority] = *handler;
+    add_to_ready_list(handler, priority);
 }
 
 static void task_exit_error(){
@@ -153,12 +167,12 @@ void scheduler_start(void){
     StartFirstTask();
 }
 
-uint8_t get_highest_priority(void);
+static inline uint8_t get_highest_priority(void);
 void vTaskSwitchContext(void){
     current_tcb = ready_list[get_highest_priority()];
 }
 
-__attribute__((always_inline)) inline uint32_t  enter_critical( void )
+__attribute__((always_inline)) inline uint32_t  critical_enter( void )
 {
     uint32_t ret;
     uint32_t temp;
@@ -177,7 +191,7 @@ __attribute__((always_inline)) inline uint32_t  enter_critical( void )
     return ret;
 }
 
-__attribute__((always_inline)) inline void exit_critical(uint32_t ret)
+__attribute__((always_inline)) inline void critical_exit(uint32_t ret)
 {
     __asm volatile(
             " cpsid i               \n"
@@ -203,4 +217,20 @@ __attribute__( ( always_inline ) ) static inline uint8_t get_highest_priority( v
             :"r" (ready_bits)
             );
     return top_zero;
+}
+
+void delay_list_init(void){
+    delay_list = delay_lst;
+    delay_overflow_list = delay_overflow_lst;
+}
+
+void delay_list_switch(void){
+    uint32_t* tmp;
+    tmp = delay_list;
+    delay_list = delay_overflow_list;
+    delay_overflow_list = tmp;
+}
+
+void task_delay(uint32_t ticks){
+
 }

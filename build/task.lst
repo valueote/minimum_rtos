@@ -1,4 +1,4 @@
-ARM GAS  /tmp//ccCbZFGD.s 			page 1
+ARM GAS  /tmp/ccv1CyWF.s 			page 1
 
 
    1              		.cpu cortex-m3
@@ -24,7 +24,7 @@ ARM GAS  /tmp//ccCbZFGD.s 			page 1
   21              		.thumb
   22              		.thumb_func
   24              	task_exit_error:
-  25              	.LFB5:
+  25              	.LFB6:
    1:Core/Src/task.c **** #include "task.h"
    2:Core/Src/task.c **** #include "config.h"
    3:Core/Src/task.c **** 
@@ -34,194 +34,213 @@ ARM GAS  /tmp//ccCbZFGD.s 			page 1
    7:Core/Src/task.c **** static task_handler_t idle_task_handler = NULL;
    8:Core/Src/task.c **** // task table
    9:Core/Src/task.c **** static task_handler_t ready_list[configMaxPriority];
-  10:Core/Src/task.c **** 
-  11:Core/Src/task.c **** static uint32_t max_priority = 0;
-  12:Core/Src/task.c **** static uint32_t priority_bits = 0;
-  13:Core/Src/task.c **** 
-  14:Core/Src/task.c **** //used for context switch, from freertos
-  15:Core/Src/task.c **** __attribute__((naked)) void xPortPendSVHandler( void )
-  16:Core/Src/task.c **** {
-  17:Core/Src/task.c ****     __asm volatile
-  18:Core/Src/task.c ****     (
-  19:Core/Src/task.c ****         "   mrs r0, psp                         \n"
-  20:Core/Src/task.c ****         "   isb                                 \n"
-  21:Core/Src/task.c ****         "                                       \n"
-  22:Core/Src/task.c ****         "   ldr r3, pxCurrentTCBConst           \n"
-  23:Core/Src/task.c ****         "   ldr r2, [r3]                        \n"
-  24:Core/Src/task.c ****         "                                       \n"
-  25:Core/Src/task.c ****         "   stmdb r0!, {r4-r11}                 \n"
-  26:Core/Src/task.c ****         "   str r0, [r2]                        \n"
-  27:Core/Src/task.c ****         "                                       \n"
-  28:Core/Src/task.c ****         "   stmdb sp!, {r3, r14}                \n"
-  29:Core/Src/task.c ****         "   mov r0, %0                          \n"
-  30:Core/Src/task.c ****         "   msr basepri, r0                     \n"
-  31:Core/Src/task.c ****         "   bl vTaskSwitchContext               \n"
-  32:Core/Src/task.c ****         "   mov r0, #0                          \n"
-  33:Core/Src/task.c ****         "   msr basepri, r0                     \n"
-ARM GAS  /tmp//ccCbZFGD.s 			page 2
+  10:Core/Src/task.c **** // ready bits for task table
+  11:Core/Src/task.c **** static uint32_t ready_bits = 0;
+  12:Core/Src/task.c **** //delay lists
+  13:Core/Src/task.c **** static uint32_t delay_lst[configMaxPriority];
+  14:Core/Src/task.c **** static uint32_t delay_overflow_lst[configMaxPriority];
+  15:Core/Src/task.c **** static uint32_t* delay_list;
+  16:Core/Src/task.c **** static uint32_t* delay_overflow_list;
+  17:Core/Src/task.c **** 
+  18:Core/Src/task.c **** static uint32_t max_priority = 0;
+  19:Core/Src/task.c **** static uint32_t current_tick_count;
+  20:Core/Src/task.c **** 
+  21:Core/Src/task.c **** //used for context switch, from freertos
+  22:Core/Src/task.c **** __attribute__((naked)) void xPortPendSVHandler( void )
+  23:Core/Src/task.c **** {
+  24:Core/Src/task.c ****     __asm volatile
+  25:Core/Src/task.c ****     (
+  26:Core/Src/task.c ****         "   mrs r0, psp                         \n"
+  27:Core/Src/task.c ****         "   isb                                 \n"
+  28:Core/Src/task.c ****         "                                       \n"
+  29:Core/Src/task.c ****         "   ldr r3, pxCurrentTCBConst           \n"
+  30:Core/Src/task.c ****         "   ldr r2, [r3]                        \n"
+  31:Core/Src/task.c ****         "                                       \n"
+  32:Core/Src/task.c ****         "   stmdb r0!, {r4-r11}                 \n"
+  33:Core/Src/task.c ****         "   str r0, [r2]                        \n"
+ARM GAS  /tmp/ccv1CyWF.s 			page 2
 
 
-  34:Core/Src/task.c ****         "   ldmia sp!, {r3, r14}                \n"
-  35:Core/Src/task.c ****         "                                       \n"
-  36:Core/Src/task.c ****         "   ldr r1, [r3]                        \n"
-  37:Core/Src/task.c ****         "   ldr r0, [r1]                        \n"
-  38:Core/Src/task.c ****         "   ldmia r0!, {r4-r11}                 \n"
-  39:Core/Src/task.c ****         "   msr psp, r0                         \n"
-  40:Core/Src/task.c ****         "   isb                                 \n"
-  41:Core/Src/task.c ****         "   bx r14                              \n"
+  34:Core/Src/task.c ****         "                                       \n"
+  35:Core/Src/task.c ****         "   stmdb sp!, {r3, r14}                \n"
+  36:Core/Src/task.c ****         "   mov r0, %0                          \n"
+  37:Core/Src/task.c ****         "   msr basepri, r0                     \n"
+  38:Core/Src/task.c ****         "   bl vTaskSwitchContext               \n"
+  39:Core/Src/task.c ****         "   mov r0, #0                          \n"
+  40:Core/Src/task.c ****         "   msr basepri, r0                     \n"
+  41:Core/Src/task.c ****         "   ldmia sp!, {r3, r14}                \n"
   42:Core/Src/task.c ****         "                                       \n"
-  43:Core/Src/task.c ****         "   .align 4                            \n"
-  44:Core/Src/task.c ****         "pxCurrentTCBConst: .word current_tcb  \n"
-  45:Core/Src/task.c ****         ::"i" ( configMAX_SYSCALL_INTERRUPT_PRIORITY )
-  46:Core/Src/task.c ****     );
-  47:Core/Src/task.c **** }
-  48:Core/Src/task.c **** //SCV handler
-  49:Core/Src/task.c **** __attribute__((naked)) void vPortSVCHandler( void )
-  50:Core/Src/task.c **** {
-  51:Core/Src/task.c ****     __asm volatile (
-  52:Core/Src/task.c ****         "   ldr r3, pxCurrentTCBConst2      \n" /* Restore the context. */
-  53:Core/Src/task.c ****         "   ldr r1, [r3]                    \n" /* Use pxCurrentTCBConst to get the pxCurrentTCB ad
-  54:Core/Src/task.c ****         "   ldr r0, [r1]                    \n" /* The first item in pxCurrentTCB is the task top o
-  55:Core/Src/task.c ****         "   ldmia r0!, {r4-r11}             \n" /* Pop the registers that are not automatically sav
-  56:Core/Src/task.c ****         "   msr psp, r0                     \n" /* Restore the task stack pointer. */
-  57:Core/Src/task.c ****         "   isb                             \n"
-  58:Core/Src/task.c ****         "   mov r0, #0                      \n"
-  59:Core/Src/task.c ****         "   msr basepri, r0                 \n"
-  60:Core/Src/task.c ****         "   orr r14, #0xd                   \n"
-  61:Core/Src/task.c ****         "   bx r14                          \n"
-  62:Core/Src/task.c ****         "                                   \n"
-  63:Core/Src/task.c ****         "   .align 4                        \n"
-  64:Core/Src/task.c ****         "pxCurrentTCBConst2: .word current_tcb             \n"
-  65:Core/Src/task.c ****         );
-  66:Core/Src/task.c **** }
-  67:Core/Src/task.c **** //start the first task
-  68:Core/Src/task.c **** __attribute__((always_inline)) inline static void StartFirstTask( void )
-  69:Core/Src/task.c **** {
-  70:Core/Src/task.c ****     ( *( ( volatile uint32_t * ) 0xe000ed20 ) ) |= ( ( ( uint32_t ) 255UL ) << 16UL );
-  71:Core/Src/task.c ****     __asm volatile (
-  72:Core/Src/task.c ****         " ldr r0, =0xE000ED08   \n" /* Use the NVIC offset register to locate the stack. */
-  73:Core/Src/task.c ****         " ldr r0, [r0]          \n" " ldr r0, [r0]          \n"
-  74:Core/Src/task.c ****         " msr msp, r0           \n" /* Set the msp back to the start of the stack. */
-  75:Core/Src/task.c ****         " cpsie i               \n" /* Globally enable interrupts. */
-  76:Core/Src/task.c ****         " cpsie f               \n"
-  77:Core/Src/task.c ****         " dsb                   \n"
-  78:Core/Src/task.c ****         " isb                   \n"
-  79:Core/Src/task.c ****         " svc 0                 \n" /* System call to start first task. */
-  80:Core/Src/task.c ****         " nop                   \n"
-  81:Core/Src/task.c ****         " .ltorg                \n"
-  82:Core/Src/task.c ****         );
-  83:Core/Src/task.c **** }
-  84:Core/Src/task.c **** 
-  85:Core/Src/task.c **** 
-  86:Core/Src/task.c **** void task_create(task_func_t func, void* func_parameters, uint32_t stack_depth,
-  87:Core/Src/task.c ****                  uint32_t priority, task_handler_t* handler) {
-  88:Core/Src/task.c ****     tcb_t* new_tcb;
-  89:Core/Src/task.c ****     uint32_t* stack_top;
-  90:Core/Src/task.c ****     //allocate memory for the tcb and stack
-ARM GAS  /tmp//ccCbZFGD.s 			page 3
+  43:Core/Src/task.c ****         "   ldr r1, [r3]                        \n"
+  44:Core/Src/task.c ****         "   ldr r0, [r1]                        \n"
+  45:Core/Src/task.c ****         "   ldmia r0!, {r4-r11}                 \n"
+  46:Core/Src/task.c ****         "   msr psp, r0                         \n"
+  47:Core/Src/task.c ****         "   isb                                 \n"
+  48:Core/Src/task.c ****         "   bx r14                              \n"
+  49:Core/Src/task.c ****         "                                       \n"
+  50:Core/Src/task.c ****         "   .align 4                            \n"
+  51:Core/Src/task.c ****         "pxCurrentTCBConst: .word current_tcb  \n"
+  52:Core/Src/task.c ****         ::"i" ( configMAX_SYSCALL_INTERRUPT_PRIORITY )
+  53:Core/Src/task.c ****     );
+  54:Core/Src/task.c **** }
+  55:Core/Src/task.c **** //SCV handler
+  56:Core/Src/task.c **** __attribute__((naked)) void vPortSVCHandler( void )
+  57:Core/Src/task.c **** {
+  58:Core/Src/task.c ****     __asm volatile (
+  59:Core/Src/task.c ****         "   ldr r3, pxCurrentTCBConst2      \n" /* Restore the context. */
+  60:Core/Src/task.c ****         "   ldr r1, [r3]                    \n" /* Use pxCurrentTCBConst to get the pxCurrentTCB ad
+  61:Core/Src/task.c ****         "   ldr r0, [r1]                    \n" /* The first item in pxCurrentTCB is the task top o
+  62:Core/Src/task.c ****         "   ldmia r0!, {r4-r11}             \n" /* Pop the registers that are not automatically sav
+  63:Core/Src/task.c ****         "   msr psp, r0                     \n" /* Restore the task stack pointer. */
+  64:Core/Src/task.c ****         "   isb                             \n"
+  65:Core/Src/task.c ****         "   mov r0, #0                      \n"
+  66:Core/Src/task.c ****         "   msr basepri, r0                 \n"
+  67:Core/Src/task.c ****         "   orr r14, #0xd                   \n"
+  68:Core/Src/task.c ****         "   bx r14                          \n"
+  69:Core/Src/task.c ****         "                                   \n"
+  70:Core/Src/task.c ****         "   .align 4                        \n"
+  71:Core/Src/task.c ****         "pxCurrentTCBConst2: .word current_tcb             \n"
+  72:Core/Src/task.c ****         );
+  73:Core/Src/task.c **** }
+  74:Core/Src/task.c **** void SysTick_Handler(void)
+  75:Core/Src/task.c **** {
+  76:Core/Src/task.c ****     uint32_t ret = critical_enter();
+  77:Core/Src/task.c ****     critical_exit(ret);
+  78:Core/Src/task.c **** }
+  79:Core/Src/task.c **** 
+  80:Core/Src/task.c **** 
+  81:Core/Src/task.c **** //start the first task
+  82:Core/Src/task.c **** __attribute__((always_inline)) inline static void StartFirstTask( void )
+  83:Core/Src/task.c **** {
+  84:Core/Src/task.c ****     ( *( ( volatile uint32_t * ) 0xe000ed20 ) ) |= ( ( ( uint32_t ) 255UL ) << 16UL );
+  85:Core/Src/task.c ****     __asm volatile (
+  86:Core/Src/task.c ****         " ldr r0, =0xE000ED08   \n" /* Use the NVIC offset register to locate the stack. */
+  87:Core/Src/task.c ****         " ldr r0, [r0]          \n" " ldr r0, [r0]          \n"
+  88:Core/Src/task.c ****         " msr msp, r0           \n" /* Set the msp back to the start of the stack. */
+  89:Core/Src/task.c ****         " cpsie i               \n" /* Globally enable interrupts. */
+  90:Core/Src/task.c ****         " cpsie f               \n"
+ARM GAS  /tmp/ccv1CyWF.s 			page 3
 
 
-  91:Core/Src/task.c ****     new_tcb = (tcb_t*)halloc(sizeof(tcb_t));
-  92:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
-  93:Core/Src/task.c ****     //get the stack top addresss and align
-  94:Core/Src/task.c ****     stack_top = new_tcb->stack + (stack_depth - (uint32_t)1);
-  95:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
-  96:Core/Src/task.c ****     //initialize the stack
-  97:Core/Src/task.c ****     new_tcb->stack_top = stack_init(stack_top, func, func_parameters);
-  98:Core/Src/task.c ****     //set the task handler
-  99:Core/Src/task.c ****     *handler = (task_handler_t)new_tcb;
- 100:Core/Src/task.c ****     //put the tcb into task table
- 101:Core/Src/task.c ****     ready_list[priority] = new_tcb;
- 102:Core/Src/task.c ****     //add_to_ready_list(handler);
- 103:Core/Src/task.c **** }
- 104:Core/Src/task.c **** 
- 105:Core/Src/task.c **** void add_to_ready_list(task_handler_t* handler, uint32_t priority){
- 106:Core/Src/task.c ****     if(priority < max_priority)
- 107:Core/Src/task.c ****         max_priority = priority;
- 108:Core/Src/task.c ****     ready_list[priority] = *handler;
- 109:Core/Src/task.c **** }
- 110:Core/Src/task.c **** 
- 111:Core/Src/task.c **** static void task_exit_error(){
-  26              		.loc 1 111 30 view -0
+  91:Core/Src/task.c ****         " dsb                   \n"
+  92:Core/Src/task.c ****         " isb                   \n"
+  93:Core/Src/task.c ****         " svc 0                 \n" /* System call to start first task. */
+  94:Core/Src/task.c ****         " nop                   \n"
+  95:Core/Src/task.c ****         " .ltorg                \n"
+  96:Core/Src/task.c ****         );
+  97:Core/Src/task.c **** }
+  98:Core/Src/task.c **** 
+  99:Core/Src/task.c **** 
+ 100:Core/Src/task.c **** void add_to_ready_list(task_handler_t* handler, uint32_t priority){
+ 101:Core/Src/task.c ****     if(priority < max_priority)
+ 102:Core/Src/task.c ****         max_priority = priority;
+ 103:Core/Src/task.c ****     ready_bits |= priority;
+ 104:Core/Src/task.c ****     ready_list[priority] = *handler;
+ 105:Core/Src/task.c **** }
+ 106:Core/Src/task.c **** 
+ 107:Core/Src/task.c **** 
+ 108:Core/Src/task.c **** 
+ 109:Core/Src/task.c **** void task_create(task_func_t func, void* func_parameters, uint32_t stack_depth,
+ 110:Core/Src/task.c ****                  uint32_t priority, task_handler_t* handler) {
+ 111:Core/Src/task.c ****     tcb_t* new_tcb;
+ 112:Core/Src/task.c ****     uint32_t* stack_top;
+ 113:Core/Src/task.c ****     //allocate memory for the tcb and stack
+ 114:Core/Src/task.c ****     new_tcb = (tcb_t*)halloc(sizeof(tcb_t));
+ 115:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
+ 116:Core/Src/task.c ****     //get the stack top addresss and align
+ 117:Core/Src/task.c ****     stack_top = new_tcb->stack + (stack_depth - (uint32_t)1);
+ 118:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
+ 119:Core/Src/task.c ****     //initialize the stack
+ 120:Core/Src/task.c ****     new_tcb->stack_top = stack_init(stack_top, func, func_parameters);
+ 121:Core/Src/task.c ****     //set the task handler
+ 122:Core/Src/task.c ****     *handler = (task_handler_t)new_tcb;
+ 123:Core/Src/task.c ****     //put the tcb into task table
+ 124:Core/Src/task.c ****     add_to_ready_list(handler, priority);
+ 125:Core/Src/task.c **** }
+ 126:Core/Src/task.c **** 
+ 127:Core/Src/task.c **** static void task_exit_error(){
+  26              		.loc 1 127 30 view -0
   27              		.cfi_startproc
   28              		@ Volatile: function does not return.
   29              		@ args = 0, pretend = 0, frame = 0
   30              		@ frame_needed = 0, uses_anonymous_args = 0
   31              		@ link register save eliminated.
   32              	.L2:
- 112:Core/Src/task.c ****     while(1){
-  33              		.loc 1 112 5 view .LVU1
- 113:Core/Src/task.c ****     }
-  34              		.loc 1 113 5 view .LVU2
- 112:Core/Src/task.c ****     while(1){
-  35              		.loc 1 112 10 view .LVU3
+ 128:Core/Src/task.c ****     while(1){
+  33              		.loc 1 128 5 view .LVU1
+ 129:Core/Src/task.c ****     }
+  34              		.loc 1 129 5 view .LVU2
+ 128:Core/Src/task.c ****     while(1){
+  35              		.loc 1 128 10 view .LVU3
   36 0000 FEE7     		b	.L2
   37              		.cfi_endproc
-  38              	.LFE5:
+  38              	.LFE6:
   40              		.section	.text.idle_task,"ax",%progbits
   41              		.align	1
   42              		.global	idle_task
   43              		.syntax unified
+ARM GAS  /tmp/ccv1CyWF.s 			page 4
+
+
   44              		.thumb
   45              		.thumb_func
   47              	idle_task:
-  48              	.LFB7:
- 114:Core/Src/task.c **** }
- 115:Core/Src/task.c **** 
- 116:Core/Src/task.c **** uint32_t* stack_init(uint32_t* stack_top, task_func_t func,void* parameters){
- 117:Core/Src/task.c ****     //set the XPSR
- 118:Core/Src/task.c ****     stack_top--;
- 119:Core/Src/task.c ****     *stack_top = INITIAL_XPSR;
- 120:Core/Src/task.c ****     //set the task func
- 121:Core/Src/task.c ****     stack_top--;
- 122:Core/Src/task.c ****     *stack_top = (uint32_t)func & (uint32_t)START_ADDRESS_MASK;
- 123:Core/Src/task.c ****     //set the error handler
- 124:Core/Src/task.c ****     stack_top--;
- 125:Core/Src/task.c ****     *stack_top = (uint32_t)task_exit_error;
-ARM GAS  /tmp//ccCbZFGD.s 			page 4
-
-
- 126:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
- 127:Core/Src/task.c ****     stack_top -= 5;
- 128:Core/Src/task.c ****     *stack_top = (uint32_t)parameters;
- 129:Core/Src/task.c ****     //leave space for r4-r11
- 130:Core/Src/task.c ****     stack_top -= 8;
- 131:Core/Src/task.c ****     return stack_top;
- 132:Core/Src/task.c **** }
- 133:Core/Src/task.c **** 
- 134:Core/Src/task.c **** uint32_t enter_idle = 0;
- 135:Core/Src/task.c **** void idle_task(){
-  49              		.loc 1 135 17 view -0
+  48              	.LFB8:
+ 130:Core/Src/task.c **** }
+ 131:Core/Src/task.c **** 
+ 132:Core/Src/task.c **** uint32_t* stack_init(uint32_t* stack_top, task_func_t func,void* parameters){
+ 133:Core/Src/task.c ****     //set the XPSR
+ 134:Core/Src/task.c ****     stack_top--;
+ 135:Core/Src/task.c ****     *stack_top = INITIAL_XPSR;
+ 136:Core/Src/task.c ****     //set the task func
+ 137:Core/Src/task.c ****     stack_top--;
+ 138:Core/Src/task.c ****     *stack_top = (uint32_t)func & (uint32_t)START_ADDRESS_MASK;
+ 139:Core/Src/task.c ****     //set the error handler
+ 140:Core/Src/task.c ****     stack_top--;
+ 141:Core/Src/task.c ****     *stack_top = (uint32_t)task_exit_error;
+ 142:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
+ 143:Core/Src/task.c ****     stack_top -= 5;
+ 144:Core/Src/task.c ****     *stack_top = (uint32_t)parameters;
+ 145:Core/Src/task.c ****     //leave space for r4-r11
+ 146:Core/Src/task.c ****     stack_top -= 8;
+ 147:Core/Src/task.c ****     return stack_top;
+ 148:Core/Src/task.c **** }
+ 149:Core/Src/task.c **** 
+ 150:Core/Src/task.c **** uint32_t enter_idle = 0;
+ 151:Core/Src/task.c **** void idle_task(){
+  49              		.loc 1 151 17 view -0
   50              		.cfi_startproc
   51              		@ Volatile: function does not return.
   52              		@ args = 0, pretend = 0, frame = 0
   53              		@ frame_needed = 0, uses_anonymous_args = 0
   54              		@ link register save eliminated.
   55              	.L4:
- 136:Core/Src/task.c ****     while(1){
-  56              		.loc 1 136 5 view .LVU5
- 137:Core/Src/task.c ****         enter_idle++;
-  57              		.loc 1 137 9 view .LVU6
-  58              		.loc 1 137 19 is_stmt 0 view .LVU7
+ 152:Core/Src/task.c ****     while(1){
+  56              		.loc 1 152 5 view .LVU5
+ 153:Core/Src/task.c ****         enter_idle++;
+  57              		.loc 1 153 9 view .LVU6
+  58              		.loc 1 153 19 is_stmt 0 view .LVU7
   59 0000 054A     		ldr	r2, .L5
   60 0002 1368     		ldr	r3, [r2]
   61 0004 0133     		adds	r3, r3, #1
   62 0006 1360     		str	r3, [r2]
- 138:Core/Src/task.c ****         task_switch();
-  63              		.loc 1 138 9 is_stmt 1 discriminator 1 view .LVU8
+ 154:Core/Src/task.c ****         task_switch();
+  63              		.loc 1 154 9 is_stmt 1 discriminator 1 view .LVU8
   64 0008 4FF0E023 		mov	r3, #-536813568
   65 000c 4FF08052 		mov	r2, #268435456
   66 0010 C3F8042D 		str	r2, [r3, #3332]
- 136:Core/Src/task.c ****     while(1){
-  67              		.loc 1 136 10 view .LVU9
+ 152:Core/Src/task.c ****     while(1){
+  67              		.loc 1 152 10 view .LVU9
   68 0014 F4E7     		b	.L4
   69              	.L6:
   70 0016 00BF     		.align	2
   71              	.L5:
   72 0018 00000000 		.word	enter_idle
   73              		.cfi_endproc
-  74              	.LFE7:
+  74              	.LFE8:
   76              		.section	.text.PendSV_Handler,"ax",%progbits
+ARM GAS  /tmp/ccv1CyWF.s 			page 5
+
+
   77              		.align	1
   78              		.global	PendSV_Handler
   79              		.syntax unified
@@ -229,19 +248,16 @@ ARM GAS  /tmp//ccCbZFGD.s 			page 1
   81              		.thumb_func
   83              	PendSV_Handler:
   84              	.LFB0:
-  16:Core/Src/task.c ****     __asm volatile
-  85              		.loc 1 16 1 view -0
+  23:Core/Src/task.c ****     __asm volatile
+  85              		.loc 1 23 1 view -0
   86              		.cfi_startproc
   87              		@ Naked Function: prologue and epilogue provided by programmer.
   88              		@ args = 0, pretend = 0, frame = 0
   89              		@ frame_needed = 0, uses_anonymous_args = 0
-  17:Core/Src/task.c ****     (
-  90              		.loc 1 17 5 view .LVU11
+  24:Core/Src/task.c ****     (
+  90              		.loc 1 24 5 view .LVU11
   91              		.syntax unified
-ARM GAS  /tmp//ccCbZFGD.s 			page 5
-
-
-  92              	@ 17 "Core/Src/task.c" 1
+  92              	@ 24 "Core/Src/task.c" 1
   93 0000 EFF30980 		   mrs r0, psp                         
   94 0004 BFF36F8F 	   isb                                 
   95              	                                       
@@ -270,8 +286,8 @@ ARM GAS  /tmp//ccCbZFGD.s 			page 1
  118 0040 00000000 	pxCurrentTCBConst: .word current_tcb  
  119              	
  120              	@ 0 "" 2
-  47:Core/Src/task.c **** //SCV handler
- 121              		.loc 1 47 1 is_stmt 0 view .LVU12
+  54:Core/Src/task.c **** //SCV handler
+ 121              		.loc 1 54 1 is_stmt 0 view .LVU12
  122              		.thumb
  123              		.syntax unified
  124              		.cfi_endproc
@@ -282,25 +298,25 @@ ARM GAS  /tmp//ccCbZFGD.s 			page 1
  130              		.syntax unified
  131              		.thumb
  132              		.thumb_func
+ARM GAS  /tmp/ccv1CyWF.s 			page 6
+
+
  134              	SVC_Handler:
  135              	.LFB1:
-  50:Core/Src/task.c ****     __asm volatile (
- 136              		.loc 1 50 1 is_stmt 1 view -0
+  57:Core/Src/task.c ****     __asm volatile (
+ 136              		.loc 1 57 1 is_stmt 1 view -0
  137              		.cfi_startproc
  138              		@ Naked Function: prologue and epilogue provided by programmer.
  139              		@ args = 0, pretend = 0, frame = 0
  140              		@ frame_needed = 0, uses_anonymous_args = 0
-  51:Core/Src/task.c ****         "   ldr r3, pxCurrentTCBConst2      \n" /* Restore the context. */
- 141              		.loc 1 51 5 view .LVU14
+  58:Core/Src/task.c ****         "   ldr r3, pxCurrentTCBConst2      \n" /* Restore the context. */
+ 141              		.loc 1 58 5 view .LVU14
  142              		.syntax unified
- 143              	@ 51 "Core/Src/task.c" 1
+ 143              	@ 58 "Core/Src/task.c" 1
  144 0000 074B     		   ldr r3, pxCurrentTCBConst2      
  145 0002 1968     	   ldr r1, [r3]                    
  146 0004 0868     	   ldr r0, [r1]                    
  147 0006 B0E8F00F 	   ldmia r0!, {r4-r11}             
-ARM GAS  /tmp//ccCbZFGD.s 			page 6
-
-
  148 000a 80F30988 	   msr psp, r0                     
  149 000e BFF36F8F 	   isb                             
  150 0012 4FF00000 	   mov r0, #0                      
@@ -312,627 +328,925 @@ ARM GAS  /tmp//ccCbZFGD.s 			page 1
  156 0020 00000000 	pxCurrentTCBConst2: .word current_tcb             
  157              	
  158              	@ 0 "" 2
-  66:Core/Src/task.c **** //start the first task
- 159              		.loc 1 66 1 is_stmt 0 view .LVU15
+  73:Core/Src/task.c **** void SysTick_Handler(void)
+ 159              		.loc 1 73 1 is_stmt 0 view .LVU15
  160              		.thumb
  161              		.syntax unified
  162              		.cfi_endproc
  163              	.LFE1:
- 165              		.section	.text.add_to_ready_list,"ax",%progbits
+ 165              		.section	.text.SysTick_Handler,"ax",%progbits
  166              		.align	1
- 167              		.global	add_to_ready_list
+ 167              		.global	SysTick_Handler
  168              		.syntax unified
  169              		.thumb
  170              		.thumb_func
- 172              	add_to_ready_list:
- 173              	.LVL0:
- 174              	.LFB4:
- 105:Core/Src/task.c ****     if(priority < max_priority)
- 175              		.loc 1 105 67 is_stmt 1 view -0
- 176              		.cfi_startproc
- 177              		@ args = 0, pretend = 0, frame = 0
- 178              		@ frame_needed = 0, uses_anonymous_args = 0
- 179              		@ link register save eliminated.
- 106:Core/Src/task.c ****         max_priority = priority;
- 180              		.loc 1 106 5 view .LVU17
- 106:Core/Src/task.c ****         max_priority = priority;
- 181              		.loc 1 106 17 is_stmt 0 view .LVU18
- 182 0000 054B     		ldr	r3, .L11
- 183 0002 1B68     		ldr	r3, [r3]
- 106:Core/Src/task.c ****         max_priority = priority;
- 184              		.loc 1 106 7 view .LVU19
- 185 0004 8B42     		cmp	r3, r1
- 186 0006 01D9     		bls	.L10
- 107:Core/Src/task.c ****     ready_list[priority] = *handler;
- 187              		.loc 1 107 9 is_stmt 1 view .LVU20
- 107:Core/Src/task.c ****     ready_list[priority] = *handler;
- 188              		.loc 1 107 22 is_stmt 0 view .LVU21
- 189 0008 034B     		ldr	r3, .L11
- 190 000a 1960     		str	r1, [r3]
- 191              	.L10:
- 108:Core/Src/task.c **** }
- 192              		.loc 1 108 5 is_stmt 1 view .LVU22
- 108:Core/Src/task.c **** }
- 193              		.loc 1 108 28 is_stmt 0 view .LVU23
- 194 000c 0268     		ldr	r2, [r0]
- 108:Core/Src/task.c **** }
- 195              		.loc 1 108 26 view .LVU24
- 196 000e 034B     		ldr	r3, .L11+4
-ARM GAS  /tmp//ccCbZFGD.s 			page 7
-
-
- 197 0010 43F82120 		str	r2, [r3, r1, lsl #2]
- 109:Core/Src/task.c **** 
- 198              		.loc 1 109 1 view .LVU25
- 199 0014 7047     		bx	lr
- 200              	.L12:
- 201 0016 00BF     		.align	2
- 202              	.L11:
- 203 0018 00000000 		.word	max_priority
- 204 001c 00000000 		.word	ready_list
- 205              		.cfi_endproc
- 206              	.LFE4:
- 208              		.section	.text.stack_init,"ax",%progbits
- 209              		.align	1
- 210              		.global	stack_init
- 211              		.syntax unified
- 212              		.thumb
- 213              		.thumb_func
- 215              	stack_init:
- 216              	.LVL1:
- 217              	.LFB6:
- 116:Core/Src/task.c ****     //set the XPSR
- 218              		.loc 1 116 77 is_stmt 1 view -0
- 219              		.cfi_startproc
- 220              		@ args = 0, pretend = 0, frame = 0
- 221              		@ frame_needed = 0, uses_anonymous_args = 0
- 222              		@ link register save eliminated.
- 118:Core/Src/task.c ****     *stack_top = INITIAL_XPSR;
- 223              		.loc 1 118 5 view .LVU27
- 119:Core/Src/task.c ****     //set the task func
- 224              		.loc 1 119 5 view .LVU28
- 119:Core/Src/task.c ****     //set the task func
- 225              		.loc 1 119 16 is_stmt 0 view .LVU29
- 226 0000 4FF08073 		mov	r3, #16777216
- 227 0004 40F8043C 		str	r3, [r0, #-4]
- 121:Core/Src/task.c ****     *stack_top = (uint32_t)func & (uint32_t)START_ADDRESS_MASK;
- 228              		.loc 1 121 5 is_stmt 1 view .LVU30
- 229              	.LVL2:
- 122:Core/Src/task.c ****     //set the error handler
- 230              		.loc 1 122 5 view .LVU31
- 122:Core/Src/task.c ****     //set the error handler
- 231              		.loc 1 122 33 is_stmt 0 view .LVU32
- 232 0008 21F00101 		bic	r1, r1, #1
- 233              	.LVL3:
- 122:Core/Src/task.c ****     //set the error handler
- 234              		.loc 1 122 16 view .LVU33
- 235 000c 40F8081C 		str	r1, [r0, #-8]
- 124:Core/Src/task.c ****     *stack_top = (uint32_t)task_exit_error;
- 236              		.loc 1 124 5 is_stmt 1 view .LVU34
- 237              	.LVL4:
- 125:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
- 238              		.loc 1 125 5 view .LVU35
- 125:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
- 239              		.loc 1 125 18 is_stmt 0 view .LVU36
- 240 0010 034B     		ldr	r3, .L14
- 125:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
- 241              		.loc 1 125 16 view .LVU37
- 242 0012 40F80C3C 		str	r3, [r0, #-12]
-ARM GAS  /tmp//ccCbZFGD.s 			page 8
-
-
- 127:Core/Src/task.c ****     *stack_top = (uint32_t)parameters;
- 243              		.loc 1 127 5 is_stmt 1 view .LVU38
- 244              	.LVL5:
- 128:Core/Src/task.c ****     //leave space for r4-r11
- 245              		.loc 1 128 5 view .LVU39
- 128:Core/Src/task.c ****     //leave space for r4-r11
- 246              		.loc 1 128 16 is_stmt 0 view .LVU40
- 247 0016 40F8202C 		str	r2, [r0, #-32]
- 130:Core/Src/task.c ****     return stack_top;
- 248              		.loc 1 130 5 is_stmt 1 view .LVU41
- 249              	.LVL6:
- 131:Core/Src/task.c **** }
- 250              		.loc 1 131 5 view .LVU42
- 132:Core/Src/task.c **** 
- 251              		.loc 1 132 1 is_stmt 0 view .LVU43
- 252 001a 4038     		subs	r0, r0, #64
- 253              	.LVL7:
- 132:Core/Src/task.c **** 
- 254              		.loc 1 132 1 view .LVU44
- 255 001c 7047     		bx	lr
- 256              	.L15:
- 257 001e 00BF     		.align	2
- 258              	.L14:
- 259 0020 00000000 		.word	task_exit_error
- 260              		.cfi_endproc
- 261              	.LFE6:
- 263              		.section	.text.task_create,"ax",%progbits
- 264              		.align	1
- 265              		.global	task_create
- 266              		.syntax unified
- 267              		.thumb
- 268              		.thumb_func
- 270              	task_create:
- 271              	.LVL8:
- 272              	.LFB3:
-  87:Core/Src/task.c ****     tcb_t* new_tcb;
- 273              		.loc 1 87 62 is_stmt 1 view -0
- 274              		.cfi_startproc
- 275              		@ args = 4, pretend = 0, frame = 0
- 276              		@ frame_needed = 0, uses_anonymous_args = 0
-  87:Core/Src/task.c ****     tcb_t* new_tcb;
- 277              		.loc 1 87 62 is_stmt 0 view .LVU46
- 278 0000 2DE9F041 		push	{r4, r5, r6, r7, r8, lr}
- 279              	.LCFI0:
- 280              		.cfi_def_cfa_offset 24
- 281              		.cfi_offset 4, -24
- 282              		.cfi_offset 5, -20
- 283              		.cfi_offset 6, -16
- 284              		.cfi_offset 7, -12
- 285              		.cfi_offset 8, -8
- 286              		.cfi_offset 14, -4
- 287 0004 0646     		mov	r6, r0
- 288 0006 0F46     		mov	r7, r1
- 289 0008 9046     		mov	r8, r2
- 290 000a 1D46     		mov	r5, r3
-  88:Core/Src/task.c ****     uint32_t* stack_top;
- 291              		.loc 1 88 5 is_stmt 1 view .LVU47
-ARM GAS  /tmp//ccCbZFGD.s 			page 9
-
-
-  89:Core/Src/task.c ****     //allocate memory for the tcb and stack
- 292              		.loc 1 89 5 view .LVU48
-  91:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
- 293              		.loc 1 91 5 view .LVU49
-  91:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
- 294              		.loc 1 91 23 is_stmt 0 view .LVU50
- 295 000c 0C20     		movs	r0, #12
- 296              	.LVL9:
-  91:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
- 297              		.loc 1 91 23 view .LVU51
- 298 000e FFF7FEFF 		bl	halloc
- 299              	.LVL10:
-  91:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
- 300              		.loc 1 91 23 view .LVU52
- 301 0012 0446     		mov	r4, r0
- 302              	.LVL11:
-  92:Core/Src/task.c ****     //get the stack top addresss and align
- 303              		.loc 1 92 5 is_stmt 1 view .LVU53
-  92:Core/Src/task.c ****     //get the stack top addresss and align
- 304              		.loc 1 92 32 is_stmt 0 view .LVU54
- 305 0014 4FEA8800 		lsl	r0, r8, #2
- 306              	.LVL12:
-  92:Core/Src/task.c ****     //get the stack top addresss and align
- 307              		.loc 1 92 32 view .LVU55
- 308 0018 FFF7FEFF 		bl	halloc
- 309              	.LVL13:
-  92:Core/Src/task.c ****     //get the stack top addresss and align
- 310              		.loc 1 92 19 discriminator 1 view .LVU56
- 311 001c A060     		str	r0, [r4, #8]
-  94:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
- 312              		.loc 1 94 5 is_stmt 1 view .LVU57
-  94:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
- 313              		.loc 1 94 32 is_stmt 0 view .LVU58
- 314 001e 08F18042 		add	r2, r8, #1073741824
- 315 0022 013A     		subs	r2, r2, #1
-  94:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
- 316              		.loc 1 94 15 view .LVU59
- 317 0024 00EB8200 		add	r0, r0, r2, lsl #2
- 318              	.LVL14:
-  95:Core/Src/task.c ****     //initialize the stack
- 319              		.loc 1 95 5 is_stmt 1 view .LVU60
-  97:Core/Src/task.c ****     //set the task handler
- 320              		.loc 1 97 5 view .LVU61
-  97:Core/Src/task.c ****     //set the task handler
- 321              		.loc 1 97 26 is_stmt 0 view .LVU62
- 322 0028 3A46     		mov	r2, r7
- 323 002a 3146     		mov	r1, r6
- 324 002c 20F00700 		bic	r0, r0, #7
- 325              	.LVL15:
-  97:Core/Src/task.c ****     //set the task handler
- 326              		.loc 1 97 26 view .LVU63
- 327 0030 FFF7FEFF 		bl	stack_init
- 328              	.LVL16:
-  97:Core/Src/task.c ****     //set the task handler
- 329              		.loc 1 97 24 discriminator 1 view .LVU64
- 330 0034 2060     		str	r0, [r4]
-  99:Core/Src/task.c ****     //put the tcb into task table
-ARM GAS  /tmp//ccCbZFGD.s 			page 10
-
-
- 331              		.loc 1 99 5 is_stmt 1 view .LVU65
-  99:Core/Src/task.c ****     //put the tcb into task table
- 332              		.loc 1 99 14 is_stmt 0 view .LVU66
- 333 0036 069B     		ldr	r3, [sp, #24]
- 334 0038 1C60     		str	r4, [r3]
- 101:Core/Src/task.c ****     //add_to_ready_list(handler);
- 335              		.loc 1 101 5 is_stmt 1 view .LVU67
- 101:Core/Src/task.c ****     //add_to_ready_list(handler);
- 336              		.loc 1 101 26 is_stmt 0 view .LVU68
- 337 003a 024B     		ldr	r3, .L18
- 338 003c 43F82540 		str	r4, [r3, r5, lsl #2]
- 103:Core/Src/task.c **** 
- 339              		.loc 1 103 1 view .LVU69
- 340 0040 BDE8F081 		pop	{r4, r5, r6, r7, r8, pc}
- 341              	.LVL17:
- 342              	.L19:
- 103:Core/Src/task.c **** 
- 343              		.loc 1 103 1 view .LVU70
- 344              		.align	2
- 345              	.L18:
- 346 0044 00000000 		.word	ready_list
- 347              		.cfi_endproc
- 348              	.LFE3:
- 350              		.section	.text.scheduler_init,"ax",%progbits
- 351              		.align	1
- 352              		.global	scheduler_init
- 353              		.syntax unified
- 354              		.thumb
- 355              		.thumb_func
- 357              	scheduler_init:
- 358              	.LFB8:
- 139:Core/Src/task.c ****     }
- 140:Core/Src/task.c **** }
- 141:Core/Src/task.c **** 
- 142:Core/Src/task.c **** void scheduler_init( void )
- 143:Core/Src/task.c **** {
- 359              		.loc 1 143 1 is_stmt 1 view -0
- 360              		.cfi_startproc
- 361              		@ args = 0, pretend = 0, frame = 0
- 362              		@ frame_needed = 0, uses_anonymous_args = 0
- 363 0000 10B5     		push	{r4, lr}
- 364              	.LCFI1:
- 365              		.cfi_def_cfa_offset 8
- 366              		.cfi_offset 4, -8
- 367              		.cfi_offset 14, -4
- 368 0002 82B0     		sub	sp, sp, #8
- 369              	.LCFI2:
- 370              		.cfi_def_cfa_offset 16
- 144:Core/Src/task.c ****     task_create(idle_task, NULL, 64, 0, &idle_task_handler);
- 371              		.loc 1 144 5 view .LVU72
- 372 0004 064C     		ldr	r4, .L22
- 373 0006 0094     		str	r4, [sp]
- 374 0008 0023     		movs	r3, #0
- 375 000a 4022     		movs	r2, #64
- 376 000c 1946     		mov	r1, r3
- 377 000e 0548     		ldr	r0, .L22+4
- 378 0010 FFF7FEFF 		bl	task_create
-ARM GAS  /tmp//ccCbZFGD.s 			page 11
-
-
- 379              	.LVL18:
- 145:Core/Src/task.c ****     current_tcb = idle_task_handler;
- 380              		.loc 1 145 5 view .LVU73
- 381              		.loc 1 145 17 is_stmt 0 view .LVU74
- 382 0014 2268     		ldr	r2, [r4]
- 383 0016 044B     		ldr	r3, .L22+8
- 384 0018 1A60     		str	r2, [r3]
- 146:Core/Src/task.c **** }
- 385              		.loc 1 146 1 view .LVU75
- 386 001a 02B0     		add	sp, sp, #8
- 387              	.LCFI3:
- 388              		.cfi_def_cfa_offset 8
- 389              		@ sp needed
- 390 001c 10BD     		pop	{r4, pc}
- 391              	.L23:
- 392 001e 00BF     		.align	2
- 393              	.L22:
- 394 0020 00000000 		.word	idle_task_handler
- 395 0024 00000000 		.word	idle_task
- 396 0028 00000000 		.word	current_tcb
- 397              		.cfi_endproc
- 398              	.LFE8:
- 400              		.section	.text.scheduler_start,"ax",%progbits
- 401              		.align	1
- 402              		.global	scheduler_start
- 403              		.syntax unified
- 404              		.thumb
- 405              		.thumb_func
- 407              	scheduler_start:
- 408              	.LFB9:
- 147:Core/Src/task.c **** 
- 148:Core/Src/task.c **** void scheduler_start(void){
- 409              		.loc 1 148 27 is_stmt 1 view -0
- 410              		.cfi_startproc
- 411              		@ args = 0, pretend = 0, frame = 0
- 412              		@ frame_needed = 0, uses_anonymous_args = 0
- 413              		@ link register save eliminated.
- 149:Core/Src/task.c ****     StartFirstTask();
- 414              		.loc 1 149 5 view .LVU77
- 415              	.LBB4:
- 416              	.LBI4:
-  68:Core/Src/task.c **** {
- 417              		.loc 1 68 51 view .LVU78
- 418              	.LBB5:
-  70:Core/Src/task.c ****     __asm volatile (
- 419              		.loc 1 70 5 view .LVU79
-  70:Core/Src/task.c ****     __asm volatile (
- 420              		.loc 1 70 7 is_stmt 0 view .LVU80
- 421 0000 4FF0E022 		mov	r2, #-536813568
- 422 0004 D2F8203D 		ldr	r3, [r2, #3360]
-  70:Core/Src/task.c ****     __asm volatile (
- 423              		.loc 1 70 49 view .LVU81
- 424 0008 43F47F03 		orr	r3, r3, #16711680
- 425 000c C2F8203D 		str	r3, [r2, #3360]
-  71:Core/Src/task.c ****         " ldr r0, =0xE000ED08   \n" /* Use the NVIC offset register to locate the stack. */
- 426              		.loc 1 71 5 is_stmt 1 view .LVU82
- 427              		.syntax unified
-ARM GAS  /tmp//ccCbZFGD.s 			page 12
-
-
- 428              	@ 71 "Core/Src/task.c" 1
- 429 0010 0648     		 ldr r0, =0xE000ED08   
- 430 0012 0068     	 ldr r0, [r0]          
- 431 0014 0068     	 ldr r0, [r0]          
- 432 0016 80F30888 	 msr msp, r0           
- 433 001a 62B6     	 cpsie i               
- 434 001c 61B6     	 cpsie f               
- 435 001e BFF34F8F 	 dsb                   
- 436 0022 BFF36F8F 	 isb                   
- 437 0026 00DF     	 svc 0                 
- 438 0028 00BF     	 nop                   
- 439 002a 000008ED 	 .ltorg                
- 439      00E0
- 440              	
- 441              	@ 0 "" 2
- 442              		.thumb
- 443              		.syntax unified
- 444              	.LBE5:
- 445              	.LBE4:
- 150:Core/Src/task.c **** }
- 446              		.loc 1 150 1 is_stmt 0 view .LVU83
- 447 0030 7047     		bx	lr
- 448              		.cfi_endproc
- 449              	.LFE9:
- 451 0032 00BF     		.section	.text.vTaskSwitchContext,"ax",%progbits
- 452              		.align	1
- 453              		.global	vTaskSwitchContext
- 454              		.syntax unified
- 455              		.thumb
- 456              		.thumb_func
- 458              	vTaskSwitchContext:
- 459              	.LFB10:
- 151:Core/Src/task.c **** 
- 152:Core/Src/task.c **** uint32_t x = 0;
- 153:Core/Src/task.c **** void vTaskSwitchContext(void){
- 460              		.loc 1 153 30 is_stmt 1 view -0
- 461              		.cfi_startproc
- 462              		@ args = 0, pretend = 0, frame = 0
- 463              		@ frame_needed = 0, uses_anonymous_args = 0
- 464              		@ link register save eliminated.
- 154:Core/Src/task.c ****     x++;
- 465              		.loc 1 154 5 view .LVU85
- 466              		.loc 1 154 6 is_stmt 0 view .LVU86
- 467 0000 084A     		ldr	r2, .L26
- 468 0002 1368     		ldr	r3, [r2]
- 469 0004 0133     		adds	r3, r3, #1
- 470 0006 1360     		str	r3, [r2]
- 155:Core/Src/task.c ****     current_tcb = ready_list[x % 3];
- 471              		.loc 1 155 5 is_stmt 1 view .LVU87
- 472              		.loc 1 155 32 is_stmt 0 view .LVU88
- 473 0008 074A     		ldr	r2, .L26+4
- 474 000a A2FB0312 		umull	r1, r2, r2, r3
- 475 000e 22F00101 		bic	r1, r2, #1
- 476 0012 01EB5202 		add	r2, r1, r2, lsr #1
- 477 0016 9B1A     		subs	r3, r3, r2
- 478              		.loc 1 155 29 view .LVU89
- 479 0018 044A     		ldr	r2, .L26+8
-ARM GAS  /tmp//ccCbZFGD.s 			page 13
-
-
- 480 001a 52F82320 		ldr	r2, [r2, r3, lsl #2]
- 481              		.loc 1 155 17 view .LVU90
- 482 001e 044B     		ldr	r3, .L26+12
- 483 0020 1A60     		str	r2, [r3]
+ 172              	SysTick_Handler:
+ 173              	.LFB2:
+  75:Core/Src/task.c ****     uint32_t ret = critical_enter();
+ 174              		.loc 1 75 1 is_stmt 1 view -0
+ 175              		.cfi_startproc
+ 176              		@ args = 0, pretend = 0, frame = 0
+ 177              		@ frame_needed = 0, uses_anonymous_args = 0
+ 178              		@ link register save eliminated.
+  76:Core/Src/task.c ****     critical_exit(ret);
+ 179              		.loc 1 76 5 view .LVU17
+ 180              	.LBB10:
+ 181              	.LBI10:
+ 155:Core/Src/task.c ****     }
  156:Core/Src/task.c **** }
- 484              		.loc 1 156 1 view .LVU91
- 485 0022 7047     		bx	lr
- 486              	.L27:
- 487              		.align	2
- 488              	.L26:
- 489 0024 00000000 		.word	x
- 490 0028 ABAAAAAA 		.word	-1431655765
- 491 002c 00000000 		.word	ready_list
- 492 0030 00000000 		.word	current_tcb
- 493              		.cfi_endproc
- 494              	.LFE10:
- 496              		.section	.text.enter_critical,"ax",%progbits
- 497              		.align	1
- 498              		.global	enter_critical
- 499              		.syntax unified
- 500              		.thumb
- 501              		.thumb_func
- 503              	enter_critical:
- 504              	.LFB11:
  157:Core/Src/task.c **** 
- 158:Core/Src/task.c **** __attribute__((always_inline)) inline uint32_t  enter_critical( void )
+ 158:Core/Src/task.c **** void scheduler_init( void )
  159:Core/Src/task.c **** {
- 505              		.loc 1 159 1 is_stmt 1 view -0
- 506              		.cfi_startproc
- 507              		@ args = 0, pretend = 0, frame = 0
- 508              		@ frame_needed = 0, uses_anonymous_args = 0
- 509              		@ link register save eliminated.
- 160:Core/Src/task.c ****     uint32_t ret;
- 510              		.loc 1 160 5 view .LVU93
- 161:Core/Src/task.c ****     uint32_t temp;
- 511              		.loc 1 161 5 view .LVU94
- 162:Core/Src/task.c ****     __asm volatile(
- 512              		.loc 1 162 5 view .LVU95
- 513 0000 BF20     		movs	r0, #191
- 514              		.syntax unified
- 515              	@ 162 "Core/Src/task.c" 1
- 516 0002 72B6     		 cpsid i               
- 517 0004 EFF31180 	 mrs r0, basepri       
- 518 0008 0346     	 mov r3, r0            
- 519 000a 83F31188 	 msr basepri, r3       
- 520 000e BFF34F8F 	 dsb                   
- 521 0012 BFF36F8F 	 isb                   
- 522 0016 62B6     	 cpsie i               
- 523              	
- 524              	@ 0 "" 2
- 525              	.LVL19:
- 163:Core/Src/task.c ****             " cpsid i               \n"
- 164:Core/Src/task.c ****             " mrs %0, basepri       \n"
- 165:Core/Src/task.c ****             " mov %1, %2            \n"
- 166:Core/Src/task.c ****             " msr basepri, %1       \n"
- 167:Core/Src/task.c ****             " dsb                   \n"
- 168:Core/Src/task.c ****             " isb                   \n"
-ARM GAS  /tmp//ccCbZFGD.s 			page 14
+ 160:Core/Src/task.c ****     current_tick_count = 0;
+ARM GAS  /tmp/ccv1CyWF.s 			page 7
 
 
- 169:Core/Src/task.c ****             " cpsie i               \n"
- 170:Core/Src/task.c ****             : "=r" (ret), "=r"(temp)
- 171:Core/Src/task.c ****             : "r" (configMAX_SYSCALL_INTERRUPT_PRIORITY)
- 172:Core/Src/task.c ****             : "memory"
- 173:Core/Src/task.c ****             );
- 174:Core/Src/task.c ****     return ret;
- 526              		.loc 1 174 5 view .LVU96
- 175:Core/Src/task.c **** }
- 527              		.loc 1 175 1 is_stmt 0 view .LVU97
- 528              		.thumb
- 529              		.syntax unified
- 530 0018 7047     		bx	lr
- 531              		.cfi_endproc
- 532              	.LFE11:
- 534              		.section	.text.exit_critical,"ax",%progbits
- 535              		.align	1
- 536              		.global	exit_critical
- 537              		.syntax unified
- 538              		.thumb
- 539              		.thumb_func
- 541              	exit_critical:
- 542              	.LVL20:
- 543              	.LFB12:
- 176:Core/Src/task.c **** 
- 177:Core/Src/task.c **** __attribute__((always_inline)) inline void exit_critical(uint32_t ret)
- 178:Core/Src/task.c **** {
- 544              		.loc 1 178 1 is_stmt 1 view -0
- 545              		.cfi_startproc
- 546              		@ args = 0, pretend = 0, frame = 0
- 547              		@ frame_needed = 0, uses_anonymous_args = 0
- 548              		@ link register save eliminated.
- 179:Core/Src/task.c ****     __asm volatile(
- 549              		.loc 1 179 5 view .LVU99
- 550              		.syntax unified
- 551              	@ 179 "Core/Src/task.c" 1
- 552 0000 72B6     		 cpsid i               
- 553 0002 80F31188 	 msr basepri, r0       
- 554 0006 BFF34F8F 	 dsb                   
- 555 000a BFF36F8F 	 isb                   
- 556 000e 62B6     	 cpsie i               
+ 161:Core/Src/task.c ****     task_create(idle_task, NULL, 64, 0, &idle_task_handler);
+ 162:Core/Src/task.c ****     current_tcb = idle_task_handler;
+ 163:Core/Src/task.c **** }
+ 164:Core/Src/task.c **** 
+ 165:Core/Src/task.c **** void scheduler_start(void){
+ 166:Core/Src/task.c ****     StartFirstTask();
+ 167:Core/Src/task.c **** }
+ 168:Core/Src/task.c **** 
+ 169:Core/Src/task.c **** static inline uint8_t get_highest_priority(void);
+ 170:Core/Src/task.c **** void vTaskSwitchContext(void){
+ 171:Core/Src/task.c ****     current_tcb = ready_list[get_highest_priority()];
+ 172:Core/Src/task.c **** }
+ 173:Core/Src/task.c **** 
+ 174:Core/Src/task.c **** __attribute__((always_inline)) inline uint32_t  critical_enter( void )
+ 182              		.loc 1 174 49 view .LVU18
+ 183              	.LBB11:
+ 175:Core/Src/task.c **** {
+ 176:Core/Src/task.c ****     uint32_t ret;
+ 184              		.loc 1 176 5 view .LVU19
+ 177:Core/Src/task.c ****     uint32_t temp;
+ 185              		.loc 1 177 5 view .LVU20
+ 178:Core/Src/task.c ****     __asm volatile(
+ 186              		.loc 1 178 5 view .LVU21
+ 187 0000 BF23     		movs	r3, #191
+ 188              		.syntax unified
+ 189              	@ 178 "Core/Src/task.c" 1
+ 190 0002 72B6     		 cpsid i               
+ 191 0004 EFF31183 	 mrs r3, basepri       
+ 192 0008 1A46     	 mov r2, r3            
+ 193 000a 82F31188 	 msr basepri, r2       
+ 194 000e BFF34F8F 	 dsb                   
+ 195 0012 BFF36F8F 	 isb                   
+ 196 0016 62B6     	 cpsie i               
+ 197              	
+ 198              	@ 0 "" 2
+ 199              	.LVL0:
+ 179:Core/Src/task.c ****             " cpsid i               \n"
+ 180:Core/Src/task.c ****             " mrs %0, basepri       \n"
+ 181:Core/Src/task.c ****             " mov %1, %2            \n"
+ 182:Core/Src/task.c ****             " msr basepri, %1       \n"
+ 183:Core/Src/task.c ****             " dsb                   \n"
+ 184:Core/Src/task.c ****             " isb                   \n"
+ 185:Core/Src/task.c ****             " cpsie i               \n"
+ 186:Core/Src/task.c ****             : "=r" (ret), "=r"(temp)
+ 187:Core/Src/task.c ****             : "r" (configMAX_SYSCALL_INTERRUPT_PRIORITY)
+ 188:Core/Src/task.c ****             : "memory"
+ 189:Core/Src/task.c ****             );
+ 190:Core/Src/task.c ****     return ret;
+ 200              		.loc 1 190 5 view .LVU22
+ 201              		.loc 1 190 5 is_stmt 0 view .LVU23
+ 202              		.thumb
+ 203              		.syntax unified
+ 204              	.LBE11:
+ 205              	.LBE10:
+  77:Core/Src/task.c **** }
+ 206              		.loc 1 77 5 is_stmt 1 view .LVU24
+ 207              	.LBB12:
+ARM GAS  /tmp/ccv1CyWF.s 			page 8
+
+
+ 208              	.LBI12:
+ 191:Core/Src/task.c **** }
+ 192:Core/Src/task.c **** 
+ 193:Core/Src/task.c **** __attribute__((always_inline)) inline void critical_exit(uint32_t ret)
+ 209              		.loc 1 193 44 view .LVU25
+ 210              	.LBB13:
+ 194:Core/Src/task.c **** {
+ 195:Core/Src/task.c ****     __asm volatile(
+ 211              		.loc 1 195 5 view .LVU26
+ 212              		.syntax unified
+ 213              	@ 195 "Core/Src/task.c" 1
+ 214 0018 72B6     		 cpsid i               
+ 215 001a 83F31188 	 msr basepri, r3       
+ 216 001e BFF34F8F 	 dsb                   
+ 217 0022 BFF36F8F 	 isb                   
+ 218 0026 62B6     	 cpsie i               
+ 219              	
+ 220              	@ 0 "" 2
+ 221              	.LVL1:
+ 222              		.loc 1 195 5 is_stmt 0 view .LVU27
+ 223              		.thumb
+ 224              		.syntax unified
+ 225              	.LBE13:
+ 226              	.LBE12:
+  78:Core/Src/task.c **** 
+ 227              		.loc 1 78 1 view .LVU28
+ 228 0028 7047     		bx	lr
+ 229              		.cfi_endproc
+ 230              	.LFE2:
+ 232              		.section	.text.add_to_ready_list,"ax",%progbits
+ 233              		.align	1
+ 234              		.global	add_to_ready_list
+ 235              		.syntax unified
+ 236              		.thumb
+ 237              		.thumb_func
+ 239              	add_to_ready_list:
+ 240              	.LVL2:
+ 241              	.LFB4:
+ 100:Core/Src/task.c ****     if(priority < max_priority)
+ 242              		.loc 1 100 67 is_stmt 1 view -0
+ 243              		.cfi_startproc
+ 244              		@ args = 0, pretend = 0, frame = 0
+ 245              		@ frame_needed = 0, uses_anonymous_args = 0
+ 246              		@ link register save eliminated.
+ 101:Core/Src/task.c ****         max_priority = priority;
+ 247              		.loc 1 101 5 view .LVU30
+ 101:Core/Src/task.c ****         max_priority = priority;
+ 248              		.loc 1 101 17 is_stmt 0 view .LVU31
+ 249 0000 074B     		ldr	r3, .L12
+ 250 0002 1B68     		ldr	r3, [r3]
+ 101:Core/Src/task.c ****         max_priority = priority;
+ 251              		.loc 1 101 7 view .LVU32
+ 252 0004 8B42     		cmp	r3, r1
+ 253 0006 01D9     		bls	.L11
+ 102:Core/Src/task.c ****     ready_bits |= priority;
+ 254              		.loc 1 102 9 is_stmt 1 view .LVU33
+ 102:Core/Src/task.c ****     ready_bits |= priority;
+ARM GAS  /tmp/ccv1CyWF.s 			page 9
+
+
+ 255              		.loc 1 102 22 is_stmt 0 view .LVU34
+ 256 0008 054B     		ldr	r3, .L12
+ 257 000a 1960     		str	r1, [r3]
+ 258              	.L11:
+ 103:Core/Src/task.c ****     ready_list[priority] = *handler;
+ 259              		.loc 1 103 5 is_stmt 1 view .LVU35
+ 103:Core/Src/task.c ****     ready_list[priority] = *handler;
+ 260              		.loc 1 103 16 is_stmt 0 view .LVU36
+ 261 000c 054A     		ldr	r2, .L12+4
+ 262 000e 1368     		ldr	r3, [r2]
+ 263 0010 0B43     		orrs	r3, r3, r1
+ 264 0012 1360     		str	r3, [r2]
+ 104:Core/Src/task.c **** }
+ 265              		.loc 1 104 5 is_stmt 1 view .LVU37
+ 104:Core/Src/task.c **** }
+ 266              		.loc 1 104 28 is_stmt 0 view .LVU38
+ 267 0014 0268     		ldr	r2, [r0]
+ 104:Core/Src/task.c **** }
+ 268              		.loc 1 104 26 view .LVU39
+ 269 0016 044B     		ldr	r3, .L12+8
+ 270 0018 43F82120 		str	r2, [r3, r1, lsl #2]
+ 105:Core/Src/task.c **** 
+ 271              		.loc 1 105 1 view .LVU40
+ 272 001c 7047     		bx	lr
+ 273              	.L13:
+ 274 001e 00BF     		.align	2
+ 275              	.L12:
+ 276 0020 00000000 		.word	max_priority
+ 277 0024 00000000 		.word	ready_bits
+ 278 0028 00000000 		.word	ready_list
+ 279              		.cfi_endproc
+ 280              	.LFE4:
+ 282              		.section	.text.stack_init,"ax",%progbits
+ 283              		.align	1
+ 284              		.global	stack_init
+ 285              		.syntax unified
+ 286              		.thumb
+ 287              		.thumb_func
+ 289              	stack_init:
+ 290              	.LVL3:
+ 291              	.LFB7:
+ 132:Core/Src/task.c ****     //set the XPSR
+ 292              		.loc 1 132 77 is_stmt 1 view -0
+ 293              		.cfi_startproc
+ 294              		@ args = 0, pretend = 0, frame = 0
+ 295              		@ frame_needed = 0, uses_anonymous_args = 0
+ 296              		@ link register save eliminated.
+ 134:Core/Src/task.c ****     *stack_top = INITIAL_XPSR;
+ 297              		.loc 1 134 5 view .LVU42
+ 135:Core/Src/task.c ****     //set the task func
+ 298              		.loc 1 135 5 view .LVU43
+ 135:Core/Src/task.c ****     //set the task func
+ 299              		.loc 1 135 16 is_stmt 0 view .LVU44
+ 300 0000 4FF08073 		mov	r3, #16777216
+ 301 0004 40F8043C 		str	r3, [r0, #-4]
+ 137:Core/Src/task.c ****     *stack_top = (uint32_t)func & (uint32_t)START_ADDRESS_MASK;
+ 302              		.loc 1 137 5 is_stmt 1 view .LVU45
+ARM GAS  /tmp/ccv1CyWF.s 			page 10
+
+
+ 303              	.LVL4:
+ 138:Core/Src/task.c ****     //set the error handler
+ 304              		.loc 1 138 5 view .LVU46
+ 138:Core/Src/task.c ****     //set the error handler
+ 305              		.loc 1 138 33 is_stmt 0 view .LVU47
+ 306 0008 21F00101 		bic	r1, r1, #1
+ 307              	.LVL5:
+ 138:Core/Src/task.c ****     //set the error handler
+ 308              		.loc 1 138 16 view .LVU48
+ 309 000c 40F8081C 		str	r1, [r0, #-8]
+ 140:Core/Src/task.c ****     *stack_top = (uint32_t)task_exit_error;
+ 310              		.loc 1 140 5 is_stmt 1 view .LVU49
+ 311              	.LVL6:
+ 141:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
+ 312              		.loc 1 141 5 view .LVU50
+ 141:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
+ 313              		.loc 1 141 18 is_stmt 0 view .LVU51
+ 314 0010 034B     		ldr	r3, .L15
+ 141:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
+ 315              		.loc 1 141 16 view .LVU52
+ 316 0012 40F80C3C 		str	r3, [r0, #-12]
+ 143:Core/Src/task.c ****     *stack_top = (uint32_t)parameters;
+ 317              		.loc 1 143 5 is_stmt 1 view .LVU53
+ 318              	.LVL7:
+ 144:Core/Src/task.c ****     //leave space for r4-r11
+ 319              		.loc 1 144 5 view .LVU54
+ 144:Core/Src/task.c ****     //leave space for r4-r11
+ 320              		.loc 1 144 16 is_stmt 0 view .LVU55
+ 321 0016 40F8202C 		str	r2, [r0, #-32]
+ 146:Core/Src/task.c ****     return stack_top;
+ 322              		.loc 1 146 5 is_stmt 1 view .LVU56
+ 323              	.LVL8:
+ 147:Core/Src/task.c **** }
+ 324              		.loc 1 147 5 view .LVU57
+ 148:Core/Src/task.c **** 
+ 325              		.loc 1 148 1 is_stmt 0 view .LVU58
+ 326 001a 4038     		subs	r0, r0, #64
+ 327              	.LVL9:
+ 148:Core/Src/task.c **** 
+ 328              		.loc 1 148 1 view .LVU59
+ 329 001c 7047     		bx	lr
+ 330              	.L16:
+ 331 001e 00BF     		.align	2
+ 332              	.L15:
+ 333 0020 00000000 		.word	task_exit_error
+ 334              		.cfi_endproc
+ 335              	.LFE7:
+ 337              		.section	.text.task_create,"ax",%progbits
+ 338              		.align	1
+ 339              		.global	task_create
+ 340              		.syntax unified
+ 341              		.thumb
+ 342              		.thumb_func
+ 344              	task_create:
+ 345              	.LVL10:
+ 346              	.LFB5:
+ 110:Core/Src/task.c ****     tcb_t* new_tcb;
+ARM GAS  /tmp/ccv1CyWF.s 			page 11
+
+
+ 347              		.loc 1 110 62 is_stmt 1 view -0
+ 348              		.cfi_startproc
+ 349              		@ args = 4, pretend = 0, frame = 0
+ 350              		@ frame_needed = 0, uses_anonymous_args = 0
+ 110:Core/Src/task.c ****     tcb_t* new_tcb;
+ 351              		.loc 1 110 62 is_stmt 0 view .LVU61
+ 352 0000 2DE9F843 		push	{r3, r4, r5, r6, r7, r8, r9, lr}
+ 353              	.LCFI0:
+ 354              		.cfi_def_cfa_offset 32
+ 355              		.cfi_offset 3, -32
+ 356              		.cfi_offset 4, -28
+ 357              		.cfi_offset 5, -24
+ 358              		.cfi_offset 6, -20
+ 359              		.cfi_offset 7, -16
+ 360              		.cfi_offset 8, -12
+ 361              		.cfi_offset 9, -8
+ 362              		.cfi_offset 14, -4
+ 363 0004 0646     		mov	r6, r0
+ 364 0006 0F46     		mov	r7, r1
+ 365 0008 9146     		mov	r9, r2
+ 366 000a 1D46     		mov	r5, r3
+ 367 000c DDF82080 		ldr	r8, [sp, #32]
+ 111:Core/Src/task.c ****     uint32_t* stack_top;
+ 368              		.loc 1 111 5 is_stmt 1 view .LVU62
+ 112:Core/Src/task.c ****     //allocate memory for the tcb and stack
+ 369              		.loc 1 112 5 view .LVU63
+ 114:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
+ 370              		.loc 1 114 5 view .LVU64
+ 114:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
+ 371              		.loc 1 114 23 is_stmt 0 view .LVU65
+ 372 0010 0C20     		movs	r0, #12
+ 373              	.LVL11:
+ 114:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
+ 374              		.loc 1 114 23 view .LVU66
+ 375 0012 FFF7FEFF 		bl	halloc
+ 376              	.LVL12:
+ 114:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
+ 377              		.loc 1 114 23 view .LVU67
+ 378 0016 0446     		mov	r4, r0
+ 379              	.LVL13:
+ 115:Core/Src/task.c ****     //get the stack top addresss and align
+ 380              		.loc 1 115 5 is_stmt 1 view .LVU68
+ 115:Core/Src/task.c ****     //get the stack top addresss and align
+ 381              		.loc 1 115 32 is_stmt 0 view .LVU69
+ 382 0018 4FEA8900 		lsl	r0, r9, #2
+ 383              	.LVL14:
+ 115:Core/Src/task.c ****     //get the stack top addresss and align
+ 384              		.loc 1 115 32 view .LVU70
+ 385 001c FFF7FEFF 		bl	halloc
+ 386              	.LVL15:
+ 115:Core/Src/task.c ****     //get the stack top addresss and align
+ 387              		.loc 1 115 19 discriminator 1 view .LVU71
+ 388 0020 A060     		str	r0, [r4, #8]
+ 117:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
+ 389              		.loc 1 117 5 is_stmt 1 view .LVU72
+ 117:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
+ 390              		.loc 1 117 32 is_stmt 0 view .LVU73
+ARM GAS  /tmp/ccv1CyWF.s 			page 12
+
+
+ 391 0022 09F18042 		add	r2, r9, #1073741824
+ 392 0026 013A     		subs	r2, r2, #1
+ 117:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
+ 393              		.loc 1 117 15 view .LVU74
+ 394 0028 00EB8200 		add	r0, r0, r2, lsl #2
+ 395              	.LVL16:
+ 118:Core/Src/task.c ****     //initialize the stack
+ 396              		.loc 1 118 5 is_stmt 1 view .LVU75
+ 120:Core/Src/task.c ****     //set the task handler
+ 397              		.loc 1 120 5 view .LVU76
+ 120:Core/Src/task.c ****     //set the task handler
+ 398              		.loc 1 120 26 is_stmt 0 view .LVU77
+ 399 002c 3A46     		mov	r2, r7
+ 400 002e 3146     		mov	r1, r6
+ 401 0030 20F00700 		bic	r0, r0, #7
+ 402              	.LVL17:
+ 120:Core/Src/task.c ****     //set the task handler
+ 403              		.loc 1 120 26 view .LVU78
+ 404 0034 FFF7FEFF 		bl	stack_init
+ 405              	.LVL18:
+ 120:Core/Src/task.c ****     //set the task handler
+ 406              		.loc 1 120 24 discriminator 1 view .LVU79
+ 407 0038 2060     		str	r0, [r4]
+ 122:Core/Src/task.c ****     //put the tcb into task table
+ 408              		.loc 1 122 5 is_stmt 1 view .LVU80
+ 122:Core/Src/task.c ****     //put the tcb into task table
+ 409              		.loc 1 122 14 is_stmt 0 view .LVU81
+ 410 003a C8F80040 		str	r4, [r8]
+ 124:Core/Src/task.c **** }
+ 411              		.loc 1 124 5 is_stmt 1 view .LVU82
+ 412 003e 2946     		mov	r1, r5
+ 413 0040 4046     		mov	r0, r8
+ 414 0042 FFF7FEFF 		bl	add_to_ready_list
+ 415              	.LVL19:
+ 125:Core/Src/task.c **** 
+ 416              		.loc 1 125 1 is_stmt 0 view .LVU83
+ 417 0046 BDE8F883 		pop	{r3, r4, r5, r6, r7, r8, r9, pc}
+ 125:Core/Src/task.c **** 
+ 418              		.loc 1 125 1 view .LVU84
+ 419              		.cfi_endproc
+ 420              	.LFE5:
+ 422              		.section	.text.scheduler_init,"ax",%progbits
+ 423              		.align	1
+ 424              		.global	scheduler_init
+ 425              		.syntax unified
+ 426              		.thumb
+ 427              		.thumb_func
+ 429              	scheduler_init:
+ 430              	.LFB9:
+ 159:Core/Src/task.c ****     current_tick_count = 0;
+ 431              		.loc 1 159 1 is_stmt 1 view -0
+ 432              		.cfi_startproc
+ 433              		@ args = 0, pretend = 0, frame = 0
+ 434              		@ frame_needed = 0, uses_anonymous_args = 0
+ 435 0000 10B5     		push	{r4, lr}
+ 436              	.LCFI1:
+ 437              		.cfi_def_cfa_offset 8
+ARM GAS  /tmp/ccv1CyWF.s 			page 13
+
+
+ 438              		.cfi_offset 4, -8
+ 439              		.cfi_offset 14, -4
+ 440 0002 82B0     		sub	sp, sp, #8
+ 441              	.LCFI2:
+ 442              		.cfi_def_cfa_offset 16
+ 160:Core/Src/task.c ****     task_create(idle_task, NULL, 64, 0, &idle_task_handler);
+ 443              		.loc 1 160 5 view .LVU86
+ 160:Core/Src/task.c ****     task_create(idle_task, NULL, 64, 0, &idle_task_handler);
+ 444              		.loc 1 160 24 is_stmt 0 view .LVU87
+ 445 0004 0021     		movs	r1, #0
+ 446 0006 074B     		ldr	r3, .L21
+ 447 0008 1960     		str	r1, [r3]
+ 161:Core/Src/task.c ****     current_tcb = idle_task_handler;
+ 448              		.loc 1 161 5 is_stmt 1 view .LVU88
+ 449 000a 074C     		ldr	r4, .L21+4
+ 450 000c 0094     		str	r4, [sp]
+ 451 000e 0B46     		mov	r3, r1
+ 452 0010 4022     		movs	r2, #64
+ 453 0012 0648     		ldr	r0, .L21+8
+ 454 0014 FFF7FEFF 		bl	task_create
+ 455              	.LVL20:
+ 162:Core/Src/task.c **** }
+ 456              		.loc 1 162 5 view .LVU89
+ 162:Core/Src/task.c **** }
+ 457              		.loc 1 162 17 is_stmt 0 view .LVU90
+ 458 0018 2268     		ldr	r2, [r4]
+ 459 001a 054B     		ldr	r3, .L21+12
+ 460 001c 1A60     		str	r2, [r3]
+ 163:Core/Src/task.c **** 
+ 461              		.loc 1 163 1 view .LVU91
+ 462 001e 02B0     		add	sp, sp, #8
+ 463              	.LCFI3:
+ 464              		.cfi_def_cfa_offset 8
+ 465              		@ sp needed
+ 466 0020 10BD     		pop	{r4, pc}
+ 467              	.L22:
+ 468 0022 00BF     		.align	2
+ 469              	.L21:
+ 470 0024 00000000 		.word	current_tick_count
+ 471 0028 00000000 		.word	idle_task_handler
+ 472 002c 00000000 		.word	idle_task
+ 473 0030 00000000 		.word	current_tcb
+ 474              		.cfi_endproc
+ 475              	.LFE9:
+ 477              		.section	.text.scheduler_start,"ax",%progbits
+ 478              		.align	1
+ 479              		.global	scheduler_start
+ 480              		.syntax unified
+ 481              		.thumb
+ 482              		.thumb_func
+ 484              	scheduler_start:
+ 485              	.LFB10:
+ 165:Core/Src/task.c ****     StartFirstTask();
+ 486              		.loc 1 165 27 is_stmt 1 view -0
+ 487              		.cfi_startproc
+ 488              		@ args = 0, pretend = 0, frame = 0
+ 489              		@ frame_needed = 0, uses_anonymous_args = 0
+ARM GAS  /tmp/ccv1CyWF.s 			page 14
+
+
+ 490              		@ link register save eliminated.
+ 166:Core/Src/task.c **** }
+ 491              		.loc 1 166 5 view .LVU93
+ 492              	.LBB14:
+ 493              	.LBI14:
+  82:Core/Src/task.c **** {
+ 494              		.loc 1 82 51 view .LVU94
+ 495              	.LBB15:
+  84:Core/Src/task.c ****     __asm volatile (
+ 496              		.loc 1 84 5 view .LVU95
+  84:Core/Src/task.c ****     __asm volatile (
+ 497              		.loc 1 84 7 is_stmt 0 view .LVU96
+ 498 0000 4FF0E022 		mov	r2, #-536813568
+ 499 0004 D2F8203D 		ldr	r3, [r2, #3360]
+  84:Core/Src/task.c ****     __asm volatile (
+ 500              		.loc 1 84 49 view .LVU97
+ 501 0008 43F47F03 		orr	r3, r3, #16711680
+ 502 000c C2F8203D 		str	r3, [r2, #3360]
+  85:Core/Src/task.c ****         " ldr r0, =0xE000ED08   \n" /* Use the NVIC offset register to locate the stack. */
+ 503              		.loc 1 85 5 is_stmt 1 view .LVU98
+ 504              		.syntax unified
+ 505              	@ 85 "Core/Src/task.c" 1
+ 506 0010 0648     		 ldr r0, =0xE000ED08   
+ 507 0012 0068     	 ldr r0, [r0]          
+ 508 0014 0068     	 ldr r0, [r0]          
+ 509 0016 80F30888 	 msr msp, r0           
+ 510 001a 62B6     	 cpsie i               
+ 511 001c 61B6     	 cpsie f               
+ 512 001e BFF34F8F 	 dsb                   
+ 513 0022 BFF36F8F 	 isb                   
+ 514 0026 00DF     	 svc 0                 
+ 515 0028 00BF     	 nop                   
+ 516 002a 000008ED 	 .ltorg                
+ 516      00E0
+ 517              	
+ 518              	@ 0 "" 2
+ 519              		.thumb
+ 520              		.syntax unified
+ 521              	.LBE15:
+ 522              	.LBE14:
+ 167:Core/Src/task.c **** 
+ 523              		.loc 1 167 1 is_stmt 0 view .LVU99
+ 524 0030 7047     		bx	lr
+ 525              		.cfi_endproc
+ 526              	.LFE10:
+ 528 0032 00BF     		.section	.text.vTaskSwitchContext,"ax",%progbits
+ 529              		.align	1
+ 530              		.global	vTaskSwitchContext
+ 531              		.syntax unified
+ 532              		.thumb
+ 533              		.thumb_func
+ 535              	vTaskSwitchContext:
+ 536              	.LFB11:
+ 170:Core/Src/task.c ****     current_tcb = ready_list[get_highest_priority()];
+ 537              		.loc 1 170 30 is_stmt 1 view -0
+ 538              		.cfi_startproc
+ 539              		@ args = 0, pretend = 0, frame = 0
+ARM GAS  /tmp/ccv1CyWF.s 			page 15
+
+
+ 540              		@ frame_needed = 0, uses_anonymous_args = 0
+ 541              		@ link register save eliminated.
+ 171:Core/Src/task.c **** }
+ 542              		.loc 1 171 5 view .LVU101
+ 543              	.LBB16:
+ 544              	.LBI16:
+ 196:Core/Src/task.c ****             " cpsid i               \n"
+ 197:Core/Src/task.c ****             " msr basepri, %0       \n"
+ 198:Core/Src/task.c ****             " dsb                   \n"
+ 199:Core/Src/task.c ****             " isb                   \n"
+ 200:Core/Src/task.c ****             " cpsie i               \n"
+ 201:Core/Src/task.c ****             :: "r" (ret)
+ 202:Core/Src/task.c ****             : "memory"
+ 203:Core/Src/task.c ****             );
+ 204:Core/Src/task.c **** }
+ 205:Core/Src/task.c **** 
+ 206:Core/Src/task.c **** __attribute__( ( always_inline ) ) static inline uint8_t get_highest_priority( void )
+ 545              		.loc 1 206 58 view .LVU102
+ 546              	.LBB17:
+ 207:Core/Src/task.c **** {
+ 208:Core/Src/task.c ****     uint8_t top_zero;
+ 547              		.loc 1 208 5 view .LVU103
+ 209:Core/Src/task.c ****     uint8_t temp;
+ 548              		.loc 1 209 5 view .LVU104
+ 210:Core/Src/task.c ****     __asm volatile
+ 549              		.loc 1 210 5 view .LVU105
+ 550 0000 074B     		ldr	r3, .L25
+ 551 0002 1B68     		ldr	r3, [r3]
+ 552              		.syntax unified
+ 553              	@ 210 "Core/Src/task.c" 1
+ 554 0004 B3FA83F3 		clz r3, r3
+ 555 0008 4FF01F02 	mov r2, #31
+ 556 000c A2EB0303 	sub r3, r2, r3
  557              	
  558              	@ 0 "" 2
- 180:Core/Src/task.c ****             " cpsid i               \n"
- 181:Core/Src/task.c ****             " msr basepri, %0       \n"
- 182:Core/Src/task.c ****             " dsb                   \n"
- 183:Core/Src/task.c ****             " isb                   \n"
- 184:Core/Src/task.c ****             " cpsie i               \n"
- 185:Core/Src/task.c ****             :: "r" (ret)
- 186:Core/Src/task.c ****             : "memory"
- 187:Core/Src/task.c ****             );
- 188:Core/Src/task.c **** }
- 559              		.loc 1 188 1 is_stmt 0 view .LVU100
- 560              		.thumb
- 561              		.syntax unified
- 562 0010 7047     		bx	lr
- 563              		.cfi_endproc
- 564              	.LFE12:
-ARM GAS  /tmp//ccCbZFGD.s 			page 15
+ 559              		.thumb
+ 560              		.syntax unified
+ 561 0010 DBB2     		uxtb	r3, r3
+ 562              	.LVL21:
+ 211:Core/Src/task.c ****             (
+ 212:Core/Src/task.c ****             "clz %0, %2\n"
+ 213:Core/Src/task.c ****             "mov %1, #31\n"
+ 214:Core/Src/task.c ****             "sub %0, %1, %0\n"
+ 215:Core/Src/task.c ****             :"=r" (top_zero),"=r"(temp)
+ 216:Core/Src/task.c ****             :"r" (ready_bits)
+ 217:Core/Src/task.c ****             );
+ 218:Core/Src/task.c ****     return top_zero;
+ 563              		.loc 1 218 5 view .LVU106
+ 564              		.loc 1 218 5 is_stmt 0 view .LVU107
+ 565              	.LBE17:
+ 566              	.LBE16:
+ 171:Core/Src/task.c **** }
+ 567              		.loc 1 171 29 discriminator 1 view .LVU108
+ 568 0012 044A     		ldr	r2, .L25+4
+ 569 0014 52F82320 		ldr	r2, [r2, r3, lsl #2]
+ 171:Core/Src/task.c **** }
+ 570              		.loc 1 171 17 discriminator 1 view .LVU109
+ARM GAS  /tmp/ccv1CyWF.s 			page 16
 
 
- 566              		.global	x
- 567              		.section	.bss.x,"aw",%nobits
- 568              		.align	2
- 571              	x:
- 572 0000 00000000 		.space	4
- 573              		.global	enter_idle
- 574              		.section	.bss.enter_idle,"aw",%nobits
- 575              		.align	2
- 578              	enter_idle:
- 579 0000 00000000 		.space	4
- 580              		.section	.bss.max_priority,"aw",%nobits
- 581              		.align	2
- 584              	max_priority:
- 585 0000 00000000 		.space	4
- 586              		.section	.bss.ready_list,"aw",%nobits
- 587              		.align	2
- 590              	ready_list:
- 591 0000 00000000 		.space	128
- 591      00000000 
- 591      00000000 
- 591      00000000 
- 591      00000000 
- 592              		.section	.bss.idle_task_handler,"aw",%nobits
- 593              		.align	2
- 596              	idle_task_handler:
- 597 0000 00000000 		.space	4
- 598              		.global	current_tcb
- 599              		.section	.bss.current_tcb,"aw",%nobits
- 600              		.align	2
- 603              	current_tcb:
- 604 0000 00000000 		.space	4
- 605              		.text
- 606              	.Letext0:
- 607              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
- 608              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
- 609              		.file 4 "/usr/lib/gcc/arm-none-eabi/14.2.0/include/stddef.h"
- 610              		.file 5 "Core/Inc/task.h"
- 611              		.file 6 "Core/Inc/mem.h"
-ARM GAS  /tmp//ccCbZFGD.s 			page 16
+ 571 0018 034B     		ldr	r3, .L25+8
+ 572 001a 1A60     		str	r2, [r3]
+ 172:Core/Src/task.c **** 
+ 573              		.loc 1 172 1 view .LVU110
+ 574 001c 7047     		bx	lr
+ 575              	.L26:
+ 576 001e 00BF     		.align	2
+ 577              	.L25:
+ 578 0020 00000000 		.word	ready_bits
+ 579 0024 00000000 		.word	ready_list
+ 580 0028 00000000 		.word	current_tcb
+ 581              		.cfi_endproc
+ 582              	.LFE11:
+ 584              		.section	.text.critical_enter,"ax",%progbits
+ 585              		.align	1
+ 586              		.global	critical_enter
+ 587              		.syntax unified
+ 588              		.thumb
+ 589              		.thumb_func
+ 591              	critical_enter:
+ 592              	.LFB12:
+ 175:Core/Src/task.c ****     uint32_t ret;
+ 593              		.loc 1 175 1 is_stmt 1 view -0
+ 594              		.cfi_startproc
+ 595              		@ args = 0, pretend = 0, frame = 0
+ 596              		@ frame_needed = 0, uses_anonymous_args = 0
+ 597              		@ link register save eliminated.
+ 176:Core/Src/task.c ****     uint32_t temp;
+ 598              		.loc 1 176 5 view .LVU112
+ 177:Core/Src/task.c ****     __asm volatile(
+ 599              		.loc 1 177 5 view .LVU113
+ 178:Core/Src/task.c ****             " cpsid i               \n"
+ 600              		.loc 1 178 5 view .LVU114
+ 601 0000 BF20     		movs	r0, #191
+ 602              		.syntax unified
+ 603              	@ 178 "Core/Src/task.c" 1
+ 604 0002 72B6     		 cpsid i               
+ 605 0004 EFF31180 	 mrs r0, basepri       
+ 606 0008 0346     	 mov r3, r0            
+ 607 000a 83F31188 	 msr basepri, r3       
+ 608 000e BFF34F8F 	 dsb                   
+ 609 0012 BFF36F8F 	 isb                   
+ 610 0016 62B6     	 cpsie i               
+ 611              	
+ 612              	@ 0 "" 2
+ 613              	.LVL22:
+ 190:Core/Src/task.c **** }
+ 614              		.loc 1 190 5 view .LVU115
+ 191:Core/Src/task.c **** 
+ 615              		.loc 1 191 1 is_stmt 0 view .LVU116
+ 616              		.thumb
+ 617              		.syntax unified
+ 618 0018 7047     		bx	lr
+ 619              		.cfi_endproc
+ 620              	.LFE12:
+ 622              		.section	.text.critical_exit,"ax",%progbits
+ 623              		.align	1
+ARM GAS  /tmp/ccv1CyWF.s 			page 17
+
+
+ 624              		.global	critical_exit
+ 625              		.syntax unified
+ 626              		.thumb
+ 627              		.thumb_func
+ 629              	critical_exit:
+ 630              	.LVL23:
+ 631              	.LFB13:
+ 194:Core/Src/task.c ****     __asm volatile(
+ 632              		.loc 1 194 1 is_stmt 1 view -0
+ 633              		.cfi_startproc
+ 634              		@ args = 0, pretend = 0, frame = 0
+ 635              		@ frame_needed = 0, uses_anonymous_args = 0
+ 636              		@ link register save eliminated.
+ 195:Core/Src/task.c ****             " cpsid i               \n"
+ 637              		.loc 1 195 5 view .LVU118
+ 638              		.syntax unified
+ 639              	@ 195 "Core/Src/task.c" 1
+ 640 0000 72B6     		 cpsid i               
+ 641 0002 80F31188 	 msr basepri, r0       
+ 642 0006 BFF34F8F 	 dsb                   
+ 643 000a BFF36F8F 	 isb                   
+ 644 000e 62B6     	 cpsie i               
+ 645              	
+ 646              	@ 0 "" 2
+ 204:Core/Src/task.c **** 
+ 647              		.loc 1 204 1 is_stmt 0 view .LVU119
+ 648              		.thumb
+ 649              		.syntax unified
+ 650 0010 7047     		bx	lr
+ 651              		.cfi_endproc
+ 652              	.LFE13:
+ 654              		.section	.text.delay_list_init,"ax",%progbits
+ 655              		.align	1
+ 656              		.global	delay_list_init
+ 657              		.syntax unified
+ 658              		.thumb
+ 659              		.thumb_func
+ 661              	delay_list_init:
+ 662              	.LFB15:
+ 219:Core/Src/task.c **** }
+ 220:Core/Src/task.c **** 
+ 221:Core/Src/task.c **** void delay_list_init(void){
+ 663              		.loc 1 221 27 is_stmt 1 view -0
+ 664              		.cfi_startproc
+ 665              		@ args = 0, pretend = 0, frame = 0
+ 666              		@ frame_needed = 0, uses_anonymous_args = 0
+ 667              		@ link register save eliminated.
+ 222:Core/Src/task.c ****     delay_list = delay_lst;
+ 668              		.loc 1 222 5 view .LVU121
+ 669              		.loc 1 222 16 is_stmt 0 view .LVU122
+ 670 0000 034B     		ldr	r3, .L30
+ 671 0002 044A     		ldr	r2, .L30+4
+ 672 0004 1A60     		str	r2, [r3]
+ 223:Core/Src/task.c ****     delay_overflow_list = delay_overflow_lst;
+ 673              		.loc 1 223 5 is_stmt 1 view .LVU123
+ 674              		.loc 1 223 25 is_stmt 0 view .LVU124
+ 675 0006 044B     		ldr	r3, .L30+8
+ARM GAS  /tmp/ccv1CyWF.s 			page 18
+
+
+ 676 0008 044A     		ldr	r2, .L30+12
+ 677 000a 1A60     		str	r2, [r3]
+ 224:Core/Src/task.c **** }
+ 678              		.loc 1 224 1 view .LVU125
+ 679 000c 7047     		bx	lr
+ 680              	.L31:
+ 681 000e 00BF     		.align	2
+ 682              	.L30:
+ 683 0010 00000000 		.word	delay_list
+ 684 0014 00000000 		.word	delay_lst
+ 685 0018 00000000 		.word	delay_overflow_list
+ 686 001c 00000000 		.word	delay_overflow_lst
+ 687              		.cfi_endproc
+ 688              	.LFE15:
+ 690              		.section	.text.delay_list_switch,"ax",%progbits
+ 691              		.align	1
+ 692              		.global	delay_list_switch
+ 693              		.syntax unified
+ 694              		.thumb
+ 695              		.thumb_func
+ 697              	delay_list_switch:
+ 698              	.LFB16:
+ 225:Core/Src/task.c **** 
+ 226:Core/Src/task.c **** void delay_list_switch(void){
+ 699              		.loc 1 226 29 is_stmt 1 view -0
+ 700              		.cfi_startproc
+ 701              		@ args = 0, pretend = 0, frame = 0
+ 702              		@ frame_needed = 0, uses_anonymous_args = 0
+ 703              		@ link register save eliminated.
+ 227:Core/Src/task.c ****     uint32_t* tmp;
+ 704              		.loc 1 227 5 view .LVU127
+ 228:Core/Src/task.c ****     tmp = delay_list;
+ 705              		.loc 1 228 5 view .LVU128
+ 706              		.loc 1 228 9 is_stmt 0 view .LVU129
+ 707 0000 034A     		ldr	r2, .L33
+ 708 0002 1168     		ldr	r1, [r2]
+ 709              	.LVL24:
+ 229:Core/Src/task.c ****     delay_list = delay_overflow_list;
+ 710              		.loc 1 229 5 is_stmt 1 view .LVU130
+ 711              		.loc 1 229 16 is_stmt 0 view .LVU131
+ 712 0004 034B     		ldr	r3, .L33+4
+ 713 0006 1868     		ldr	r0, [r3]
+ 714 0008 1060     		str	r0, [r2]
+ 230:Core/Src/task.c ****     delay_overflow_list = tmp;
+ 715              		.loc 1 230 5 is_stmt 1 view .LVU132
+ 716              		.loc 1 230 25 is_stmt 0 view .LVU133
+ 717 000a 1960     		str	r1, [r3]
+ 231:Core/Src/task.c **** }
+ 718              		.loc 1 231 1 view .LVU134
+ 719 000c 7047     		bx	lr
+ 720              	.L34:
+ 721 000e 00BF     		.align	2
+ 722              	.L33:
+ 723 0010 00000000 		.word	delay_list
+ 724 0014 00000000 		.word	delay_overflow_list
+ 725              		.cfi_endproc
+ 726              	.LFE16:
+ARM GAS  /tmp/ccv1CyWF.s 			page 19
+
+
+ 728              		.section	.text.task_delay,"ax",%progbits
+ 729              		.align	1
+ 730              		.global	task_delay
+ 731              		.syntax unified
+ 732              		.thumb
+ 733              		.thumb_func
+ 735              	task_delay:
+ 736              	.LVL25:
+ 737              	.LFB17:
+ 232:Core/Src/task.c **** 
+ 233:Core/Src/task.c **** void task_delay(uint32_t ticks){
+ 738              		.loc 1 233 32 is_stmt 1 view -0
+ 739              		.cfi_startproc
+ 740              		@ args = 0, pretend = 0, frame = 0
+ 741              		@ frame_needed = 0, uses_anonymous_args = 0
+ 742              		@ link register save eliminated.
+ 234:Core/Src/task.c **** 
+ 235:Core/Src/task.c **** }
+ 743              		.loc 1 235 1 view .LVU136
+ 744 0000 7047     		bx	lr
+ 745              		.cfi_endproc
+ 746              	.LFE17:
+ 748              		.global	enter_idle
+ 749              		.section	.bss.enter_idle,"aw",%nobits
+ 750              		.align	2
+ 753              	enter_idle:
+ 754 0000 00000000 		.space	4
+ 755              		.section	.bss.current_tick_count,"aw",%nobits
+ 756              		.align	2
+ 759              	current_tick_count:
+ 760 0000 00000000 		.space	4
+ 761              		.section	.bss.max_priority,"aw",%nobits
+ 762              		.align	2
+ 765              	max_priority:
+ 766 0000 00000000 		.space	4
+ 767              		.section	.bss.delay_overflow_list,"aw",%nobits
+ 768              		.align	2
+ 771              	delay_overflow_list:
+ 772 0000 00000000 		.space	4
+ 773              		.section	.bss.delay_list,"aw",%nobits
+ 774              		.align	2
+ 777              	delay_list:
+ 778 0000 00000000 		.space	4
+ 779              		.section	.bss.delay_overflow_lst,"aw",%nobits
+ 780              		.align	2
+ 783              	delay_overflow_lst:
+ 784 0000 00000000 		.space	128
+ 784      00000000 
+ 784      00000000 
+ 784      00000000 
+ 784      00000000 
+ 785              		.section	.bss.delay_lst,"aw",%nobits
+ 786              		.align	2
+ 789              	delay_lst:
+ 790 0000 00000000 		.space	128
+ 790      00000000 
+ 790      00000000 
+ARM GAS  /tmp/ccv1CyWF.s 			page 20
+
+
+ 790      00000000 
+ 790      00000000 
+ 791              		.section	.bss.ready_bits,"aw",%nobits
+ 792              		.align	2
+ 795              	ready_bits:
+ 796 0000 00000000 		.space	4
+ 797              		.section	.bss.ready_list,"aw",%nobits
+ 798              		.align	2
+ 801              	ready_list:
+ 802 0000 00000000 		.space	128
+ 802      00000000 
+ 802      00000000 
+ 802      00000000 
+ 802      00000000 
+ 803              		.section	.bss.idle_task_handler,"aw",%nobits
+ 804              		.align	2
+ 807              	idle_task_handler:
+ 808 0000 00000000 		.space	4
+ 809              		.global	current_tcb
+ 810              		.section	.bss.current_tcb,"aw",%nobits
+ 811              		.align	2
+ 814              	current_tcb:
+ 815 0000 00000000 		.space	4
+ 816              		.text
+ 817              	.Letext0:
+ 818              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
+ 819              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
+ 820              		.file 4 "/usr/lib/gcc/arm-none-eabi/14.2.0/include/stddef.h"
+ 821              		.file 5 "Core/Inc/task.h"
+ 822              		.file 6 "Core/Inc/mem.h"
+ARM GAS  /tmp/ccv1CyWF.s 			page 21
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 task.c
-    /tmp//ccCbZFGD.s:19     .text.task_exit_error:00000000 $t
-    /tmp//ccCbZFGD.s:24     .text.task_exit_error:00000000 task_exit_error
-    /tmp//ccCbZFGD.s:41     .text.idle_task:00000000 $t
-    /tmp//ccCbZFGD.s:47     .text.idle_task:00000000 idle_task
-    /tmp//ccCbZFGD.s:72     .text.idle_task:00000018 $d
-    /tmp//ccCbZFGD.s:578    .bss.enter_idle:00000000 enter_idle
-    /tmp//ccCbZFGD.s:77     .text.PendSV_Handler:00000000 $t
-    /tmp//ccCbZFGD.s:83     .text.PendSV_Handler:00000000 PendSV_Handler
-    /tmp//ccCbZFGD.s:118    .text.PendSV_Handler:00000040 pxCurrentTCBConst
-    /tmp//ccCbZFGD.s:458    .text.vTaskSwitchContext:00000000 vTaskSwitchContext
-    /tmp//ccCbZFGD.s:118    .text.PendSV_Handler:00000040 $d
-    /tmp//ccCbZFGD.s:603    .bss.current_tcb:00000000 current_tcb
-    /tmp//ccCbZFGD.s:128    .text.SVC_Handler:00000000 $t
-    /tmp//ccCbZFGD.s:134    .text.SVC_Handler:00000000 SVC_Handler
-    /tmp//ccCbZFGD.s:156    .text.SVC_Handler:00000020 pxCurrentTCBConst2
-    /tmp//ccCbZFGD.s:156    .text.SVC_Handler:00000020 $d
-    /tmp//ccCbZFGD.s:166    .text.add_to_ready_list:00000000 $t
-    /tmp//ccCbZFGD.s:172    .text.add_to_ready_list:00000000 add_to_ready_list
-    /tmp//ccCbZFGD.s:203    .text.add_to_ready_list:00000018 $d
-    /tmp//ccCbZFGD.s:584    .bss.max_priority:00000000 max_priority
-    /tmp//ccCbZFGD.s:590    .bss.ready_list:00000000 ready_list
-    /tmp//ccCbZFGD.s:209    .text.stack_init:00000000 $t
-    /tmp//ccCbZFGD.s:215    .text.stack_init:00000000 stack_init
-    /tmp//ccCbZFGD.s:259    .text.stack_init:00000020 $d
-    /tmp//ccCbZFGD.s:264    .text.task_create:00000000 $t
-    /tmp//ccCbZFGD.s:270    .text.task_create:00000000 task_create
-    /tmp//ccCbZFGD.s:346    .text.task_create:00000044 $d
-    /tmp//ccCbZFGD.s:351    .text.scheduler_init:00000000 $t
-    /tmp//ccCbZFGD.s:357    .text.scheduler_init:00000000 scheduler_init
-    /tmp//ccCbZFGD.s:394    .text.scheduler_init:00000020 $d
-    /tmp//ccCbZFGD.s:596    .bss.idle_task_handler:00000000 idle_task_handler
-    /tmp//ccCbZFGD.s:401    .text.scheduler_start:00000000 $t
-    /tmp//ccCbZFGD.s:407    .text.scheduler_start:00000000 scheduler_start
-    /tmp//ccCbZFGD.s:439    .text.scheduler_start:0000002a $d
-    /tmp//ccCbZFGD.s:439    .text.scheduler_start:0000002c $d
-    /tmp//ccCbZFGD.s:447    .text.scheduler_start:00000030 $t
-    /tmp//ccCbZFGD.s:452    .text.vTaskSwitchContext:00000000 $t
-    /tmp//ccCbZFGD.s:489    .text.vTaskSwitchContext:00000024 $d
-    /tmp//ccCbZFGD.s:571    .bss.x:00000000 x
-    /tmp//ccCbZFGD.s:497    .text.enter_critical:00000000 $t
-    /tmp//ccCbZFGD.s:503    .text.enter_critical:00000000 enter_critical
-    /tmp//ccCbZFGD.s:535    .text.exit_critical:00000000 $t
-    /tmp//ccCbZFGD.s:541    .text.exit_critical:00000000 exit_critical
-    /tmp//ccCbZFGD.s:568    .bss.x:00000000 $d
-    /tmp//ccCbZFGD.s:575    .bss.enter_idle:00000000 $d
-    /tmp//ccCbZFGD.s:581    .bss.max_priority:00000000 $d
-    /tmp//ccCbZFGD.s:587    .bss.ready_list:00000000 $d
-    /tmp//ccCbZFGD.s:593    .bss.idle_task_handler:00000000 $d
-    /tmp//ccCbZFGD.s:600    .bss.current_tcb:00000000 $d
+     /tmp/ccv1CyWF.s:19     .text.task_exit_error:00000000 $t
+     /tmp/ccv1CyWF.s:24     .text.task_exit_error:00000000 task_exit_error
+     /tmp/ccv1CyWF.s:41     .text.idle_task:00000000 $t
+     /tmp/ccv1CyWF.s:47     .text.idle_task:00000000 idle_task
+     /tmp/ccv1CyWF.s:72     .text.idle_task:00000018 $d
+     /tmp/ccv1CyWF.s:753    .bss.enter_idle:00000000 enter_idle
+     /tmp/ccv1CyWF.s:77     .text.PendSV_Handler:00000000 $t
+     /tmp/ccv1CyWF.s:83     .text.PendSV_Handler:00000000 PendSV_Handler
+     /tmp/ccv1CyWF.s:118    .text.PendSV_Handler:00000040 pxCurrentTCBConst
+     /tmp/ccv1CyWF.s:535    .text.vTaskSwitchContext:00000000 vTaskSwitchContext
+     /tmp/ccv1CyWF.s:118    .text.PendSV_Handler:00000040 $d
+     /tmp/ccv1CyWF.s:814    .bss.current_tcb:00000000 current_tcb
+     /tmp/ccv1CyWF.s:128    .text.SVC_Handler:00000000 $t
+     /tmp/ccv1CyWF.s:134    .text.SVC_Handler:00000000 SVC_Handler
+     /tmp/ccv1CyWF.s:156    .text.SVC_Handler:00000020 pxCurrentTCBConst2
+     /tmp/ccv1CyWF.s:156    .text.SVC_Handler:00000020 $d
+     /tmp/ccv1CyWF.s:166    .text.SysTick_Handler:00000000 $t
+     /tmp/ccv1CyWF.s:172    .text.SysTick_Handler:00000000 SysTick_Handler
+     /tmp/ccv1CyWF.s:233    .text.add_to_ready_list:00000000 $t
+     /tmp/ccv1CyWF.s:239    .text.add_to_ready_list:00000000 add_to_ready_list
+     /tmp/ccv1CyWF.s:276    .text.add_to_ready_list:00000020 $d
+     /tmp/ccv1CyWF.s:765    .bss.max_priority:00000000 max_priority
+     /tmp/ccv1CyWF.s:795    .bss.ready_bits:00000000 ready_bits
+     /tmp/ccv1CyWF.s:801    .bss.ready_list:00000000 ready_list
+     /tmp/ccv1CyWF.s:283    .text.stack_init:00000000 $t
+     /tmp/ccv1CyWF.s:289    .text.stack_init:00000000 stack_init
+     /tmp/ccv1CyWF.s:333    .text.stack_init:00000020 $d
+     /tmp/ccv1CyWF.s:338    .text.task_create:00000000 $t
+     /tmp/ccv1CyWF.s:344    .text.task_create:00000000 task_create
+     /tmp/ccv1CyWF.s:423    .text.scheduler_init:00000000 $t
+     /tmp/ccv1CyWF.s:429    .text.scheduler_init:00000000 scheduler_init
+     /tmp/ccv1CyWF.s:470    .text.scheduler_init:00000024 $d
+     /tmp/ccv1CyWF.s:759    .bss.current_tick_count:00000000 current_tick_count
+     /tmp/ccv1CyWF.s:807    .bss.idle_task_handler:00000000 idle_task_handler
+     /tmp/ccv1CyWF.s:478    .text.scheduler_start:00000000 $t
+     /tmp/ccv1CyWF.s:484    .text.scheduler_start:00000000 scheduler_start
+     /tmp/ccv1CyWF.s:516    .text.scheduler_start:0000002a $d
+     /tmp/ccv1CyWF.s:516    .text.scheduler_start:0000002c $d
+     /tmp/ccv1CyWF.s:524    .text.scheduler_start:00000030 $t
+     /tmp/ccv1CyWF.s:529    .text.vTaskSwitchContext:00000000 $t
+     /tmp/ccv1CyWF.s:578    .text.vTaskSwitchContext:00000020 $d
+     /tmp/ccv1CyWF.s:585    .text.critical_enter:00000000 $t
+     /tmp/ccv1CyWF.s:591    .text.critical_enter:00000000 critical_enter
+     /tmp/ccv1CyWF.s:623    .text.critical_exit:00000000 $t
+     /tmp/ccv1CyWF.s:629    .text.critical_exit:00000000 critical_exit
+     /tmp/ccv1CyWF.s:655    .text.delay_list_init:00000000 $t
+     /tmp/ccv1CyWF.s:661    .text.delay_list_init:00000000 delay_list_init
+     /tmp/ccv1CyWF.s:683    .text.delay_list_init:00000010 $d
+     /tmp/ccv1CyWF.s:777    .bss.delay_list:00000000 delay_list
+     /tmp/ccv1CyWF.s:789    .bss.delay_lst:00000000 delay_lst
+     /tmp/ccv1CyWF.s:771    .bss.delay_overflow_list:00000000 delay_overflow_list
+     /tmp/ccv1CyWF.s:783    .bss.delay_overflow_lst:00000000 delay_overflow_lst
+     /tmp/ccv1CyWF.s:691    .text.delay_list_switch:00000000 $t
+     /tmp/ccv1CyWF.s:697    .text.delay_list_switch:00000000 delay_list_switch
+     /tmp/ccv1CyWF.s:723    .text.delay_list_switch:00000010 $d
+ARM GAS  /tmp/ccv1CyWF.s 			page 22
+
+
+     /tmp/ccv1CyWF.s:729    .text.task_delay:00000000 $t
+     /tmp/ccv1CyWF.s:735    .text.task_delay:00000000 task_delay
+     /tmp/ccv1CyWF.s:750    .bss.enter_idle:00000000 $d
+     /tmp/ccv1CyWF.s:756    .bss.current_tick_count:00000000 $d
+     /tmp/ccv1CyWF.s:762    .bss.max_priority:00000000 $d
+     /tmp/ccv1CyWF.s:768    .bss.delay_overflow_list:00000000 $d
+     /tmp/ccv1CyWF.s:774    .bss.delay_list:00000000 $d
+     /tmp/ccv1CyWF.s:780    .bss.delay_overflow_lst:00000000 $d
+     /tmp/ccv1CyWF.s:786    .bss.delay_lst:00000000 $d
+     /tmp/ccv1CyWF.s:792    .bss.ready_bits:00000000 $d
+     /tmp/ccv1CyWF.s:798    .bss.ready_list:00000000 $d
+     /tmp/ccv1CyWF.s:804    .bss.idle_task_handler:00000000 $d
+     /tmp/ccv1CyWF.s:811    .bss.current_tcb:00000000 $d
 
 UNDEFINED SYMBOLS
 halloc
