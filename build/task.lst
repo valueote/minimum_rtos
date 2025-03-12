@@ -1,4 +1,4 @@
-ARM GAS  /tmp//ccijhvNl.s 			page 1
+ARM GAS  /tmp//ccCbZFGD.s 			page 1
 
 
    1              		.cpu cortex-m3
@@ -58,7 +58,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
   31:Core/Src/task.c ****         "   bl vTaskSwitchContext               \n"
   32:Core/Src/task.c ****         "   mov r0, #0                          \n"
   33:Core/Src/task.c ****         "   msr basepri, r0                     \n"
-ARM GAS  /tmp//ccijhvNl.s 			page 2
+ARM GAS  /tmp//ccCbZFGD.s 			page 2
 
 
   34:Core/Src/task.c ****         "   ldmia sp!, {r3, r14}                \n"
@@ -118,7 +118,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
   88:Core/Src/task.c ****     tcb_t* new_tcb;
   89:Core/Src/task.c ****     uint32_t* stack_top;
   90:Core/Src/task.c ****     //allocate memory for the tcb and stack
-ARM GAS  /tmp//ccijhvNl.s 			page 3
+ARM GAS  /tmp//ccCbZFGD.s 			page 3
 
 
   91:Core/Src/task.c ****     new_tcb = (tcb_t*)halloc(sizeof(tcb_t));
@@ -178,7 +178,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
  123:Core/Src/task.c ****     //set the error handler
  124:Core/Src/task.c ****     stack_top--;
  125:Core/Src/task.c ****     *stack_top = (uint32_t)task_exit_error;
-ARM GAS  /tmp//ccijhvNl.s 			page 4
+ARM GAS  /tmp//ccCbZFGD.s 			page 4
 
 
  126:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
@@ -238,7 +238,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
   17:Core/Src/task.c ****     (
   90              		.loc 1 17 5 view .LVU11
   91              		.syntax unified
-ARM GAS  /tmp//ccijhvNl.s 			page 5
+ARM GAS  /tmp//ccCbZFGD.s 			page 5
 
 
   92              	@ 17 "Core/Src/task.c" 1
@@ -298,7 +298,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
  145 0002 1968     	   ldr r1, [r3]                    
  146 0004 0868     	   ldr r0, [r1]                    
  147 0006 B0E8F00F 	   ldmia r0!, {r4-r11}             
-ARM GAS  /tmp//ccijhvNl.s 			page 6
+ARM GAS  /tmp//ccCbZFGD.s 			page 6
 
 
  148 000a 80F30988 	   msr psp, r0                     
@@ -358,7 +358,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
  108:Core/Src/task.c **** }
  195              		.loc 1 108 26 view .LVU24
  196 000e 034B     		ldr	r3, .L11+4
-ARM GAS  /tmp//ccijhvNl.s 			page 7
+ARM GAS  /tmp//ccCbZFGD.s 			page 7
 
 
  197 0010 43F82120 		str	r2, [r3, r1, lsl #2]
@@ -418,7 +418,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
  125:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
  241              		.loc 1 125 16 view .LVU37
  242 0012 40F80C3C 		str	r3, [r0, #-12]
-ARM GAS  /tmp//ccijhvNl.s 			page 8
+ARM GAS  /tmp//ccCbZFGD.s 			page 8
 
 
  127:Core/Src/task.c ****     *stack_top = (uint32_t)parameters;
@@ -478,7 +478,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
  290 000a 1D46     		mov	r5, r3
   88:Core/Src/task.c ****     uint32_t* stack_top;
  291              		.loc 1 88 5 is_stmt 1 view .LVU47
-ARM GAS  /tmp//ccijhvNl.s 			page 9
+ARM GAS  /tmp//ccCbZFGD.s 			page 9
 
 
   89:Core/Src/task.c ****     //allocate memory for the tcb and stack
@@ -538,7 +538,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
  329              		.loc 1 97 24 discriminator 1 view .LVU64
  330 0034 2060     		str	r0, [r4]
   99:Core/Src/task.c ****     //put the tcb into task table
-ARM GAS  /tmp//ccijhvNl.s 			page 10
+ARM GAS  /tmp//ccCbZFGD.s 			page 10
 
 
  331              		.loc 1 99 5 is_stmt 1 view .LVU65
@@ -598,7 +598,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
  376 000c 1946     		mov	r1, r3
  377 000e 0548     		ldr	r0, .L22+4
  378 0010 FFF7FEFF 		bl	task_create
-ARM GAS  /tmp//ccijhvNl.s 			page 11
+ARM GAS  /tmp//ccCbZFGD.s 			page 11
 
 
  379              	.LVL18:
@@ -658,7 +658,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
   71:Core/Src/task.c ****         " ldr r0, =0xE000ED08   \n" /* Use the NVIC offset register to locate the stack. */
  426              		.loc 1 71 5 is_stmt 1 view .LVU82
  427              		.syntax unified
-ARM GAS  /tmp//ccijhvNl.s 			page 12
+ARM GAS  /tmp//ccCbZFGD.s 			page 12
 
 
  428              	@ 71 "Core/Src/task.c" 1
@@ -718,7 +718,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
  477 0016 9B1A     		subs	r3, r3, r2
  478              		.loc 1 155 29 view .LVU89
  479 0018 044A     		ldr	r2, .L26+8
-ARM GAS  /tmp//ccijhvNl.s 			page 13
+ARM GAS  /tmp//ccCbZFGD.s 			page 13
 
 
  480 001a 52F82320 		ldr	r2, [r2, r3, lsl #2]
@@ -778,7 +778,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
  166:Core/Src/task.c ****             " msr basepri, %1       \n"
  167:Core/Src/task.c ****             " dsb                   \n"
  168:Core/Src/task.c ****             " isb                   \n"
-ARM GAS  /tmp//ccijhvNl.s 			page 14
+ARM GAS  /tmp//ccCbZFGD.s 			page 14
 
 
  169:Core/Src/task.c ****             " cpsie i               \n"
@@ -838,7 +838,7 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
  562 0010 7047     		bx	lr
  563              		.cfi_endproc
  564              	.LFE12:
-ARM GAS  /tmp//ccijhvNl.s 			page 15
+ARM GAS  /tmp//ccCbZFGD.s 			page 15
 
 
  566              		.global	x
@@ -879,60 +879,60 @@ ARM GAS  /tmp//ccijhvNl.s 			page 1
  609              		.file 4 "/usr/lib/gcc/arm-none-eabi/14.2.0/include/stddef.h"
  610              		.file 5 "Core/Inc/task.h"
  611              		.file 6 "Core/Inc/mem.h"
-ARM GAS  /tmp//ccijhvNl.s 			page 16
+ARM GAS  /tmp//ccCbZFGD.s 			page 16
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 task.c
-    /tmp//ccijhvNl.s:19     .text.task_exit_error:00000000 $t
-    /tmp//ccijhvNl.s:24     .text.task_exit_error:00000000 task_exit_error
-    /tmp//ccijhvNl.s:41     .text.idle_task:00000000 $t
-    /tmp//ccijhvNl.s:47     .text.idle_task:00000000 idle_task
-    /tmp//ccijhvNl.s:72     .text.idle_task:00000018 $d
-    /tmp//ccijhvNl.s:578    .bss.enter_idle:00000000 enter_idle
-    /tmp//ccijhvNl.s:77     .text.PendSV_Handler:00000000 $t
-    /tmp//ccijhvNl.s:83     .text.PendSV_Handler:00000000 PendSV_Handler
-    /tmp//ccijhvNl.s:118    .text.PendSV_Handler:00000040 pxCurrentTCBConst
-    /tmp//ccijhvNl.s:458    .text.vTaskSwitchContext:00000000 vTaskSwitchContext
-    /tmp//ccijhvNl.s:118    .text.PendSV_Handler:00000040 $d
-    /tmp//ccijhvNl.s:603    .bss.current_tcb:00000000 current_tcb
-    /tmp//ccijhvNl.s:128    .text.SVC_Handler:00000000 $t
-    /tmp//ccijhvNl.s:134    .text.SVC_Handler:00000000 SVC_Handler
-    /tmp//ccijhvNl.s:156    .text.SVC_Handler:00000020 pxCurrentTCBConst2
-    /tmp//ccijhvNl.s:156    .text.SVC_Handler:00000020 $d
-    /tmp//ccijhvNl.s:166    .text.add_to_ready_list:00000000 $t
-    /tmp//ccijhvNl.s:172    .text.add_to_ready_list:00000000 add_to_ready_list
-    /tmp//ccijhvNl.s:203    .text.add_to_ready_list:00000018 $d
-    /tmp//ccijhvNl.s:584    .bss.max_priority:00000000 max_priority
-    /tmp//ccijhvNl.s:590    .bss.ready_list:00000000 ready_list
-    /tmp//ccijhvNl.s:209    .text.stack_init:00000000 $t
-    /tmp//ccijhvNl.s:215    .text.stack_init:00000000 stack_init
-    /tmp//ccijhvNl.s:259    .text.stack_init:00000020 $d
-    /tmp//ccijhvNl.s:264    .text.task_create:00000000 $t
-    /tmp//ccijhvNl.s:270    .text.task_create:00000000 task_create
-    /tmp//ccijhvNl.s:346    .text.task_create:00000044 $d
-    /tmp//ccijhvNl.s:351    .text.scheduler_init:00000000 $t
-    /tmp//ccijhvNl.s:357    .text.scheduler_init:00000000 scheduler_init
-    /tmp//ccijhvNl.s:394    .text.scheduler_init:00000020 $d
-    /tmp//ccijhvNl.s:596    .bss.idle_task_handler:00000000 idle_task_handler
-    /tmp//ccijhvNl.s:401    .text.scheduler_start:00000000 $t
-    /tmp//ccijhvNl.s:407    .text.scheduler_start:00000000 scheduler_start
-    /tmp//ccijhvNl.s:439    .text.scheduler_start:0000002a $d
-    /tmp//ccijhvNl.s:439    .text.scheduler_start:0000002c $d
-    /tmp//ccijhvNl.s:447    .text.scheduler_start:00000030 $t
-    /tmp//ccijhvNl.s:452    .text.vTaskSwitchContext:00000000 $t
-    /tmp//ccijhvNl.s:489    .text.vTaskSwitchContext:00000024 $d
-    /tmp//ccijhvNl.s:571    .bss.x:00000000 x
-    /tmp//ccijhvNl.s:497    .text.enter_critical:00000000 $t
-    /tmp//ccijhvNl.s:503    .text.enter_critical:00000000 enter_critical
-    /tmp//ccijhvNl.s:535    .text.exit_critical:00000000 $t
-    /tmp//ccijhvNl.s:541    .text.exit_critical:00000000 exit_critical
-    /tmp//ccijhvNl.s:568    .bss.x:00000000 $d
-    /tmp//ccijhvNl.s:575    .bss.enter_idle:00000000 $d
-    /tmp//ccijhvNl.s:581    .bss.max_priority:00000000 $d
-    /tmp//ccijhvNl.s:587    .bss.ready_list:00000000 $d
-    /tmp//ccijhvNl.s:593    .bss.idle_task_handler:00000000 $d
-    /tmp//ccijhvNl.s:600    .bss.current_tcb:00000000 $d
+    /tmp//ccCbZFGD.s:19     .text.task_exit_error:00000000 $t
+    /tmp//ccCbZFGD.s:24     .text.task_exit_error:00000000 task_exit_error
+    /tmp//ccCbZFGD.s:41     .text.idle_task:00000000 $t
+    /tmp//ccCbZFGD.s:47     .text.idle_task:00000000 idle_task
+    /tmp//ccCbZFGD.s:72     .text.idle_task:00000018 $d
+    /tmp//ccCbZFGD.s:578    .bss.enter_idle:00000000 enter_idle
+    /tmp//ccCbZFGD.s:77     .text.PendSV_Handler:00000000 $t
+    /tmp//ccCbZFGD.s:83     .text.PendSV_Handler:00000000 PendSV_Handler
+    /tmp//ccCbZFGD.s:118    .text.PendSV_Handler:00000040 pxCurrentTCBConst
+    /tmp//ccCbZFGD.s:458    .text.vTaskSwitchContext:00000000 vTaskSwitchContext
+    /tmp//ccCbZFGD.s:118    .text.PendSV_Handler:00000040 $d
+    /tmp//ccCbZFGD.s:603    .bss.current_tcb:00000000 current_tcb
+    /tmp//ccCbZFGD.s:128    .text.SVC_Handler:00000000 $t
+    /tmp//ccCbZFGD.s:134    .text.SVC_Handler:00000000 SVC_Handler
+    /tmp//ccCbZFGD.s:156    .text.SVC_Handler:00000020 pxCurrentTCBConst2
+    /tmp//ccCbZFGD.s:156    .text.SVC_Handler:00000020 $d
+    /tmp//ccCbZFGD.s:166    .text.add_to_ready_list:00000000 $t
+    /tmp//ccCbZFGD.s:172    .text.add_to_ready_list:00000000 add_to_ready_list
+    /tmp//ccCbZFGD.s:203    .text.add_to_ready_list:00000018 $d
+    /tmp//ccCbZFGD.s:584    .bss.max_priority:00000000 max_priority
+    /tmp//ccCbZFGD.s:590    .bss.ready_list:00000000 ready_list
+    /tmp//ccCbZFGD.s:209    .text.stack_init:00000000 $t
+    /tmp//ccCbZFGD.s:215    .text.stack_init:00000000 stack_init
+    /tmp//ccCbZFGD.s:259    .text.stack_init:00000020 $d
+    /tmp//ccCbZFGD.s:264    .text.task_create:00000000 $t
+    /tmp//ccCbZFGD.s:270    .text.task_create:00000000 task_create
+    /tmp//ccCbZFGD.s:346    .text.task_create:00000044 $d
+    /tmp//ccCbZFGD.s:351    .text.scheduler_init:00000000 $t
+    /tmp//ccCbZFGD.s:357    .text.scheduler_init:00000000 scheduler_init
+    /tmp//ccCbZFGD.s:394    .text.scheduler_init:00000020 $d
+    /tmp//ccCbZFGD.s:596    .bss.idle_task_handler:00000000 idle_task_handler
+    /tmp//ccCbZFGD.s:401    .text.scheduler_start:00000000 $t
+    /tmp//ccCbZFGD.s:407    .text.scheduler_start:00000000 scheduler_start
+    /tmp//ccCbZFGD.s:439    .text.scheduler_start:0000002a $d
+    /tmp//ccCbZFGD.s:439    .text.scheduler_start:0000002c $d
+    /tmp//ccCbZFGD.s:447    .text.scheduler_start:00000030 $t
+    /tmp//ccCbZFGD.s:452    .text.vTaskSwitchContext:00000000 $t
+    /tmp//ccCbZFGD.s:489    .text.vTaskSwitchContext:00000024 $d
+    /tmp//ccCbZFGD.s:571    .bss.x:00000000 x
+    /tmp//ccCbZFGD.s:497    .text.enter_critical:00000000 $t
+    /tmp//ccCbZFGD.s:503    .text.enter_critical:00000000 enter_critical
+    /tmp//ccCbZFGD.s:535    .text.exit_critical:00000000 $t
+    /tmp//ccCbZFGD.s:541    .text.exit_critical:00000000 exit_critical
+    /tmp//ccCbZFGD.s:568    .bss.x:00000000 $d
+    /tmp//ccCbZFGD.s:575    .bss.enter_idle:00000000 $d
+    /tmp//ccCbZFGD.s:581    .bss.max_priority:00000000 $d
+    /tmp//ccCbZFGD.s:587    .bss.ready_list:00000000 $d
+    /tmp//ccCbZFGD.s:593    .bss.idle_task_handler:00000000 $d
+    /tmp//ccCbZFGD.s:600    .bss.current_tcb:00000000 $d
 
 UNDEFINED SYMBOLS
 halloc

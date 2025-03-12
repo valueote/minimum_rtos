@@ -7,9 +7,11 @@ __attribute__((used)) volatile tcb_t* current_tcb = NULL;
 static task_handler_t idle_task_handler = NULL;
 // task table
 static task_handler_t ready_list[configMaxPriority];
+static uint32_t ready_bits = 0;
 
 static uint32_t max_priority = 0;
 static uint32_t priority_bits = 0;
+static uint32_t current_tick_count;
 
 //used for context switch, from freertos
 __attribute__((naked)) void xPortPendSVHandler( void )
@@ -98,13 +100,14 @@ void task_create(task_func_t func, void* func_parameters, uint32_t stack_depth,
     //set the task handler
     *handler = (task_handler_t)new_tcb;
     //put the tcb into task table
-    ready_list[priority] = new_tcb;
-    //add_to_ready_list(handler);
+    //
+    add_to_ready_list(handler);
 }
 
 void add_to_ready_list(task_handler_t* handler, uint32_t priority){
     if(priority < max_priority)
         max_priority = priority;
+    ready_bits |= priority;
     ready_list[priority] = *handler;
 }
 
@@ -141,6 +144,7 @@ void idle_task(){
 
 void scheduler_init( void )
 {
+    current_tick_count = 0;
     task_create(idle_task, NULL, 64, 0, &idle_task_handler);
     current_tcb = idle_task_handler;
 }
@@ -149,10 +153,9 @@ void scheduler_start(void){
     StartFirstTask();
 }
 
-uint32_t x = 0;
+uint8_t get_highest_priority(void);
 void vTaskSwitchContext(void){
-    x++;
-    current_tcb = ready_list[x % 3];
+    current_tcb = ready_list[get_highest_priority()];
 }
 
 __attribute__((always_inline)) inline uint32_t  enter_critical( void )
@@ -185,4 +188,19 @@ __attribute__((always_inline)) inline void exit_critical(uint32_t ret)
             :: "r" (ret)
             : "memory"
             );
+}
+
+__attribute__( ( always_inline ) ) static inline uint8_t get_highest_priority( void )
+{
+    uint8_t top_zero;
+    uint8_t temp;
+    __asm volatile
+            (
+            "clz %0, %2\n"
+            "mov %1, #31\n"
+            "sub %0, %1, %0\n"
+            :"=r" (top_zero),"=r"(temp)
+            :"r" (ready_bits)
+            );
+    return top_zero;
 }
