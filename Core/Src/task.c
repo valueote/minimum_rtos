@@ -243,9 +243,7 @@ void delay_list_switch(void){
     delay_overflow_list = tmp;
 }
 
-void task_delay(uint32_t ticks){
-    uint32_t time_to_wake = ticks + current_tick_count;
-    uint32_t priority = current_tcb->priority;
+void task_delay(uint32_t ticks){uint32_t time_to_wake = ticks + current_tick_count; uint32_t priority = current_tcb->priority;
     //overflow
     if(time_to_wake < current_tick_count){
         delay_overflow_list[priority] = time_to_wake;
