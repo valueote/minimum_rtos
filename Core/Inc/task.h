@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "mem.h"
+#include "main.h"
+#include "core_cm3.h"
 
 #define INITIAL_XPSR            ( 0x01000000 )
 #define START_ADDRESS_MASK      ( 0xfffffffeUL )
@@ -32,6 +34,6 @@ void scheduler_init(void);
 void scheduler_start(void);
 uint32_t critical_enter(void);
 void critical_exit(uint32_t ret);
-
+void task_delay(uint32_t ticks);
 
 #endif

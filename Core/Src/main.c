@@ -55,7 +55,6 @@ static void MX_USART1_UART_Init(void);
 #include "mem.h"
 #include "task.h"
 #include <stdint.h>
-#include <stdlib.h>
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
