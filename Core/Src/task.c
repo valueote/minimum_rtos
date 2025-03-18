@@ -8,7 +8,7 @@ static task_handler_t idle_task_handler = NULL;
 // task table
 static task_handler_t ready_list[configMaxPriority];
 // ready bits for task table
-static uint32_t ready_bits = 0;
+uint32_t ready_bits = 0;
 //delay lists
 static uint32_t delay_lst[configMaxPriority];
 static uint32_t delay_overflow_lst[configMaxPriority];
@@ -111,6 +111,7 @@ __attribute__((always_inline)) inline static void StartFirstTask( void )
 void add_to_ready_list(task_handler_t* handler, uint32_t priority){
     if(priority < max_priority)
         max_priority = priority;
+
     ready_bits |= (1 << priority);
     ready_list[priority] = *handler;
 }
@@ -128,6 +129,7 @@ void task_create(task_func_t func, void* func_parameters, uint32_t stack_depth,
     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
     //initialize the stack
     new_tcb->stack_top = stack_init(stack_top, func, func_parameters);
+    new_tcb->priority = priority;
     //set the task handler
     *handler = (task_handler_t)new_tcb;
     //put the tcb into task table
@@ -219,6 +221,7 @@ __attribute__( ( always_inline ) ) static inline uint8_t get_highest_priority( v
 {
     uint8_t top_zero;
     uint8_t temp;
+
     __asm volatile
             (
             "clz %0, %2\n"
@@ -251,13 +254,14 @@ void task_delay(uint32_t ticks){uint32_t time_to_wake = ticks + current_tick_cou
         delay_list[priority] = time_to_wake;
     }
 
-    ready_bits &= ~(1 << priority);
+    ready_bits = ready_bits & (~(1 << priority));
     task_switch();
 }
 
 static void increment_tick(void){
     current_tick_count += 1;
 
+    //the tick count have overflowed
     if(current_tick_count == 0){
         delay_list_switch();
     }
@@ -270,4 +274,6 @@ static void increment_tick(void){
             }
         }
     }
+
+    task_switch();
 }

@@ -50,7 +50,7 @@ void* halloc(size_t size){
     //make sure the mem size is 8-byte aligned
     if((size & alignment_byte) != 0){
         alignment_required = (alignment_byte + 1) - (size & alignment_byte);
-        size += alignment_byte;
+        size += alignment_required;
     }
     //make sure the heap is initialized
     if(heap.tail == NULL){

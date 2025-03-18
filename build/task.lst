@@ -1,4 +1,4 @@
-ARM GAS  /tmp/cciKPolz.s 			page 1
+ARM GAS  /tmp//cc05OQ6b.s 			page 1
 
 
    1              		.cpu cortex-m3
@@ -10,7 +10,7 @@ ARM GAS  /tmp/cciKPolz.s 			page 1
    7              		.eabi_attribute 24, 1
    8              		.eabi_attribute 25, 1
    9              		.eabi_attribute 26, 1
-  10              		.eabi_attribute 30, 1
+  10              		.eabi_attribute 30, 6
   11              		.eabi_attribute 34, 1
   12              		.eabi_attribute 18, 4
   13              		.file	"task.c"
@@ -18,13 +18,71 @@ ARM GAS  /tmp/cciKPolz.s 			page 1
   15              	.Ltext0:
   16              		.cfi_sections	.debug_frame
   17              		.file 1 "Core/Src/task.c"
-  18              		.section	.text.task_exit_error,"ax",%progbits
-  19              		.align	1
-  20              		.syntax unified
-  21              		.thumb
-  22              		.thumb_func
-  24              	task_exit_error:
-  25              	.LFB71:
+  18              		.global	current_tcb
+  19              		.section	.bss.current_tcb,"aw",%nobits
+  20              		.align	2
+  23              	current_tcb:
+  24 0000 00000000 		.space	4
+  25              		.section	.bss.idle_task_handler,"aw",%nobits
+  26              		.align	2
+  29              	idle_task_handler:
+  30 0000 00000000 		.space	4
+  31              		.section	.bss.ready_list,"aw",%nobits
+  32              		.align	2
+  35              	ready_list:
+  36 0000 00000000 		.space	128
+  36      00000000 
+  36      00000000 
+  36      00000000 
+  36      00000000 
+  37              		.global	ready_bits
+  38              		.section	.bss.ready_bits,"aw",%nobits
+  39              		.align	2
+  42              	ready_bits:
+  43 0000 00000000 		.space	4
+  44              		.section	.bss.delay_lst,"aw",%nobits
+  45              		.align	2
+  48              	delay_lst:
+  49 0000 00000000 		.space	128
+  49      00000000 
+  49      00000000 
+  49      00000000 
+  49      00000000 
+  50              		.section	.bss.delay_overflow_lst,"aw",%nobits
+  51              		.align	2
+  54              	delay_overflow_lst:
+  55 0000 00000000 		.space	128
+  55      00000000 
+  55      00000000 
+  55      00000000 
+  55      00000000 
+  56              		.section	.bss.delay_list,"aw",%nobits
+  57              		.align	2
+ARM GAS  /tmp//cc05OQ6b.s 			page 2
+
+
+  60              	delay_list:
+  61 0000 00000000 		.space	4
+  62              		.section	.bss.delay_overflow_list,"aw",%nobits
+  63              		.align	2
+  66              	delay_overflow_list:
+  67 0000 00000000 		.space	4
+  68              		.section	.bss.max_priority,"aw",%nobits
+  69              		.align	2
+  72              	max_priority:
+  73 0000 00000000 		.space	4
+  74              		.section	.bss.current_tick_count,"aw",%nobits
+  75              		.align	2
+  78              	current_tick_count:
+  79 0000 00000000 		.space	4
+  80              		.section	.text.PendSV_Handler,"ax",%progbits
+  81              		.align	1
+  82              		.global	PendSV_Handler
+  83              		.syntax unified
+  84              		.thumb
+  85              		.thumb_func
+  87              	PendSV_Handler:
+  88              	.LFB65:
    1:Core/Src/task.c **** #include "task.h"
    2:Core/Src/task.c **** #include "config.h"
    3:Core/Src/task.c **** 
@@ -35,7 +93,7 @@ ARM GAS  /tmp/cciKPolz.s 			page 1
    8:Core/Src/task.c **** // task table
    9:Core/Src/task.c **** static task_handler_t ready_list[configMaxPriority];
   10:Core/Src/task.c **** // ready bits for task table
-  11:Core/Src/task.c **** static uint32_t ready_bits = 0;
+  11:Core/Src/task.c **** uint32_t ready_bits = 0;
   12:Core/Src/task.c **** //delay lists
   13:Core/Src/task.c **** static uint32_t delay_lst[configMaxPriority];
   14:Core/Src/task.c **** static uint32_t delay_overflow_lst[configMaxPriority];
@@ -48,7 +106,46 @@ ARM GAS  /tmp/cciKPolz.s 			page 1
   21:Core/Src/task.c **** //used for context switch, from freertos
   22:Core/Src/task.c **** __attribute__((naked)) void xPortPendSVHandler( void )
   23:Core/Src/task.c **** {
+  89              		.loc 1 23 1
+  90              		.cfi_startproc
+  91              		@ Naked Function: prologue and epilogue provided by programmer.
+  92              		@ args = 0, pretend = 0, frame = 0
+  93              		@ frame_needed = 1, uses_anonymous_args = 0
   24:Core/Src/task.c ****     __asm volatile
+  94              		.loc 1 24 5
+  95              		.syntax unified
+  96              	@ 24 "Core/Src/task.c" 1
+  97 0000 EFF30980 		   mrs r0, psp                         
+  98 0004 BFF36F8F 	   isb                                 
+  99              	                                       
+ARM GAS  /tmp//cc05OQ6b.s 			page 3
+
+
+ 100 0008 0D4B     	   ldr r3, pxCurrentTCBConst           
+ 101 000a 1A68     	   ldr r2, [r3]                        
+ 102              	                                       
+ 103 000c 20E9F00F 	   stmdb r0!, {r4-r11}                 
+ 104 0010 1060     	   str r0, [r2]                        
+ 105              	                                       
+ 106 0012 2DE90840 	   stmdb sp!, {r3, r14}                
+ 107 0016 4FF0BF00 	   mov r0, #191                          
+ 108 001a 80F31188 	   msr basepri, r0                     
+ 109 001e FFF7FEFF 	   bl vTaskSwitchContext               
+ 110 0022 4FF00000 	   mov r0, #0                          
+ 111 0026 80F31188 	   msr basepri, r0                     
+ 112 002a BDE80840 	   ldmia sp!, {r3, r14}                
+ 113              	                                       
+ 114 002e 1968     	   ldr r1, [r3]                        
+ 115 0030 0868     	   ldr r0, [r1]                        
+ 116 0032 B0E8F00F 	   ldmia r0!, {r4-r11}                 
+ 117 0036 80F30988 	   msr psp, r0                         
+ 118 003a BFF36F8F 	   isb                                 
+ 119 003e 7047     	   bx r14                              
+ 120              	                                       
+ 121              	   .align 4                            
+ 122 0040 00000000 	pxCurrentTCBConst: .word current_tcb  
+ 123              	
+ 124              	@ 0 "" 2
   25:Core/Src/task.c ****     (
   26:Core/Src/task.c ****         "   mrs r0, psp                         \n"
   27:Core/Src/task.c ****         "   isb                                 \n"
@@ -58,9 +155,6 @@ ARM GAS  /tmp/cciKPolz.s 			page 1
   31:Core/Src/task.c ****         "                                       \n"
   32:Core/Src/task.c ****         "   stmdb r0!, {r4-r11}                 \n"
   33:Core/Src/task.c ****         "   str r0, [r2]                        \n"
-ARM GAS  /tmp/cciKPolz.s 			page 2
-
-
   34:Core/Src/task.c ****         "                                       \n"
   35:Core/Src/task.c ****         "   stmdb sp!, {r3, r14}                \n"
   36:Core/Src/task.c ****         "   mov r0, %0                          \n"
@@ -82,10 +176,50 @@ ARM GAS  /tmp/cciKPolz.s 			page 1
   52:Core/Src/task.c ****         ::"i" ( configMAX_SYSCALL_INTERRUPT_PRIORITY )
   53:Core/Src/task.c ****     );
   54:Core/Src/task.c **** }
+ 125              		.loc 1 54 1
+ 126              		.thumb
+ARM GAS  /tmp//cc05OQ6b.s 			page 4
+
+
+ 127              		.syntax unified
+ 128 0044 00BF     		nop
+ 129              		.cfi_endproc
+ 130              	.LFE65:
+ 132 0046 00BF     		.section	.text.SVC_Handler,"ax",%progbits
+ 133              		.align	1
+ 134              		.global	SVC_Handler
+ 135              		.syntax unified
+ 136              		.thumb
+ 137              		.thumb_func
+ 139              	SVC_Handler:
+ 140              	.LFB66:
   55:Core/Src/task.c **** //SCV handler
   56:Core/Src/task.c **** __attribute__((naked)) void vPortSVCHandler( void )
   57:Core/Src/task.c **** {
+ 141              		.loc 1 57 1
+ 142              		.cfi_startproc
+ 143              		@ Naked Function: prologue and epilogue provided by programmer.
+ 144              		@ args = 0, pretend = 0, frame = 0
+ 145              		@ frame_needed = 1, uses_anonymous_args = 0
   58:Core/Src/task.c ****     __asm volatile (
+ 146              		.loc 1 58 5
+ 147              		.syntax unified
+ 148              	@ 58 "Core/Src/task.c" 1
+ 149 0000 074B     		   ldr r3, pxCurrentTCBConst2      
+ 150 0002 1968     	   ldr r1, [r3]                    
+ 151 0004 0868     	   ldr r0, [r1]                    
+ 152 0006 B0E8F00F 	   ldmia r0!, {r4-r11}             
+ 153 000a 80F30988 	   msr psp, r0                     
+ 154 000e BFF36F8F 	   isb                             
+ 155 0012 4FF00000 	   mov r0, #0                      
+ 156 0016 80F31188 	   msr basepri, r0                 
+ 157 001a 4EF00D0E 	   orr r14, #0xd                   
+ 158 001e 7047     	   bx r14                          
+ 159              	                                   
+ 160              	   .align 4                        
+ 161 0020 00000000 	pxCurrentTCBConst2: .word current_tcb             
+ 162              	
+ 163              	@ 0 "" 2
   59:Core/Src/task.c ****         "   ldr r3, pxCurrentTCBConst2      \n" /* Restore the context. */
   60:Core/Src/task.c ****         "   ldr r1, [r3]                    \n" /* Use pxCurrentTCBConst to get the pxCurrentTCB ad
   61:Core/Src/task.c ****         "   ldr r0, [r1]                    \n" /* The first item in pxCurrentTCB is the task top o
@@ -101,6 +235,23 @@ ARM GAS  /tmp/cciKPolz.s 			page 1
   71:Core/Src/task.c ****         "pxCurrentTCBConst2: .word current_tcb             \n"
   72:Core/Src/task.c ****         );
   73:Core/Src/task.c **** }
+ 164              		.loc 1 73 1
+ 165              		.thumb
+ 166              		.syntax unified
+ARM GAS  /tmp//cc05OQ6b.s 			page 5
+
+
+ 167 0024 00BF     		nop
+ 168              		.cfi_endproc
+ 169              	.LFE66:
+ 171 0026 00BF     		.section	.text.SysTick_Handler,"ax",%progbits
+ 172              		.align	1
+ 173              		.global	SysTick_Handler
+ 174              		.syntax unified
+ 175              		.thumb
+ 176              		.thumb_func
+ 178              	SysTick_Handler:
+ 179              	.LFB67:
   74:Core/Src/task.c **** 
   75:Core/Src/task.c **** 
   76:Core/Src/task.c **** 
@@ -108,8 +259,25 @@ ARM GAS  /tmp/cciKPolz.s 			page 1
   78:Core/Src/task.c **** static void increment_tick(void);
   79:Core/Src/task.c **** void SysTick_Handler(void)
   80:Core/Src/task.c **** {
+ 180              		.loc 1 80 1
+ 181              		.cfi_startproc
+ 182              		@ args = 0, pretend = 0, frame = 16
+ 183              		@ frame_needed = 1, uses_anonymous_args = 0
+ 184 0000 80B5     		push	{r7, lr}
+ 185              	.LCFI0:
+ 186              		.cfi_def_cfa_offset 8
+ 187              		.cfi_offset 7, -8
+ 188              		.cfi_offset 14, -4
+ 189 0002 84B0     		sub	sp, sp, #16
+ 190              	.LCFI1:
+ 191              		.cfi_def_cfa_offset 24
+ 192 0004 00AF     		add	r7, sp, #0
+ 193              	.LCFI2:
+ 194              		.cfi_def_cfa_register 7
+ 195              	.LBB10:
+ 196              	.LBB11:
   81:Core/Src/task.c ****     uint32_t ret = critical_enter();
-  82:Core/Src/task.c ****     //increment_ticks();
+  82:Core/Src/task.c ****     increment_tick();
   83:Core/Src/task.c ****     critical_exit(ret);
   84:Core/Src/task.c **** }
   85:Core/Src/task.c **** 
@@ -118,9 +286,6 @@ ARM GAS  /tmp/cciKPolz.s 			page 1
   88:Core/Src/task.c **** __attribute__((always_inline)) inline static void StartFirstTask( void )
   89:Core/Src/task.c **** {
   90:Core/Src/task.c ****     ( *( ( volatile uint32_t * ) 0xe000ed20 ) ) |= ( ( ( uint32_t ) 255UL ) << 16UL );
-ARM GAS  /tmp/cciKPolz.s 			page 3
-
-
   91:Core/Src/task.c ****     ( *( ( volatile uint32_t * ) 0xe000ed20 ) ) |= ( ( ( uint32_t ) 255UL ) << 24UL );
   92:Core/Src/task.c ****     SysTick->CTRL = 0UL;
   93:Core/Src/task.c ****     SysTick->VAL  = 0UL;
@@ -133,6 +298,9 @@ ARM GAS  /tmp/cciKPolz.s 			page 1
  100:Core/Src/task.c ****         " cpsie i               \n" /* Globally enable interrupts. */
  101:Core/Src/task.c ****         " cpsie f               \n"
  102:Core/Src/task.c ****         " dsb                   \n"
+ARM GAS  /tmp//cc05OQ6b.s 			page 6
+
+
  103:Core/Src/task.c ****         " isb                   \n"
  104:Core/Src/task.c ****         " svc 0                 \n" /* System call to start first task. */
  105:Core/Src/task.c ****         " nop                   \n"
@@ -144,1278 +312,1478 @@ ARM GAS  /tmp/cciKPolz.s 			page 1
  111:Core/Src/task.c **** void add_to_ready_list(task_handler_t* handler, uint32_t priority){
  112:Core/Src/task.c ****     if(priority < max_priority)
  113:Core/Src/task.c ****         max_priority = priority;
- 114:Core/Src/task.c ****     ready_bits |= (1 << priority);
- 115:Core/Src/task.c ****     ready_list[priority] = *handler;
- 116:Core/Src/task.c **** }
- 117:Core/Src/task.c **** 
+ 114:Core/Src/task.c **** 
+ 115:Core/Src/task.c ****     ready_bits |= (1 << priority);
+ 116:Core/Src/task.c ****     ready_list[priority] = *handler;
+ 117:Core/Src/task.c **** }
  118:Core/Src/task.c **** 
- 119:Core/Src/task.c **** void task_create(task_func_t func, void* func_parameters, uint32_t stack_depth,
- 120:Core/Src/task.c ****                  uint32_t priority, task_handler_t* handler) {
- 121:Core/Src/task.c ****     tcb_t* new_tcb;
- 122:Core/Src/task.c ****     uint32_t* stack_top;
- 123:Core/Src/task.c ****     //allocate memory for the tcb and stack
- 124:Core/Src/task.c ****     new_tcb = (tcb_t*)halloc(sizeof(tcb_t));
- 125:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
- 126:Core/Src/task.c ****     //get the stack top addresss and align
- 127:Core/Src/task.c ****     stack_top = new_tcb->stack + (stack_depth - (uint32_t)1);
- 128:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
- 129:Core/Src/task.c ****     //initialize the stack
- 130:Core/Src/task.c ****     new_tcb->stack_top = stack_init(stack_top, func, func_parameters);
- 131:Core/Src/task.c ****     //set the task handler
- 132:Core/Src/task.c ****     *handler = (task_handler_t)new_tcb;
- 133:Core/Src/task.c ****     //put the tcb into task table
- 134:Core/Src/task.c ****     add_to_ready_list(handler, priority);
- 135:Core/Src/task.c **** }
- 136:Core/Src/task.c **** 
- 137:Core/Src/task.c **** static void task_exit_error(){
-  26              		.loc 1 137 30 view -0
-  27              		.cfi_startproc
-  28              		@ Volatile: function does not return.
-  29              		@ args = 0, pretend = 0, frame = 0
-  30              		@ frame_needed = 0, uses_anonymous_args = 0
-  31              		@ link register save eliminated.
-  32              	.L2:
- 138:Core/Src/task.c ****     while(1){
-  33              		.loc 1 138 5 view .LVU1
- 139:Core/Src/task.c ****     }
-ARM GAS  /tmp/cciKPolz.s 			page 4
+ 119:Core/Src/task.c **** 
+ 120:Core/Src/task.c **** void task_create(task_func_t func, void* func_parameters, uint32_t stack_depth,
+ 121:Core/Src/task.c ****                  uint32_t priority, task_handler_t* handler) {
+ 122:Core/Src/task.c ****     tcb_t* new_tcb;
+ 123:Core/Src/task.c ****     uint32_t* stack_top;
+ 124:Core/Src/task.c ****     //allocate memory for the tcb and stack
+ 125:Core/Src/task.c ****     new_tcb = (tcb_t*)halloc(sizeof(tcb_t));
+ 126:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
+ 127:Core/Src/task.c ****     //get the stack top addresss and align
+ 128:Core/Src/task.c ****     stack_top = new_tcb->stack + (stack_depth - (uint32_t)1);
+ 129:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
+ 130:Core/Src/task.c ****     //initialize the stack
+ 131:Core/Src/task.c ****     new_tcb->stack_top = stack_init(stack_top, func, func_parameters);
+ 132:Core/Src/task.c ****     new_tcb->priority = priority;
+ 133:Core/Src/task.c ****     //set the task handler
+ 134:Core/Src/task.c ****     *handler = (task_handler_t)new_tcb;
+ 135:Core/Src/task.c ****     //put the tcb into task table
+ 136:Core/Src/task.c ****     add_to_ready_list(handler, priority);
+ 137:Core/Src/task.c **** }
+ 138:Core/Src/task.c **** 
+ 139:Core/Src/task.c **** static void task_exit_error(){
+ 140:Core/Src/task.c ****     while(1){
+ 141:Core/Src/task.c ****     }
+ 142:Core/Src/task.c **** }
+ 143:Core/Src/task.c **** 
+ 144:Core/Src/task.c **** uint32_t* stack_init(uint32_t* stack_top, task_func_t func,void* parameters){
+ 145:Core/Src/task.c ****     //set the XPSR
+ 146:Core/Src/task.c ****     stack_top--;
+ 147:Core/Src/task.c ****     *stack_top = INITIAL_XPSR;
+ 148:Core/Src/task.c ****     //set the task func
+ 149:Core/Src/task.c ****     stack_top--;
+ 150:Core/Src/task.c ****     *stack_top = (uint32_t)func & (uint32_t)START_ADDRESS_MASK;
+ 151:Core/Src/task.c ****     //set the error handler
+ 152:Core/Src/task.c ****     stack_top--;
+ 153:Core/Src/task.c ****     *stack_top = (uint32_t)task_exit_error;
+ 154:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
+ 155:Core/Src/task.c ****     stack_top -= 5;
+ 156:Core/Src/task.c ****     *stack_top = (uint32_t)parameters;
+ 157:Core/Src/task.c ****     //leave space for r4-r11
+ 158:Core/Src/task.c ****     stack_top -= 8;
+ 159:Core/Src/task.c ****     return stack_top;
+ARM GAS  /tmp//cc05OQ6b.s 			page 7
 
 
-  34              		.loc 1 139 5 view .LVU2
- 138:Core/Src/task.c ****     while(1){
-  35              		.loc 1 138 10 view .LVU3
-  36 0000 FEE7     		b	.L2
-  37              		.cfi_endproc
-  38              	.LFE71:
-  40              		.section	.text.idle_task,"ax",%progbits
-  41              		.align	1
-  42              		.global	idle_task
-  43              		.syntax unified
-  44              		.thumb
-  45              		.thumb_func
-  47              	idle_task:
-  48              	.LFB73:
- 140:Core/Src/task.c **** }
- 141:Core/Src/task.c **** 
- 142:Core/Src/task.c **** uint32_t* stack_init(uint32_t* stack_top, task_func_t func,void* parameters){
- 143:Core/Src/task.c ****     //set the XPSR
- 144:Core/Src/task.c ****     stack_top--;
- 145:Core/Src/task.c ****     *stack_top = INITIAL_XPSR;
- 146:Core/Src/task.c ****     //set the task func
- 147:Core/Src/task.c ****     stack_top--;
- 148:Core/Src/task.c ****     *stack_top = (uint32_t)func & (uint32_t)START_ADDRESS_MASK;
- 149:Core/Src/task.c ****     //set the error handler
- 150:Core/Src/task.c ****     stack_top--;
- 151:Core/Src/task.c ****     *stack_top = (uint32_t)task_exit_error;
- 152:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
- 153:Core/Src/task.c ****     stack_top -= 5;
- 154:Core/Src/task.c ****     *stack_top = (uint32_t)parameters;
- 155:Core/Src/task.c ****     //leave space for r4-r11
- 156:Core/Src/task.c ****     stack_top -= 8;
- 157:Core/Src/task.c ****     return stack_top;
- 158:Core/Src/task.c **** }
- 159:Core/Src/task.c **** 
- 160:Core/Src/task.c **** uint32_t enter_idle = 0;
- 161:Core/Src/task.c **** void idle_task(){
-  49              		.loc 1 161 17 view -0
-  50              		.cfi_startproc
-  51              		@ Volatile: function does not return.
-  52              		@ args = 0, pretend = 0, frame = 0
-  53              		@ frame_needed = 0, uses_anonymous_args = 0
-  54              		@ link register save eliminated.
-  55              	.L4:
- 162:Core/Src/task.c ****     while(1){
-  56              		.loc 1 162 5 view .LVU5
- 163:Core/Src/task.c ****         enter_idle++;
-  57              		.loc 1 163 9 view .LVU6
-  58              		.loc 1 163 19 is_stmt 0 view .LVU7
-  59 0000 054A     		ldr	r2, .L5
-  60 0002 1368     		ldr	r3, [r2]
-  61 0004 0133     		adds	r3, r3, #1
-  62 0006 1360     		str	r3, [r2]
- 164:Core/Src/task.c ****         task_switch();
-  63              		.loc 1 164 9 is_stmt 1 discriminator 1 view .LVU8
-  64 0008 4FF0E023 		mov	r3, #-536813568
-  65 000c 4FF08052 		mov	r2, #268435456
-  66 0010 C3F8042D 		str	r2, [r3, #3332]
-ARM GAS  /tmp/cciKPolz.s 			page 5
-
-
- 162:Core/Src/task.c ****     while(1){
-  67              		.loc 1 162 10 view .LVU9
-  68 0014 F4E7     		b	.L4
-  69              	.L6:
-  70 0016 00BF     		.align	2
-  71              	.L5:
-  72 0018 00000000 		.word	enter_idle
-  73              		.cfi_endproc
-  74              	.LFE73:
-  76              		.section	.text.delay_list_init,"ax",%progbits
-  77              		.align	1
-  78              		.syntax unified
-  79              		.thumb
-  80              		.thumb_func
-  82              	delay_list_init:
-  83              	.LFB80:
- 165:Core/Src/task.c ****     }
- 166:Core/Src/task.c **** }
- 167:Core/Src/task.c **** 
- 168:Core/Src/task.c **** static void delay_list_init(void);
- 169:Core/Src/task.c **** void scheduler_init( void )
- 170:Core/Src/task.c **** {
- 171:Core/Src/task.c ****     current_tick_count = 0;
- 172:Core/Src/task.c ****     delay_list_init();
- 173:Core/Src/task.c ****     task_create(idle_task, NULL, 64, 0, &idle_task_handler);
- 174:Core/Src/task.c ****     current_tcb = idle_task_handler;
- 175:Core/Src/task.c **** }
- 176:Core/Src/task.c **** 
- 177:Core/Src/task.c **** void scheduler_start(void){
- 178:Core/Src/task.c ****     StartFirstTask();
- 179:Core/Src/task.c **** }
- 180:Core/Src/task.c **** 
- 181:Core/Src/task.c **** static inline uint8_t get_highest_priority(void);
- 182:Core/Src/task.c **** void vTaskSwitchContext(void){
- 183:Core/Src/task.c ****     current_tcb = ready_list[get_highest_priority()];
- 184:Core/Src/task.c **** }
- 185:Core/Src/task.c **** 
- 186:Core/Src/task.c **** __attribute__((always_inline)) inline uint32_t  critical_enter( void )
- 187:Core/Src/task.c **** {
- 188:Core/Src/task.c ****     uint32_t ret;
- 189:Core/Src/task.c ****     uint32_t temp;
- 190:Core/Src/task.c ****     __asm volatile(
- 191:Core/Src/task.c ****             " cpsid i               \n"
- 192:Core/Src/task.c ****             " mrs %0, basepri       \n"
- 193:Core/Src/task.c ****             " mov %1, %2            \n"
- 194:Core/Src/task.c ****             " msr basepri, %1       \n"
- 195:Core/Src/task.c ****             " dsb                   \n"
- 196:Core/Src/task.c ****             " isb                   \n"
- 197:Core/Src/task.c ****             " cpsie i               \n"
- 198:Core/Src/task.c ****             : "=r" (ret), "=r"(temp)
- 199:Core/Src/task.c ****             : "r" (configMAX_SYSCALL_INTERRUPT_PRIORITY)
- 200:Core/Src/task.c ****             : "memory"
- 201:Core/Src/task.c ****             );
- 202:Core/Src/task.c ****     return ret;
- 203:Core/Src/task.c **** }
- 204:Core/Src/task.c **** 
- 205:Core/Src/task.c **** __attribute__((always_inline)) inline void critical_exit(uint32_t ret)
-ARM GAS  /tmp/cciKPolz.s 			page 6
-
-
- 206:Core/Src/task.c **** {
- 207:Core/Src/task.c ****     __asm volatile(
- 208:Core/Src/task.c ****             " cpsid i               \n"
- 209:Core/Src/task.c ****             " msr basepri, %0       \n"
- 210:Core/Src/task.c ****             " dsb                   \n"
- 211:Core/Src/task.c ****             " isb                   \n"
- 212:Core/Src/task.c ****             " cpsie i               \n"
- 213:Core/Src/task.c ****             :: "r" (ret)
- 214:Core/Src/task.c ****             : "memory"
- 215:Core/Src/task.c ****             );
- 216:Core/Src/task.c **** }
- 217:Core/Src/task.c **** 
- 218:Core/Src/task.c **** __attribute__( ( always_inline ) ) static inline uint8_t get_highest_priority( void )
- 219:Core/Src/task.c **** {
- 220:Core/Src/task.c ****     uint8_t top_zero;
- 221:Core/Src/task.c ****     uint8_t temp;
- 222:Core/Src/task.c ****     __asm volatile
- 223:Core/Src/task.c ****             (
- 224:Core/Src/task.c ****             "clz %0, %2\n"
- 225:Core/Src/task.c ****             "mov %1, #31\n"
- 226:Core/Src/task.c ****             "sub %0, %1, %0\n"
- 227:Core/Src/task.c ****             :"=r" (top_zero),"=r"(temp)
- 228:Core/Src/task.c ****             :"r" (ready_bits)
- 229:Core/Src/task.c ****             );
- 230:Core/Src/task.c ****     return top_zero;
- 231:Core/Src/task.c **** }
- 232:Core/Src/task.c **** 
- 233:Core/Src/task.c **** static void delay_list_init(void){
-  84              		.loc 1 233 34 view -0
-  85              		.cfi_startproc
-  86              		@ args = 0, pretend = 0, frame = 0
-  87              		@ frame_needed = 0, uses_anonymous_args = 0
-  88              		@ link register save eliminated.
- 234:Core/Src/task.c ****     current_tick_count = 0;
-  89              		.loc 1 234 5 view .LVU11
-  90              		.loc 1 234 24 is_stmt 0 view .LVU12
-  91 0000 044B     		ldr	r3, .L8
-  92 0002 0022     		movs	r2, #0
-  93 0004 1A60     		str	r2, [r3]
- 235:Core/Src/task.c ****     delay_list = delay_lst;
-  94              		.loc 1 235 5 is_stmt 1 view .LVU13
-  95              		.loc 1 235 16 is_stmt 0 view .LVU14
-  96 0006 044B     		ldr	r3, .L8+4
-  97 0008 044A     		ldr	r2, .L8+8
-  98 000a 1A60     		str	r2, [r3]
- 236:Core/Src/task.c ****     delay_overflow_list = delay_overflow_lst;
-  99              		.loc 1 236 5 is_stmt 1 view .LVU15
- 100              		.loc 1 236 25 is_stmt 0 view .LVU16
- 101 000c 044B     		ldr	r3, .L8+12
- 102 000e 054A     		ldr	r2, .L8+16
- 103 0010 1A60     		str	r2, [r3]
- 237:Core/Src/task.c **** }
- 104              		.loc 1 237 1 view .LVU17
- 105 0012 7047     		bx	lr
- 106              	.L9:
- 107              		.align	2
- 108              	.L8:
-ARM GAS  /tmp/cciKPolz.s 			page 7
-
-
- 109 0014 00000000 		.word	current_tick_count
- 110 0018 00000000 		.word	delay_list
- 111 001c 00000000 		.word	delay_lst
- 112 0020 00000000 		.word	delay_overflow_list
- 113 0024 00000000 		.word	delay_overflow_lst
- 114              		.cfi_endproc
- 115              	.LFE80:
- 117              		.section	.text.PendSV_Handler,"ax",%progbits
- 118              		.align	1
- 119              		.global	PendSV_Handler
- 120              		.syntax unified
- 121              		.thumb
- 122              		.thumb_func
- 124              	PendSV_Handler:
- 125              	.LFB65:
-  23:Core/Src/task.c ****     __asm volatile
- 126              		.loc 1 23 1 is_stmt 1 view -0
- 127              		.cfi_startproc
- 128              		@ Naked Function: prologue and epilogue provided by programmer.
- 129              		@ args = 0, pretend = 0, frame = 0
- 130              		@ frame_needed = 0, uses_anonymous_args = 0
-  24:Core/Src/task.c ****     (
- 131              		.loc 1 24 5 view .LVU19
- 132              		.syntax unified
- 133              	@ 24 "Core/Src/task.c" 1
- 134 0000 EFF30980 		   mrs r0, psp                         
- 135 0004 BFF36F8F 	   isb                                 
- 136              	                                       
- 137 0008 0D4B     	   ldr r3, pxCurrentTCBConst           
- 138 000a 1A68     	   ldr r2, [r3]                        
- 139              	                                       
- 140 000c 20E9F00F 	   stmdb r0!, {r4-r11}                 
- 141 0010 1060     	   str r0, [r2]                        
- 142              	                                       
- 143 0012 2DE90840 	   stmdb sp!, {r3, r14}                
- 144 0016 4FF0BF00 	   mov r0, #191                          
- 145 001a 80F31188 	   msr basepri, r0                     
- 146 001e FFF7FEFF 	   bl vTaskSwitchContext               
- 147 0022 4FF00000 	   mov r0, #0                          
- 148 0026 80F31188 	   msr basepri, r0                     
- 149 002a BDE80840 	   ldmia sp!, {r3, r14}                
- 150              	                                       
- 151 002e 1968     	   ldr r1, [r3]                        
- 152 0030 0868     	   ldr r0, [r1]                        
- 153 0032 B0E8F00F 	   ldmia r0!, {r4-r11}                 
- 154 0036 80F30988 	   msr psp, r0                         
- 155 003a BFF36F8F 	   isb                                 
- 156 003e 7047     	   bx r14                              
- 157              	                                       
- 158              	   .align 4                            
- 159 0040 00000000 	pxCurrentTCBConst: .word current_tcb  
- 160              	
- 161              	@ 0 "" 2
-  54:Core/Src/task.c **** //SCV handler
- 162              		.loc 1 54 1 is_stmt 0 view .LVU20
- 163              		.thumb
- 164              		.syntax unified
-ARM GAS  /tmp/cciKPolz.s 			page 8
-
-
- 165              		.cfi_endproc
- 166              	.LFE65:
- 168              		.section	.text.SVC_Handler,"ax",%progbits
- 169              		.align	1
- 170              		.global	SVC_Handler
- 171              		.syntax unified
- 172              		.thumb
- 173              		.thumb_func
- 175              	SVC_Handler:
- 176              	.LFB66:
-  57:Core/Src/task.c ****     __asm volatile (
- 177              		.loc 1 57 1 is_stmt 1 view -0
- 178              		.cfi_startproc
- 179              		@ Naked Function: prologue and epilogue provided by programmer.
- 180              		@ args = 0, pretend = 0, frame = 0
- 181              		@ frame_needed = 0, uses_anonymous_args = 0
-  58:Core/Src/task.c ****         "   ldr r3, pxCurrentTCBConst2      \n" /* Restore the context. */
- 182              		.loc 1 58 5 view .LVU22
- 183              		.syntax unified
- 184              	@ 58 "Core/Src/task.c" 1
- 185 0000 074B     		   ldr r3, pxCurrentTCBConst2      
- 186 0002 1968     	   ldr r1, [r3]                    
- 187 0004 0868     	   ldr r0, [r1]                    
- 188 0006 B0E8F00F 	   ldmia r0!, {r4-r11}             
- 189 000a 80F30988 	   msr psp, r0                     
- 190 000e BFF36F8F 	   isb                             
- 191 0012 4FF00000 	   mov r0, #0                      
- 192 0016 80F31188 	   msr basepri, r0                 
- 193 001a 4EF00D0E 	   orr r14, #0xd                   
- 194 001e 7047     	   bx r14                          
- 195              	                                   
- 196              	   .align 4                        
- 197 0020 00000000 	pxCurrentTCBConst2: .word current_tcb             
- 198              	
- 199              	@ 0 "" 2
-  73:Core/Src/task.c **** 
- 200              		.loc 1 73 1 is_stmt 0 view .LVU23
- 201              		.thumb
- 202              		.syntax unified
- 203              		.cfi_endproc
- 204              	.LFE66:
- 206              		.section	.text.SysTick_Handler,"ax",%progbits
- 207              		.align	1
- 208              		.global	SysTick_Handler
- 209              		.syntax unified
+ 160:Core/Src/task.c **** }
+ 161:Core/Src/task.c **** 
+ 162:Core/Src/task.c **** uint32_t enter_idle = 0;
+ 163:Core/Src/task.c **** void idle_task(){
+ 164:Core/Src/task.c ****     while(1){
+ 165:Core/Src/task.c ****         enter_idle++;
+ 166:Core/Src/task.c ****         task_switch();
+ 167:Core/Src/task.c ****     }
+ 168:Core/Src/task.c **** }
+ 169:Core/Src/task.c **** 
+ 170:Core/Src/task.c **** static void delay_list_init(void);
+ 171:Core/Src/task.c **** void scheduler_init( void )
+ 172:Core/Src/task.c **** {
+ 173:Core/Src/task.c ****     current_tick_count = 0;
+ 174:Core/Src/task.c ****     delay_list_init();
+ 175:Core/Src/task.c ****     task_create(idle_task, NULL, 64, 0, &idle_task_handler);
+ 176:Core/Src/task.c ****     current_tcb = idle_task_handler;
+ 177:Core/Src/task.c **** }
+ 178:Core/Src/task.c **** 
+ 179:Core/Src/task.c **** void scheduler_start(void){
+ 180:Core/Src/task.c ****     StartFirstTask();
+ 181:Core/Src/task.c **** }
+ 182:Core/Src/task.c **** 
+ 183:Core/Src/task.c **** static inline uint8_t get_highest_priority(void);
+ 184:Core/Src/task.c **** void vTaskSwitchContext(void){
+ 185:Core/Src/task.c ****     current_tcb = ready_list[get_highest_priority()];
+ 186:Core/Src/task.c **** }
+ 187:Core/Src/task.c **** 
+ 188:Core/Src/task.c **** __attribute__((always_inline)) inline uint32_t  critical_enter( void )
+ 189:Core/Src/task.c **** {
+ 190:Core/Src/task.c ****     uint32_t ret;
+ 191:Core/Src/task.c ****     uint32_t temp;
+ 192:Core/Src/task.c ****     __asm volatile(
+ 197              		.loc 1 192 5
+ 198 0006 BF23     		movs	r3, #191
+ 199              		.syntax unified
+ 200              	@ 192 "Core/Src/task.c" 1
+ 201 0008 72B6     		 cpsid i               
+ 202 000a EFF31182 	 mrs r2, basepri       
+ 203 000e 1B46     	 mov r3, r3            
+ 204 0010 83F31188 	 msr basepri, r3       
+ 205 0014 BFF34F8F 	 dsb                   
+ 206 0018 BFF36F8F 	 isb                   
+ 207 001c 62B6     	 cpsie i               
+ 208              	
+ 209              	@ 0 "" 2
  210              		.thumb
- 211              		.thumb_func
- 213              	SysTick_Handler:
- 214              	.LFB67:
-  80:Core/Src/task.c ****     uint32_t ret = critical_enter();
- 215              		.loc 1 80 1 is_stmt 1 view -0
- 216              		.cfi_startproc
- 217              		@ args = 0, pretend = 0, frame = 0
- 218              		@ frame_needed = 0, uses_anonymous_args = 0
- 219              		@ link register save eliminated.
-  81:Core/Src/task.c ****     //increment_ticks();
- 220              		.loc 1 81 5 view .LVU25
-ARM GAS  /tmp/cciKPolz.s 			page 9
+ 211              		.syntax unified
+ 212 001e 7A60     		str	r2, [r7, #4]
+ 213 0020 3B60     		str	r3, [r7]
+ 193:Core/Src/task.c ****             " cpsid i               \n"
+ 194:Core/Src/task.c ****             " mrs %0, basepri       \n"
+ 195:Core/Src/task.c ****             " mov %1, %2            \n"
+ 196:Core/Src/task.c ****             " msr basepri, %1       \n"
+ 197:Core/Src/task.c ****             " dsb                   \n"
+ 198:Core/Src/task.c ****             " isb                   \n"
+ 199:Core/Src/task.c ****             " cpsie i               \n"
+ARM GAS  /tmp//cc05OQ6b.s 			page 8
 
 
- 221              	.LBB10:
- 222              	.LBI10:
- 186:Core/Src/task.c **** {
- 223              		.loc 1 186 49 view .LVU26
- 224              	.LBB11:
- 188:Core/Src/task.c ****     uint32_t temp;
- 225              		.loc 1 188 5 view .LVU27
- 189:Core/Src/task.c ****     __asm volatile(
- 226              		.loc 1 189 5 view .LVU28
- 190:Core/Src/task.c ****             " cpsid i               \n"
- 227              		.loc 1 190 5 view .LVU29
- 228 0000 BF23     		movs	r3, #191
- 229              		.syntax unified
- 230              	@ 190 "Core/Src/task.c" 1
- 231 0002 72B6     		 cpsid i               
- 232 0004 EFF31183 	 mrs r3, basepri       
- 233 0008 1A46     	 mov r2, r3            
- 234 000a 82F31188 	 msr basepri, r2       
- 235 000e BFF34F8F 	 dsb                   
- 236 0012 BFF36F8F 	 isb                   
- 237 0016 62B6     	 cpsie i               
- 238              	
- 239              	@ 0 "" 2
- 240              	.LVL0:
- 202:Core/Src/task.c **** }
- 241              		.loc 1 202 5 view .LVU30
- 202:Core/Src/task.c **** }
- 242              		.loc 1 202 5 is_stmt 0 view .LVU31
- 243              		.thumb
- 244              		.syntax unified
- 245              	.LBE11:
- 246              	.LBE10:
-  83:Core/Src/task.c **** }
- 247              		.loc 1 83 5 is_stmt 1 view .LVU32
- 248              	.LBB12:
- 249              	.LBI12:
- 205:Core/Src/task.c **** {
- 250              		.loc 1 205 44 view .LVU33
- 251              	.LBB13:
- 207:Core/Src/task.c ****             " cpsid i               \n"
- 252              		.loc 1 207 5 view .LVU34
- 253              		.syntax unified
- 254              	@ 207 "Core/Src/task.c" 1
- 255 0018 72B6     		 cpsid i               
- 256 001a 83F31188 	 msr basepri, r3       
- 257 001e BFF34F8F 	 dsb                   
- 258 0022 BFF36F8F 	 isb                   
- 259 0026 62B6     	 cpsie i               
- 260              	
- 261              	@ 0 "" 2
- 262              	.LVL1:
- 207:Core/Src/task.c ****             " cpsid i               \n"
- 263              		.loc 1 207 5 is_stmt 0 view .LVU35
- 264              		.thumb
- 265              		.syntax unified
- 266              	.LBE13:
- 267              	.LBE12:
-ARM GAS  /tmp/cciKPolz.s 			page 10
-
-
+ 200:Core/Src/task.c ****             : "=r" (ret), "=r"(temp)
+ 201:Core/Src/task.c ****             : "r" (configMAX_SYSCALL_INTERRUPT_PRIORITY)
+ 202:Core/Src/task.c ****             : "memory"
+ 203:Core/Src/task.c ****             );
+ 204:Core/Src/task.c ****     return ret;
+ 214              		.loc 1 204 12
+ 215 0022 7B68     		ldr	r3, [r7, #4]
+ 216              	.LBE11:
+ 217              	.LBE10:
+  81:Core/Src/task.c ****     uint32_t ret = critical_enter();
+ 218              		.loc 1 81 20
+ 219 0024 FB60     		str	r3, [r7, #12]
+  82:Core/Src/task.c ****     critical_exit(ret);
+ 220              		.loc 1 82 5
+ 221 0026 FFF7FEFF 		bl	increment_tick
+ 222 002a FB68     		ldr	r3, [r7, #12]
+ 223 002c BB60     		str	r3, [r7, #8]
+ 224              	.LBB12:
+ 225              	.LBB13:
+ 205:Core/Src/task.c **** }
+ 206:Core/Src/task.c **** 
+ 207:Core/Src/task.c **** __attribute__((always_inline)) inline void critical_exit(uint32_t ret)
+ 208:Core/Src/task.c **** {
+ 209:Core/Src/task.c ****     __asm volatile(
+ 226              		.loc 1 209 5
+ 227 002e BB68     		ldr	r3, [r7, #8]
+ 228              		.syntax unified
+ 229              	@ 209 "Core/Src/task.c" 1
+ 230 0030 72B6     		 cpsid i               
+ 231 0032 83F31188 	 msr basepri, r3       
+ 232 0036 BFF34F8F 	 dsb                   
+ 233 003a BFF36F8F 	 isb                   
+ 234 003e 62B6     	 cpsie i               
+ 235              	
+ 236              	@ 0 "" 2
+ 210:Core/Src/task.c ****             " cpsid i               \n"
+ 211:Core/Src/task.c ****             " msr basepri, %0       \n"
+ 212:Core/Src/task.c ****             " dsb                   \n"
+ 213:Core/Src/task.c ****             " isb                   \n"
+ 214:Core/Src/task.c ****             " cpsie i               \n"
+ 215:Core/Src/task.c ****             :: "r" (ret)
+ 216:Core/Src/task.c ****             : "memory"
+ 217:Core/Src/task.c ****             );
+ 218:Core/Src/task.c **** }
+ 237              		.loc 1 218 1
+ 238              		.thumb
+ 239              		.syntax unified
+ 240 0040 00BF     		nop
+ 241              	.LBE13:
+ 242              	.LBE12:
   84:Core/Src/task.c **** 
- 268              		.loc 1 84 1 view .LVU36
- 269 0028 7047     		bx	lr
- 270              		.cfi_endproc
- 271              	.LFE67:
- 273              		.section	.text.add_to_ready_list,"ax",%progbits
- 274              		.align	1
- 275              		.global	add_to_ready_list
- 276              		.syntax unified
- 277              		.thumb
- 278              		.thumb_func
- 280              	add_to_ready_list:
- 281              	.LVL2:
- 282              	.LFB69:
- 111:Core/Src/task.c ****     if(priority < max_priority)
- 283              		.loc 1 111 67 is_stmt 1 view -0
- 284              		.cfi_startproc
- 285              		@ args = 0, pretend = 0, frame = 0
- 286              		@ frame_needed = 0, uses_anonymous_args = 0
- 287              		@ link register save eliminated.
- 111:Core/Src/task.c ****     if(priority < max_priority)
- 288              		.loc 1 111 67 is_stmt 0 view .LVU38
- 289 0000 10B4     		push	{r4}
- 290              	.LCFI0:
- 291              		.cfi_def_cfa_offset 4
- 292              		.cfi_offset 4, -4
- 112:Core/Src/task.c ****         max_priority = priority;
- 293              		.loc 1 112 5 is_stmt 1 view .LVU39
- 112:Core/Src/task.c ****         max_priority = priority;
- 294              		.loc 1 112 17 is_stmt 0 view .LVU40
- 295 0002 094B     		ldr	r3, .L16
- 296 0004 1B68     		ldr	r3, [r3]
- 112:Core/Src/task.c ****         max_priority = priority;
- 297              		.loc 1 112 7 view .LVU41
- 298 0006 8B42     		cmp	r3, r1
- 299 0008 01D9     		bls	.L14
- 113:Core/Src/task.c ****     ready_bits |= (1 << priority);
- 300              		.loc 1 113 9 is_stmt 1 view .LVU42
- 113:Core/Src/task.c ****     ready_bits |= (1 << priority);
- 301              		.loc 1 113 22 is_stmt 0 view .LVU43
- 302 000a 074B     		ldr	r3, .L16
- 303 000c 1960     		str	r1, [r3]
- 304              	.L14:
- 114:Core/Src/task.c ****     ready_list[priority] = *handler;
- 305              		.loc 1 114 5 is_stmt 1 view .LVU44
- 114:Core/Src/task.c ****     ready_list[priority] = *handler;
- 306              		.loc 1 114 22 is_stmt 0 view .LVU45
- 307 000e 0122     		movs	r2, #1
- 308 0010 8A40     		lsls	r2, r2, r1
- 114:Core/Src/task.c ****     ready_list[priority] = *handler;
- 309              		.loc 1 114 16 view .LVU46
- 310 0012 064C     		ldr	r4, .L16+4
- 311 0014 2368     		ldr	r3, [r4]
- 312 0016 1343     		orrs	r3, r3, r2
- 313 0018 2360     		str	r3, [r4]
- 115:Core/Src/task.c **** }
- 314              		.loc 1 115 5 is_stmt 1 view .LVU47
-ARM GAS  /tmp/cciKPolz.s 			page 11
+ 243              		.loc 1 84 1
+ 244 0042 00BF     		nop
+ 245 0044 1037     		adds	r7, r7, #16
+ 246              	.LCFI3:
+ 247              		.cfi_def_cfa_offset 8
+ 248 0046 BD46     		mov	sp, r7
+ARM GAS  /tmp//cc05OQ6b.s 			page 9
 
 
- 115:Core/Src/task.c **** }
- 315              		.loc 1 115 28 is_stmt 0 view .LVU48
- 316 001a 0268     		ldr	r2, [r0]
- 115:Core/Src/task.c **** }
- 317              		.loc 1 115 26 view .LVU49
- 318 001c 044B     		ldr	r3, .L16+8
- 319 001e 43F82120 		str	r2, [r3, r1, lsl #2]
- 116:Core/Src/task.c **** 
- 320              		.loc 1 116 1 view .LVU50
- 321 0022 10BC     		pop	{r4}
- 322              	.LCFI1:
- 323              		.cfi_restore 4
+ 249              	.LCFI4:
+ 250              		.cfi_def_cfa_register 13
+ 251              		@ sp needed
+ 252 0048 80BD     		pop	{r7, pc}
+ 253              		.cfi_endproc
+ 254              	.LFE67:
+ 256              		.section	.text.add_to_ready_list,"ax",%progbits
+ 257              		.align	1
+ 258              		.global	add_to_ready_list
+ 259              		.syntax unified
+ 260              		.thumb
+ 261              		.thumb_func
+ 263              	add_to_ready_list:
+ 264              	.LFB69:
+ 111:Core/Src/task.c ****     if(priority < max_priority)
+ 265              		.loc 1 111 67
+ 266              		.cfi_startproc
+ 267              		@ args = 0, pretend = 0, frame = 8
+ 268              		@ frame_needed = 1, uses_anonymous_args = 0
+ 269              		@ link register save eliminated.
+ 270 0000 80B4     		push	{r7}
+ 271              	.LCFI5:
+ 272              		.cfi_def_cfa_offset 4
+ 273              		.cfi_offset 7, -4
+ 274 0002 83B0     		sub	sp, sp, #12
+ 275              	.LCFI6:
+ 276              		.cfi_def_cfa_offset 16
+ 277 0004 00AF     		add	r7, sp, #0
+ 278              	.LCFI7:
+ 279              		.cfi_def_cfa_register 7
+ 280 0006 7860     		str	r0, [r7, #4]
+ 281 0008 3960     		str	r1, [r7]
+ 112:Core/Src/task.c ****         max_priority = priority;
+ 282              		.loc 1 112 17
+ 283 000a 0E4B     		ldr	r3, .L7
+ 284 000c 1B68     		ldr	r3, [r3]
+ 112:Core/Src/task.c ****         max_priority = priority;
+ 285              		.loc 1 112 7
+ 286 000e 3A68     		ldr	r2, [r7]
+ 287 0010 9A42     		cmp	r2, r3
+ 288 0012 02D2     		bcs	.L6
+ 113:Core/Src/task.c **** 
+ 289              		.loc 1 113 22
+ 290 0014 0B4A     		ldr	r2, .L7
+ 291 0016 3B68     		ldr	r3, [r7]
+ 292 0018 1360     		str	r3, [r2]
+ 293              	.L6:
+ 115:Core/Src/task.c ****     ready_list[priority] = *handler;
+ 294              		.loc 1 115 22
+ 295 001a 0122     		movs	r2, #1
+ 296 001c 3B68     		ldr	r3, [r7]
+ 297 001e 02FA03F3 		lsl	r3, r2, r3
+ 298 0022 1A46     		mov	r2, r3
+ 115:Core/Src/task.c ****     ready_list[priority] = *handler;
+ 299              		.loc 1 115 16
+ 300 0024 084B     		ldr	r3, .L7+4
+ 301 0026 1B68     		ldr	r3, [r3]
+ARM GAS  /tmp//cc05OQ6b.s 			page 10
+
+
+ 302 0028 1343     		orrs	r3, r3, r2
+ 303 002a 074A     		ldr	r2, .L7+4
+ 304 002c 1360     		str	r3, [r2]
+ 116:Core/Src/task.c **** }
+ 305              		.loc 1 116 28
+ 306 002e 7B68     		ldr	r3, [r7, #4]
+ 307 0030 1A68     		ldr	r2, [r3]
+ 116:Core/Src/task.c **** }
+ 308              		.loc 1 116 26
+ 309 0032 0649     		ldr	r1, .L7+8
+ 310 0034 3B68     		ldr	r3, [r7]
+ 311 0036 41F82320 		str	r2, [r1, r3, lsl #2]
+ 117:Core/Src/task.c **** 
+ 312              		.loc 1 117 1
+ 313 003a 00BF     		nop
+ 314 003c 0C37     		adds	r7, r7, #12
+ 315              	.LCFI8:
+ 316              		.cfi_def_cfa_offset 4
+ 317 003e BD46     		mov	sp, r7
+ 318              	.LCFI9:
+ 319              		.cfi_def_cfa_register 13
+ 320              		@ sp needed
+ 321 0040 80BC     		pop	{r7}
+ 322              	.LCFI10:
+ 323              		.cfi_restore 7
  324              		.cfi_def_cfa_offset 0
- 325 0024 7047     		bx	lr
- 326              	.L17:
- 327 0026 00BF     		.align	2
- 328              	.L16:
- 329 0028 00000000 		.word	max_priority
- 330 002c 00000000 		.word	ready_bits
- 331 0030 00000000 		.word	ready_list
+ 325 0042 7047     		bx	lr
+ 326              	.L8:
+ 327              		.align	2
+ 328              	.L7:
+ 329 0044 00000000 		.word	max_priority
+ 330 0048 00000000 		.word	ready_bits
+ 331 004c 00000000 		.word	ready_list
  332              		.cfi_endproc
  333              	.LFE69:
- 335              		.section	.text.stack_init,"ax",%progbits
+ 335              		.section	.text.task_create,"ax",%progbits
  336              		.align	1
- 337              		.global	stack_init
+ 337              		.global	task_create
  338              		.syntax unified
  339              		.thumb
  340              		.thumb_func
- 342              	stack_init:
- 343              	.LVL3:
- 344              	.LFB72:
- 142:Core/Src/task.c ****     //set the XPSR
- 345              		.loc 1 142 77 is_stmt 1 view -0
- 346              		.cfi_startproc
- 347              		@ args = 0, pretend = 0, frame = 0
- 348              		@ frame_needed = 0, uses_anonymous_args = 0
- 349              		@ link register save eliminated.
- 144:Core/Src/task.c ****     *stack_top = INITIAL_XPSR;
- 350              		.loc 1 144 5 view .LVU52
- 145:Core/Src/task.c ****     //set the task func
- 351              		.loc 1 145 5 view .LVU53
- 145:Core/Src/task.c ****     //set the task func
- 352              		.loc 1 145 16 is_stmt 0 view .LVU54
- 353 0000 4FF08073 		mov	r3, #16777216
- 354 0004 40F8043C 		str	r3, [r0, #-4]
- 147:Core/Src/task.c ****     *stack_top = (uint32_t)func & (uint32_t)START_ADDRESS_MASK;
- 355              		.loc 1 147 5 is_stmt 1 view .LVU55
- 356              	.LVL4:
- 148:Core/Src/task.c ****     //set the error handler
- 357              		.loc 1 148 5 view .LVU56
- 148:Core/Src/task.c ****     //set the error handler
- 358              		.loc 1 148 33 is_stmt 0 view .LVU57
- 359 0008 21F00101 		bic	r1, r1, #1
- 360              	.LVL5:
- 148:Core/Src/task.c ****     //set the error handler
- 361              		.loc 1 148 16 view .LVU58
- 362 000c 40F8081C 		str	r1, [r0, #-8]
-ARM GAS  /tmp/cciKPolz.s 			page 12
+ 342              	task_create:
+ 343              	.LFB70:
+ 121:Core/Src/task.c ****     tcb_t* new_tcb;
+ 344              		.loc 1 121 62
+ 345              		.cfi_startproc
+ 346              		@ args = 4, pretend = 0, frame = 24
+ 347              		@ frame_needed = 1, uses_anonymous_args = 0
+ 348 0000 80B5     		push	{r7, lr}
+ 349              	.LCFI11:
+ 350              		.cfi_def_cfa_offset 8
+ 351              		.cfi_offset 7, -8
+ 352              		.cfi_offset 14, -4
+ 353 0002 86B0     		sub	sp, sp, #24
+ 354              	.LCFI12:
+ 355              		.cfi_def_cfa_offset 32
+ 356 0004 00AF     		add	r7, sp, #0
+ARM GAS  /tmp//cc05OQ6b.s 			page 11
 
 
- 150:Core/Src/task.c ****     *stack_top = (uint32_t)task_exit_error;
- 363              		.loc 1 150 5 is_stmt 1 view .LVU59
- 364              	.LVL6:
- 151:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
- 365              		.loc 1 151 5 view .LVU60
- 151:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
- 366              		.loc 1 151 18 is_stmt 0 view .LVU61
- 367 0010 034B     		ldr	r3, .L19
- 151:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
- 368              		.loc 1 151 16 view .LVU62
- 369 0012 40F80C3C 		str	r3, [r0, #-12]
- 153:Core/Src/task.c ****     *stack_top = (uint32_t)parameters;
- 370              		.loc 1 153 5 is_stmt 1 view .LVU63
- 371              	.LVL7:
- 154:Core/Src/task.c ****     //leave space for r4-r11
- 372              		.loc 1 154 5 view .LVU64
- 154:Core/Src/task.c ****     //leave space for r4-r11
- 373              		.loc 1 154 16 is_stmt 0 view .LVU65
- 374 0016 40F8202C 		str	r2, [r0, #-32]
- 156:Core/Src/task.c ****     return stack_top;
- 375              		.loc 1 156 5 is_stmt 1 view .LVU66
- 376              	.LVL8:
- 157:Core/Src/task.c **** }
- 377              		.loc 1 157 5 view .LVU67
- 158:Core/Src/task.c **** 
- 378              		.loc 1 158 1 is_stmt 0 view .LVU68
- 379 001a 4038     		subs	r0, r0, #64
- 380              	.LVL9:
- 158:Core/Src/task.c **** 
- 381              		.loc 1 158 1 view .LVU69
- 382 001c 7047     		bx	lr
- 383              	.L20:
- 384 001e 00BF     		.align	2
- 385              	.L19:
- 386 0020 00000000 		.word	task_exit_error
- 387              		.cfi_endproc
- 388              	.LFE72:
- 390              		.section	.text.task_create,"ax",%progbits
- 391              		.align	1
- 392              		.global	task_create
- 393              		.syntax unified
- 394              		.thumb
- 395              		.thumb_func
- 397              	task_create:
- 398              	.LVL10:
- 399              	.LFB70:
- 120:Core/Src/task.c ****     tcb_t* new_tcb;
- 400              		.loc 1 120 62 is_stmt 1 view -0
- 401              		.cfi_startproc
- 402              		@ args = 4, pretend = 0, frame = 0
- 403              		@ frame_needed = 0, uses_anonymous_args = 0
- 120:Core/Src/task.c ****     tcb_t* new_tcb;
- 404              		.loc 1 120 62 is_stmt 0 view .LVU71
- 405 0000 2DE9F843 		push	{r3, r4, r5, r6, r7, r8, r9, lr}
- 406              	.LCFI2:
- 407              		.cfi_def_cfa_offset 32
- 408              		.cfi_offset 3, -32
-ARM GAS  /tmp/cciKPolz.s 			page 13
+ 357              	.LCFI13:
+ 358              		.cfi_def_cfa_register 7
+ 359 0006 F860     		str	r0, [r7, #12]
+ 360 0008 B960     		str	r1, [r7, #8]
+ 361 000a 7A60     		str	r2, [r7, #4]
+ 362 000c 3B60     		str	r3, [r7]
+ 125:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
+ 363              		.loc 1 125 23
+ 364 000e 0C20     		movs	r0, #12
+ 365 0010 FFF7FEFF 		bl	halloc
+ 366 0014 7861     		str	r0, [r7, #20]
+ 126:Core/Src/task.c ****     //get the stack top addresss and align
+ 367              		.loc 1 126 32
+ 368 0016 7B68     		ldr	r3, [r7, #4]
+ 369 0018 9B00     		lsls	r3, r3, #2
+ 370 001a 1846     		mov	r0, r3
+ 371 001c FFF7FEFF 		bl	halloc
+ 372 0020 0246     		mov	r2, r0
+ 126:Core/Src/task.c ****     //get the stack top addresss and align
+ 373              		.loc 1 126 19 discriminator 1
+ 374 0022 7B69     		ldr	r3, [r7, #20]
+ 375 0024 9A60     		str	r2, [r3, #8]
+ 128:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
+ 376              		.loc 1 128 24
+ 377 0026 7B69     		ldr	r3, [r7, #20]
+ 378 0028 9A68     		ldr	r2, [r3, #8]
+ 128:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
+ 379              		.loc 1 128 32
+ 380 002a 7B68     		ldr	r3, [r7, #4]
+ 381 002c 03F18043 		add	r3, r3, #1073741824
+ 382 0030 013B     		subs	r3, r3, #1
+ 383 0032 9B00     		lsls	r3, r3, #2
+ 128:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
+ 384              		.loc 1 128 15
+ 385 0034 1344     		add	r3, r3, r2
+ 386 0036 3B61     		str	r3, [r7, #16]
+ 129:Core/Src/task.c ****     //initialize the stack
+ 387              		.loc 1 129 29
+ 388 0038 3B69     		ldr	r3, [r7, #16]
+ 129:Core/Src/task.c ****     //initialize the stack
+ 389              		.loc 1 129 49
+ 390 003a 23F00703 		bic	r3, r3, #7
+ 129:Core/Src/task.c ****     //initialize the stack
+ 391              		.loc 1 129 15
+ 392 003e 3B61     		str	r3, [r7, #16]
+ 131:Core/Src/task.c ****     new_tcb->priority = priority;
+ 393              		.loc 1 131 26
+ 394 0040 BA68     		ldr	r2, [r7, #8]
+ 395 0042 F968     		ldr	r1, [r7, #12]
+ 396 0044 3869     		ldr	r0, [r7, #16]
+ 397 0046 FFF7FEFF 		bl	stack_init
+ 398 004a 0246     		mov	r2, r0
+ 131:Core/Src/task.c ****     new_tcb->priority = priority;
+ 399              		.loc 1 131 24 discriminator 1
+ 400 004c 7B69     		ldr	r3, [r7, #20]
+ 401 004e 1A60     		str	r2, [r3]
+ 132:Core/Src/task.c ****     //set the task handler
+ARM GAS  /tmp//cc05OQ6b.s 			page 12
 
 
- 409              		.cfi_offset 4, -28
- 410              		.cfi_offset 5, -24
- 411              		.cfi_offset 6, -20
- 412              		.cfi_offset 7, -16
- 413              		.cfi_offset 8, -12
- 414              		.cfi_offset 9, -8
- 415              		.cfi_offset 14, -4
- 416 0004 0646     		mov	r6, r0
- 417 0006 0F46     		mov	r7, r1
- 418 0008 9146     		mov	r9, r2
- 419 000a 1D46     		mov	r5, r3
- 420 000c DDF82080 		ldr	r8, [sp, #32]
- 121:Core/Src/task.c ****     uint32_t* stack_top;
- 421              		.loc 1 121 5 is_stmt 1 view .LVU72
- 122:Core/Src/task.c ****     //allocate memory for the tcb and stack
- 422              		.loc 1 122 5 view .LVU73
- 124:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
- 423              		.loc 1 124 5 view .LVU74
- 124:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
- 424              		.loc 1 124 23 is_stmt 0 view .LVU75
- 425 0010 0C20     		movs	r0, #12
- 426              	.LVL11:
- 124:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
- 427              		.loc 1 124 23 view .LVU76
- 428 0012 FFF7FEFF 		bl	halloc
- 429              	.LVL12:
- 124:Core/Src/task.c ****     new_tcb->stack= (uint32_t*)halloc((size_t)stack_depth * sizeof(uint32_t));
- 430              		.loc 1 124 23 view .LVU77
- 431 0016 0446     		mov	r4, r0
- 432              	.LVL13:
- 125:Core/Src/task.c ****     //get the stack top addresss and align
- 433              		.loc 1 125 5 is_stmt 1 view .LVU78
- 125:Core/Src/task.c ****     //get the stack top addresss and align
- 434              		.loc 1 125 32 is_stmt 0 view .LVU79
- 435 0018 4FEA8900 		lsl	r0, r9, #2
- 436              	.LVL14:
- 125:Core/Src/task.c ****     //get the stack top addresss and align
- 437              		.loc 1 125 32 view .LVU80
- 438 001c FFF7FEFF 		bl	halloc
- 439              	.LVL15:
- 125:Core/Src/task.c ****     //get the stack top addresss and align
- 440              		.loc 1 125 19 discriminator 1 view .LVU81
- 441 0020 A060     		str	r0, [r4, #8]
- 127:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
- 442              		.loc 1 127 5 is_stmt 1 view .LVU82
- 127:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
- 443              		.loc 1 127 32 is_stmt 0 view .LVU83
- 444 0022 09F18042 		add	r2, r9, #1073741824
- 445 0026 013A     		subs	r2, r2, #1
- 127:Core/Src/task.c ****     stack_top = (uint32_t*)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
- 446              		.loc 1 127 15 view .LVU84
- 447 0028 00EB8200 		add	r0, r0, r2, lsl #2
- 448              	.LVL16:
- 128:Core/Src/task.c ****     //initialize the stack
- 449              		.loc 1 128 5 is_stmt 1 view .LVU85
- 130:Core/Src/task.c ****     //set the task handler
- 450              		.loc 1 130 5 view .LVU86
-ARM GAS  /tmp/cciKPolz.s 			page 14
+ 402              		.loc 1 132 23
+ 403 0050 7B69     		ldr	r3, [r7, #20]
+ 404 0052 3A68     		ldr	r2, [r7]
+ 405 0054 5A60     		str	r2, [r3, #4]
+ 134:Core/Src/task.c ****     //put the tcb into task table
+ 406              		.loc 1 134 14
+ 407 0056 3B6A     		ldr	r3, [r7, #32]
+ 408 0058 7A69     		ldr	r2, [r7, #20]
+ 409 005a 1A60     		str	r2, [r3]
+ 136:Core/Src/task.c **** }
+ 410              		.loc 1 136 5
+ 411 005c 3968     		ldr	r1, [r7]
+ 412 005e 386A     		ldr	r0, [r7, #32]
+ 413 0060 FFF7FEFF 		bl	add_to_ready_list
+ 137:Core/Src/task.c **** 
+ 414              		.loc 1 137 1
+ 415 0064 00BF     		nop
+ 416 0066 1837     		adds	r7, r7, #24
+ 417              	.LCFI14:
+ 418              		.cfi_def_cfa_offset 8
+ 419 0068 BD46     		mov	sp, r7
+ 420              	.LCFI15:
+ 421              		.cfi_def_cfa_register 13
+ 422              		@ sp needed
+ 423 006a 80BD     		pop	{r7, pc}
+ 424              		.cfi_endproc
+ 425              	.LFE70:
+ 427              		.section	.text.task_exit_error,"ax",%progbits
+ 428              		.align	1
+ 429              		.syntax unified
+ 430              		.thumb
+ 431              		.thumb_func
+ 433              	task_exit_error:
+ 434              	.LFB71:
+ 139:Core/Src/task.c ****     while(1){
+ 435              		.loc 1 139 30
+ 436              		.cfi_startproc
+ 437              		@ args = 0, pretend = 0, frame = 0
+ 438              		@ frame_needed = 1, uses_anonymous_args = 0
+ 439              		@ link register save eliminated.
+ 440 0000 80B4     		push	{r7}
+ 441              	.LCFI16:
+ 442              		.cfi_def_cfa_offset 4
+ 443              		.cfi_offset 7, -4
+ 444 0002 00AF     		add	r7, sp, #0
+ 445              	.LCFI17:
+ 446              		.cfi_def_cfa_register 7
+ 447              	.L11:
+ 140:Core/Src/task.c ****     }
+ 448              		.loc 1 140 10
+ 449 0004 00BF     		nop
+ 450 0006 FDE7     		b	.L11
+ 451              		.cfi_endproc
+ 452              	.LFE71:
+ 454              		.section	.text.stack_init,"ax",%progbits
+ 455              		.align	1
+ 456              		.global	stack_init
+ARM GAS  /tmp//cc05OQ6b.s 			page 13
 
 
- 130:Core/Src/task.c ****     //set the task handler
- 451              		.loc 1 130 26 is_stmt 0 view .LVU87
- 452 002c 3A46     		mov	r2, r7
- 453 002e 3146     		mov	r1, r6
- 454 0030 20F00700 		bic	r0, r0, #7
- 455              	.LVL17:
- 130:Core/Src/task.c ****     //set the task handler
- 456              		.loc 1 130 26 view .LVU88
- 457 0034 FFF7FEFF 		bl	stack_init
- 458              	.LVL18:
- 130:Core/Src/task.c ****     //set the task handler
- 459              		.loc 1 130 24 discriminator 1 view .LVU89
- 460 0038 2060     		str	r0, [r4]
- 132:Core/Src/task.c ****     //put the tcb into task table
- 461              		.loc 1 132 5 is_stmt 1 view .LVU90
- 132:Core/Src/task.c ****     //put the tcb into task table
- 462              		.loc 1 132 14 is_stmt 0 view .LVU91
- 463 003a C8F80040 		str	r4, [r8]
- 134:Core/Src/task.c **** }
- 464              		.loc 1 134 5 is_stmt 1 view .LVU92
- 465 003e 2946     		mov	r1, r5
- 466 0040 4046     		mov	r0, r8
- 467 0042 FFF7FEFF 		bl	add_to_ready_list
- 468              	.LVL19:
- 135:Core/Src/task.c **** 
- 469              		.loc 1 135 1 is_stmt 0 view .LVU93
- 470 0046 BDE8F883 		pop	{r3, r4, r5, r6, r7, r8, r9, pc}
- 135:Core/Src/task.c **** 
- 471              		.loc 1 135 1 view .LVU94
- 472              		.cfi_endproc
- 473              	.LFE70:
- 475              		.section	.text.scheduler_init,"ax",%progbits
- 476              		.align	1
- 477              		.global	scheduler_init
- 478              		.syntax unified
- 479              		.thumb
- 480              		.thumb_func
- 482              	scheduler_init:
- 483              	.LFB74:
- 170:Core/Src/task.c ****     current_tick_count = 0;
- 484              		.loc 1 170 1 is_stmt 1 view -0
- 485              		.cfi_startproc
- 486              		@ args = 0, pretend = 0, frame = 0
- 487              		@ frame_needed = 0, uses_anonymous_args = 0
- 488 0000 30B5     		push	{r4, r5, lr}
- 489              	.LCFI3:
- 490              		.cfi_def_cfa_offset 12
- 491              		.cfi_offset 4, -12
- 492              		.cfi_offset 5, -8
- 493              		.cfi_offset 14, -4
- 494 0002 83B0     		sub	sp, sp, #12
- 495              	.LCFI4:
- 496              		.cfi_def_cfa_offset 24
- 171:Core/Src/task.c ****     delay_list_init();
- 497              		.loc 1 171 5 view .LVU96
- 171:Core/Src/task.c ****     delay_list_init();
- 498              		.loc 1 171 24 is_stmt 0 view .LVU97
-ARM GAS  /tmp/cciKPolz.s 			page 15
+ 457              		.syntax unified
+ 458              		.thumb
+ 459              		.thumb_func
+ 461              	stack_init:
+ 462              	.LFB72:
+ 144:Core/Src/task.c ****     //set the XPSR
+ 463              		.loc 1 144 77
+ 464              		.cfi_startproc
+ 465              		@ args = 0, pretend = 0, frame = 16
+ 466              		@ frame_needed = 1, uses_anonymous_args = 0
+ 467              		@ link register save eliminated.
+ 468 0000 80B4     		push	{r7}
+ 469              	.LCFI18:
+ 470              		.cfi_def_cfa_offset 4
+ 471              		.cfi_offset 7, -4
+ 472 0002 85B0     		sub	sp, sp, #20
+ 473              	.LCFI19:
+ 474              		.cfi_def_cfa_offset 24
+ 475 0004 00AF     		add	r7, sp, #0
+ 476              	.LCFI20:
+ 477              		.cfi_def_cfa_register 7
+ 478 0006 F860     		str	r0, [r7, #12]
+ 479 0008 B960     		str	r1, [r7, #8]
+ 480 000a 7A60     		str	r2, [r7, #4]
+ 146:Core/Src/task.c ****     *stack_top = INITIAL_XPSR;
+ 481              		.loc 1 146 14
+ 482 000c FB68     		ldr	r3, [r7, #12]
+ 483 000e 043B     		subs	r3, r3, #4
+ 484 0010 FB60     		str	r3, [r7, #12]
+ 147:Core/Src/task.c ****     //set the task func
+ 485              		.loc 1 147 16
+ 486 0012 FB68     		ldr	r3, [r7, #12]
+ 487 0014 4FF08072 		mov	r2, #16777216
+ 488 0018 1A60     		str	r2, [r3]
+ 149:Core/Src/task.c ****     *stack_top = (uint32_t)func & (uint32_t)START_ADDRESS_MASK;
+ 489              		.loc 1 149 14
+ 490 001a FB68     		ldr	r3, [r7, #12]
+ 491 001c 043B     		subs	r3, r3, #4
+ 492 001e FB60     		str	r3, [r7, #12]
+ 150:Core/Src/task.c ****     //set the error handler
+ 493              		.loc 1 150 18
+ 494 0020 BB68     		ldr	r3, [r7, #8]
+ 150:Core/Src/task.c ****     //set the error handler
+ 495              		.loc 1 150 33
+ 496 0022 23F00102 		bic	r2, r3, #1
+ 150:Core/Src/task.c ****     //set the error handler
+ 497              		.loc 1 150 16
+ 498 0026 FB68     		ldr	r3, [r7, #12]
+ 499 0028 1A60     		str	r2, [r3]
+ 152:Core/Src/task.c ****     *stack_top = (uint32_t)task_exit_error;
+ 500              		.loc 1 152 14
+ 501 002a FB68     		ldr	r3, [r7, #12]
+ 502 002c 043B     		subs	r3, r3, #4
+ 503 002e FB60     		str	r3, [r7, #12]
+ 153:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
+ 504              		.loc 1 153 18
+ 505 0030 084A     		ldr	r2, .L14
+ARM GAS  /tmp//cc05OQ6b.s 			page 14
 
 
- 499 0004 0024     		movs	r4, #0
- 500 0006 084B     		ldr	r3, .L25
- 501 0008 1C60     		str	r4, [r3]
- 172:Core/Src/task.c ****     task_create(idle_task, NULL, 64, 0, &idle_task_handler);
- 502              		.loc 1 172 5 is_stmt 1 view .LVU98
- 503 000a FFF7FEFF 		bl	delay_list_init
- 504              	.LVL20:
- 173:Core/Src/task.c ****     current_tcb = idle_task_handler;
- 505              		.loc 1 173 5 view .LVU99
- 506 000e 074D     		ldr	r5, .L25+4
- 507 0010 0095     		str	r5, [sp]
- 508 0012 2346     		mov	r3, r4
- 509 0014 4022     		movs	r2, #64
- 510 0016 2146     		mov	r1, r4
- 511 0018 0548     		ldr	r0, .L25+8
- 512 001a FFF7FEFF 		bl	task_create
- 513              	.LVL21:
- 174:Core/Src/task.c **** }
- 514              		.loc 1 174 5 view .LVU100
- 174:Core/Src/task.c **** }
- 515              		.loc 1 174 17 is_stmt 0 view .LVU101
- 516 001e 2A68     		ldr	r2, [r5]
- 517 0020 044B     		ldr	r3, .L25+12
- 518 0022 1A60     		str	r2, [r3]
- 175:Core/Src/task.c **** 
- 519              		.loc 1 175 1 view .LVU102
- 520 0024 03B0     		add	sp, sp, #12
- 521              	.LCFI5:
- 522              		.cfi_def_cfa_offset 12
- 523              		@ sp needed
- 524 0026 30BD     		pop	{r4, r5, pc}
- 525              	.L26:
- 526              		.align	2
- 527              	.L25:
- 528 0028 00000000 		.word	current_tick_count
- 529 002c 00000000 		.word	idle_task_handler
- 530 0030 00000000 		.word	idle_task
- 531 0034 00000000 		.word	current_tcb
- 532              		.cfi_endproc
- 533              	.LFE74:
- 535              		.section	.text.scheduler_start,"ax",%progbits
- 536              		.align	1
- 537              		.global	scheduler_start
- 538              		.syntax unified
- 539              		.thumb
- 540              		.thumb_func
- 542              	scheduler_start:
- 543              	.LFB75:
- 177:Core/Src/task.c ****     StartFirstTask();
- 544              		.loc 1 177 27 is_stmt 1 view -0
- 545              		.cfi_startproc
- 546              		@ args = 0, pretend = 0, frame = 0
- 547              		@ frame_needed = 0, uses_anonymous_args = 0
- 548              		@ link register save eliminated.
- 178:Core/Src/task.c **** }
- 549              		.loc 1 178 5 view .LVU104
- 550              	.LBB14:
-ARM GAS  /tmp/cciKPolz.s 			page 16
+ 153:Core/Src/task.c ****     //set the r12, r1-3 to zero, and set r0 to parameters
+ 506              		.loc 1 153 16
+ 507 0032 FB68     		ldr	r3, [r7, #12]
+ 508 0034 1A60     		str	r2, [r3]
+ 155:Core/Src/task.c ****     *stack_top = (uint32_t)parameters;
+ 509              		.loc 1 155 15
+ 510 0036 FB68     		ldr	r3, [r7, #12]
+ 511 0038 143B     		subs	r3, r3, #20
+ 512 003a FB60     		str	r3, [r7, #12]
+ 156:Core/Src/task.c ****     //leave space for r4-r11
+ 513              		.loc 1 156 18
+ 514 003c 7A68     		ldr	r2, [r7, #4]
+ 156:Core/Src/task.c ****     //leave space for r4-r11
+ 515              		.loc 1 156 16
+ 516 003e FB68     		ldr	r3, [r7, #12]
+ 517 0040 1A60     		str	r2, [r3]
+ 158:Core/Src/task.c ****     return stack_top;
+ 518              		.loc 1 158 15
+ 519 0042 FB68     		ldr	r3, [r7, #12]
+ 520 0044 203B     		subs	r3, r3, #32
+ 521 0046 FB60     		str	r3, [r7, #12]
+ 159:Core/Src/task.c **** }
+ 522              		.loc 1 159 12
+ 523 0048 FB68     		ldr	r3, [r7, #12]
+ 160:Core/Src/task.c **** 
+ 524              		.loc 1 160 1
+ 525 004a 1846     		mov	r0, r3
+ 526 004c 1437     		adds	r7, r7, #20
+ 527              	.LCFI21:
+ 528              		.cfi_def_cfa_offset 4
+ 529 004e BD46     		mov	sp, r7
+ 530              	.LCFI22:
+ 531              		.cfi_def_cfa_register 13
+ 532              		@ sp needed
+ 533 0050 80BC     		pop	{r7}
+ 534              	.LCFI23:
+ 535              		.cfi_restore 7
+ 536              		.cfi_def_cfa_offset 0
+ 537 0052 7047     		bx	lr
+ 538              	.L15:
+ 539              		.align	2
+ 540              	.L14:
+ 541 0054 00000000 		.word	task_exit_error
+ 542              		.cfi_endproc
+ 543              	.LFE72:
+ 545              		.global	enter_idle
+ 546              		.section	.bss.enter_idle,"aw",%nobits
+ 547              		.align	2
+ 550              	enter_idle:
+ 551 0000 00000000 		.space	4
+ 552              		.section	.text.idle_task,"ax",%progbits
+ 553              		.align	1
+ 554              		.global	idle_task
+ 555              		.syntax unified
+ 556              		.thumb
+ 557              		.thumb_func
+ 559              	idle_task:
+ARM GAS  /tmp//cc05OQ6b.s 			page 15
 
 
- 551              	.LBI14:
-  88:Core/Src/task.c **** {
- 552              		.loc 1 88 51 view .LVU105
- 553              	.LBB15:
+ 560              	.LFB73:
+ 163:Core/Src/task.c ****     while(1){
+ 561              		.loc 1 163 17
+ 562              		.cfi_startproc
+ 563              		@ args = 0, pretend = 0, frame = 0
+ 564              		@ frame_needed = 1, uses_anonymous_args = 0
+ 565              		@ link register save eliminated.
+ 566 0000 80B4     		push	{r7}
+ 567              	.LCFI24:
+ 568              		.cfi_def_cfa_offset 4
+ 569              		.cfi_offset 7, -4
+ 570 0002 00AF     		add	r7, sp, #0
+ 571              	.LCFI25:
+ 572              		.cfi_def_cfa_register 7
+ 573              	.L17:
+ 165:Core/Src/task.c ****         task_switch();
+ 574              		.loc 1 165 19
+ 575 0004 054B     		ldr	r3, .L18
+ 576 0006 1B68     		ldr	r3, [r3]
+ 577 0008 0133     		adds	r3, r3, #1
+ 578 000a 044A     		ldr	r2, .L18
+ 579 000c 1360     		str	r3, [r2]
+ 166:Core/Src/task.c ****     }
+ 580              		.loc 1 166 9 discriminator 1
+ 581 000e 044B     		ldr	r3, .L18+4
+ 582 0010 4FF08052 		mov	r2, #268435456
+ 583 0014 1A60     		str	r2, [r3]
+ 165:Core/Src/task.c ****         task_switch();
+ 584              		.loc 1 165 19
+ 585 0016 00BF     		nop
+ 586 0018 F4E7     		b	.L17
+ 587              	.L19:
+ 588 001a 00BF     		.align	2
+ 589              	.L18:
+ 590 001c 00000000 		.word	enter_idle
+ 591 0020 04ED00E0 		.word	-536810236
+ 592              		.cfi_endproc
+ 593              	.LFE73:
+ 595              		.section	.text.scheduler_init,"ax",%progbits
+ 596              		.align	1
+ 597              		.global	scheduler_init
+ 598              		.syntax unified
+ 599              		.thumb
+ 600              		.thumb_func
+ 602              	scheduler_init:
+ 603              	.LFB74:
+ 172:Core/Src/task.c ****     current_tick_count = 0;
+ 604              		.loc 1 172 1
+ 605              		.cfi_startproc
+ 606              		@ args = 0, pretend = 0, frame = 0
+ 607              		@ frame_needed = 1, uses_anonymous_args = 0
+ 608 0000 80B5     		push	{r7, lr}
+ 609              	.LCFI26:
+ 610              		.cfi_def_cfa_offset 8
+ 611              		.cfi_offset 7, -8
+ 612              		.cfi_offset 14, -4
+ 613 0002 82B0     		sub	sp, sp, #8
+ARM GAS  /tmp//cc05OQ6b.s 			page 16
+
+
+ 614              	.LCFI27:
+ 615              		.cfi_def_cfa_offset 16
+ 616 0004 02AF     		add	r7, sp, #8
+ 617              	.LCFI28:
+ 618              		.cfi_def_cfa 7, 8
+ 173:Core/Src/task.c ****     delay_list_init();
+ 619              		.loc 1 173 24
+ 620 0006 0A4B     		ldr	r3, .L21
+ 621 0008 0022     		movs	r2, #0
+ 622 000a 1A60     		str	r2, [r3]
+ 174:Core/Src/task.c ****     task_create(idle_task, NULL, 64, 0, &idle_task_handler);
+ 623              		.loc 1 174 5
+ 624 000c FFF7FEFF 		bl	delay_list_init
+ 175:Core/Src/task.c ****     current_tcb = idle_task_handler;
+ 625              		.loc 1 175 5
+ 626 0010 084B     		ldr	r3, .L21+4
+ 627 0012 0093     		str	r3, [sp]
+ 628 0014 0023     		movs	r3, #0
+ 629 0016 4022     		movs	r2, #64
+ 630 0018 0021     		movs	r1, #0
+ 631 001a 0748     		ldr	r0, .L21+8
+ 632 001c FFF7FEFF 		bl	task_create
+ 176:Core/Src/task.c **** }
+ 633              		.loc 1 176 17
+ 634 0020 044B     		ldr	r3, .L21+4
+ 635 0022 1B68     		ldr	r3, [r3]
+ 636 0024 054A     		ldr	r2, .L21+12
+ 637 0026 1360     		str	r3, [r2]
+ 177:Core/Src/task.c **** 
+ 638              		.loc 1 177 1
+ 639 0028 00BF     		nop
+ 640 002a BD46     		mov	sp, r7
+ 641              	.LCFI29:
+ 642              		.cfi_def_cfa_register 13
+ 643              		@ sp needed
+ 644 002c 80BD     		pop	{r7, pc}
+ 645              	.L22:
+ 646 002e 00BF     		.align	2
+ 647              	.L21:
+ 648 0030 00000000 		.word	current_tick_count
+ 649 0034 00000000 		.word	idle_task_handler
+ 650 0038 00000000 		.word	idle_task
+ 651 003c 00000000 		.word	current_tcb
+ 652              		.cfi_endproc
+ 653              	.LFE74:
+ 655              		.section	.text.scheduler_start,"ax",%progbits
+ 656              		.align	1
+ 657              		.global	scheduler_start
+ 658              		.syntax unified
+ 659              		.thumb
+ 660              		.thumb_func
+ 662              	scheduler_start:
+ 663              	.LFB75:
+ 179:Core/Src/task.c ****     StartFirstTask();
+ 664              		.loc 1 179 27
+ 665              		.cfi_startproc
+ 666              		@ args = 0, pretend = 0, frame = 0
+ARM GAS  /tmp//cc05OQ6b.s 			page 17
+
+
+ 667              		@ frame_needed = 1, uses_anonymous_args = 0
+ 668              		@ link register save eliminated.
+ 669 0000 80B4     		push	{r7}
+ 670              	.LCFI30:
+ 671              		.cfi_def_cfa_offset 4
+ 672              		.cfi_offset 7, -4
+ 673 0002 00AF     		add	r7, sp, #0
+ 674              	.LCFI31:
+ 675              		.cfi_def_cfa_register 7
+ 676              	.LBB14:
+ 677              	.LBB15:
   90:Core/Src/task.c ****     ( *( ( volatile uint32_t * ) 0xe000ed20 ) ) |= ( ( ( uint32_t ) 255UL ) << 24UL );
- 554              		.loc 1 90 5 view .LVU106
+ 678              		.loc 1 90 7
+ 679 0004 164B     		ldr	r3, .L24
+ 680 0006 1B68     		ldr	r3, [r3]
+ 681 0008 154A     		ldr	r2, .L24
   90:Core/Src/task.c ****     ( *( ( volatile uint32_t * ) 0xe000ed20 ) ) |= ( ( ( uint32_t ) 255UL ) << 24UL );
- 555              		.loc 1 90 7 is_stmt 0 view .LVU107
- 556 0000 4FF0E023 		mov	r3, #-536813568
- 557 0004 D3F8202D 		ldr	r2, [r3, #3360]
-  90:Core/Src/task.c ****     ( *( ( volatile uint32_t * ) 0xe000ed20 ) ) |= ( ( ( uint32_t ) 255UL ) << 24UL );
- 558              		.loc 1 90 49 view .LVU108
- 559 0008 42F47F02 		orr	r2, r2, #16711680
- 560 000c C3F8202D 		str	r2, [r3, #3360]
+ 682              		.loc 1 90 49
+ 683 000a 43F47F03 		orr	r3, r3, #16711680
+ 684 000e 1360     		str	r3, [r2]
   91:Core/Src/task.c ****     SysTick->CTRL = 0UL;
- 561              		.loc 1 91 5 is_stmt 1 view .LVU109
+ 685              		.loc 1 91 7
+ 686 0010 134B     		ldr	r3, .L24
+ 687 0012 1B68     		ldr	r3, [r3]
+ 688 0014 124A     		ldr	r2, .L24
   91:Core/Src/task.c ****     SysTick->CTRL = 0UL;
- 562              		.loc 1 91 7 is_stmt 0 view .LVU110
- 563 0010 D3F8202D 		ldr	r2, [r3, #3360]
-  91:Core/Src/task.c ****     SysTick->CTRL = 0UL;
- 564              		.loc 1 91 49 view .LVU111
- 565 0014 42F07F42 		orr	r2, r2, #-16777216
- 566 0018 C3F8202D 		str	r2, [r3, #3360]
+ 689              		.loc 1 91 49
+ 690 0016 43F07F43 		orr	r3, r3, #-16777216
+ 691 001a 1360     		str	r3, [r2]
   92:Core/Src/task.c ****     SysTick->VAL  = 0UL;
- 567              		.loc 1 92 5 is_stmt 1 view .LVU112
+ 692              		.loc 1 92 12
+ 693 001c 114B     		ldr	r3, .L24+4
   92:Core/Src/task.c ****     SysTick->VAL  = 0UL;
- 568              		.loc 1 92 19 is_stmt 0 view .LVU113
- 569 001c 0022     		movs	r2, #0
- 570 001e 1A61     		str	r2, [r3, #16]
+ 694              		.loc 1 92 19
+ 695 001e 0022     		movs	r2, #0
+ 696 0020 1A60     		str	r2, [r3]
   93:Core/Src/task.c ****     SysTick->LOAD = (configSysTickClockHz / configSysTickClockRateHz) - 1UL;
- 571              		.loc 1 93 5 is_stmt 1 view .LVU114
+ 697              		.loc 1 93 12
+ 698 0022 104B     		ldr	r3, .L24+4
   93:Core/Src/task.c ****     SysTick->LOAD = (configSysTickClockHz / configSysTickClockRateHz) - 1UL;
- 572              		.loc 1 93 19 is_stmt 0 view .LVU115
- 573 0020 9A61     		str	r2, [r3, #24]
+ 699              		.loc 1 93 19
+ 700 0024 0022     		movs	r2, #0
+ 701 0026 9A60     		str	r2, [r3, #8]
   94:Core/Src/task.c ****     SysTick->CTRL = ( ( 1UL << 2UL ) | ( 1UL << 1UL ) | ( 1UL << 0UL ) );
- 574              		.loc 1 94 5 is_stmt 1 view .LVU116
+ 702              		.loc 1 94 12
+ 703 0028 0E4B     		ldr	r3, .L24+4
   94:Core/Src/task.c ****     SysTick->CTRL = ( ( 1UL << 2UL ) | ( 1UL << 1UL ) | ( 1UL << 0UL ) );
- 575              		.loc 1 94 19 is_stmt 0 view .LVU117
- 576 0022 41F61F42 		movw	r2, #7199
- 577 0026 5A61     		str	r2, [r3, #20]
+ 704              		.loc 1 94 19
+ 705 002a 41F61F42 		movw	r2, #7199
+ 706 002e 5A60     		str	r2, [r3, #4]
   95:Core/Src/task.c ****     __asm volatile (
- 578              		.loc 1 95 5 is_stmt 1 view .LVU118
+ 707              		.loc 1 95 12
+ 708 0030 0C4B     		ldr	r3, .L24+4
   95:Core/Src/task.c ****     __asm volatile (
- 579              		.loc 1 95 19 is_stmt 0 view .LVU119
- 580 0028 0722     		movs	r2, #7
- 581 002a 1A61     		str	r2, [r3, #16]
+ 709              		.loc 1 95 19
+ 710 0032 0722     		movs	r2, #7
+ 711 0034 1A60     		str	r2, [r3]
+ARM GAS  /tmp//cc05OQ6b.s 			page 18
+
+
   96:Core/Src/task.c ****         " ldr r0, =0xE000ED08   \n" /* Use the NVIC offset register to locate the stack. */
- 582              		.loc 1 96 5 is_stmt 1 view .LVU120
- 583              		.syntax unified
- 584              	@ 96 "Core/Src/task.c" 1
- 585 002c 0648     		 ldr r0, =0xE000ED08   
- 586 002e 0068     	 ldr r0, [r0]          
- 587 0030 0068     	 ldr r0, [r0]          
- 588 0032 80F30888 	 msr msp, r0           
- 589 0036 62B6     	 cpsie i               
- 590 0038 61B6     	 cpsie f               
- 591 003a BFF34F8F 	 dsb                   
-ARM GAS  /tmp/cciKPolz.s 			page 17
+ 712              		.loc 1 96 5
+ 713              		.syntax unified
+ 714              	@ 96 "Core/Src/task.c" 1
+ 715 0036 0648     		 ldr r0, =0xE000ED08   
+ 716 0038 0068     	 ldr r0, [r0]          
+ 717 003a 0068     	 ldr r0, [r0]          
+ 718 003c 80F30888 	 msr msp, r0           
+ 719 0040 62B6     	 cpsie i               
+ 720 0042 61B6     	 cpsie f               
+ 721 0044 BFF34F8F 	 dsb                   
+ 722 0048 BFF36F8F 	 isb                   
+ 723 004c 00DF     	 svc 0                 
+ 724 004e 00BF     	 nop                   
+ 725 0050 08ED00E0 	 .ltorg                
+ 726              	
+ 727              	@ 0 "" 2
+ 108:Core/Src/task.c **** 
+ 728              		.loc 1 108 1
+ 729              		.thumb
+ 730              		.syntax unified
+ 731 0054 00BF     		nop
+ 732              	.LBE15:
+ 733              	.LBE14:
+ 181:Core/Src/task.c **** 
+ 734              		.loc 1 181 1
+ 735 0056 00BF     		nop
+ 736 0058 BD46     		mov	sp, r7
+ 737              	.LCFI32:
+ 738              		.cfi_def_cfa_register 13
+ 739              		@ sp needed
+ 740 005a 80BC     		pop	{r7}
+ 741              	.LCFI33:
+ 742              		.cfi_restore 7
+ 743              		.cfi_def_cfa_offset 0
+ 744 005c 7047     		bx	lr
+ 745              	.L25:
+ 746 005e 00BF     		.align	2
+ 747              	.L24:
+ 748 0060 20ED00E0 		.word	-536810208
+ 749 0064 10E000E0 		.word	-536813552
+ 750              		.cfi_endproc
+ 751              	.LFE75:
+ 753              		.section	.text.vTaskSwitchContext,"ax",%progbits
+ 754              		.align	1
+ 755              		.global	vTaskSwitchContext
+ 756              		.syntax unified
+ 757              		.thumb
+ 758              		.thumb_func
+ 760              	vTaskSwitchContext:
+ 761              	.LFB76:
+ 184:Core/Src/task.c ****     current_tcb = ready_list[get_highest_priority()];
+ 762              		.loc 1 184 30
+ 763              		.cfi_startproc
+ 764              		@ args = 0, pretend = 0, frame = 8
+ 765              		@ frame_needed = 1, uses_anonymous_args = 0
+ 766              		@ link register save eliminated.
+ARM GAS  /tmp//cc05OQ6b.s 			page 19
 
 
- 592 003e BFF36F8F 	 isb                   
- 593 0042 00DF     	 svc 0                 
- 594 0044 00BF     	 nop                   
- 595 0046 000008ED 	 .ltorg                
- 595      00E0
- 596              	
- 597              	@ 0 "" 2
- 598              		.thumb
- 599              		.syntax unified
- 600              	.LBE15:
- 601              	.LBE14:
- 179:Core/Src/task.c **** 
- 602              		.loc 1 179 1 is_stmt 0 view .LVU121
- 603 004c 7047     		bx	lr
- 604              		.cfi_endproc
- 605              	.LFE75:
- 607 004e 00BF     		.section	.text.vTaskSwitchContext,"ax",%progbits
- 608              		.align	1
- 609              		.global	vTaskSwitchContext
- 610              		.syntax unified
- 611              		.thumb
- 612              		.thumb_func
- 614              	vTaskSwitchContext:
- 615              	.LFB76:
- 182:Core/Src/task.c ****     current_tcb = ready_list[get_highest_priority()];
- 616              		.loc 1 182 30 is_stmt 1 view -0
- 617              		.cfi_startproc
- 618              		@ args = 0, pretend = 0, frame = 0
- 619              		@ frame_needed = 0, uses_anonymous_args = 0
- 620              		@ link register save eliminated.
- 183:Core/Src/task.c **** }
- 621              		.loc 1 183 5 view .LVU123
- 622              	.LBB16:
- 623              	.LBI16:
- 218:Core/Src/task.c **** {
- 624              		.loc 1 218 58 view .LVU124
- 625              	.LBB17:
- 220:Core/Src/task.c ****     uint8_t temp;
- 626              		.loc 1 220 5 view .LVU125
- 221:Core/Src/task.c ****     __asm volatile
- 627              		.loc 1 221 5 view .LVU126
- 222:Core/Src/task.c ****             (
- 628              		.loc 1 222 5 view .LVU127
- 629 0000 074B     		ldr	r3, .L29
- 630 0002 1B68     		ldr	r3, [r3]
- 631              		.syntax unified
- 632              	@ 222 "Core/Src/task.c" 1
- 633 0004 B3FA83F3 		clz r3, r3
- 634 0008 4FF01F02 	mov r2, #31
- 635 000c A2EB0303 	sub r3, r2, r3
- 636              	
- 637              	@ 0 "" 2
- 638              		.thumb
- 639              		.syntax unified
- 640 0010 DBB2     		uxtb	r3, r3
- 641              	.LVL22:
- 230:Core/Src/task.c **** }
-ARM GAS  /tmp/cciKPolz.s 			page 18
+ 767 0000 80B4     		push	{r7}
+ 768              	.LCFI34:
+ 769              		.cfi_def_cfa_offset 4
+ 770              		.cfi_offset 7, -4
+ 771 0002 83B0     		sub	sp, sp, #12
+ 772              	.LCFI35:
+ 773              		.cfi_def_cfa_offset 16
+ 774 0004 00AF     		add	r7, sp, #0
+ 775              	.LCFI36:
+ 776              		.cfi_def_cfa_register 7
+ 777              	.LBB16:
+ 778              	.LBB17:
+ 219:Core/Src/task.c **** 
+ 220:Core/Src/task.c **** __attribute__( ( always_inline ) ) static inline uint8_t get_highest_priority( void )
+ 221:Core/Src/task.c **** {
+ 222:Core/Src/task.c ****     uint8_t top_zero;
+ 223:Core/Src/task.c ****     uint8_t temp;
+ 224:Core/Src/task.c **** 
+ 225:Core/Src/task.c ****     __asm volatile
+ 779              		.loc 1 225 5
+ 780 0006 0B4B     		ldr	r3, .L28
+ 781 0008 1B68     		ldr	r3, [r3]
+ 782              		.syntax unified
+ 783              	@ 225 "Core/Src/task.c" 1
+ 784 000a B3FA83F2 		clz r2, r3
+ 785 000e 4FF01F03 	mov r3, #31
+ 786 0012 A3EB0202 	sub r2, r3, r2
+ 787              	
+ 788              	@ 0 "" 2
+ 789              		.thumb
+ 790              		.syntax unified
+ 791 0016 FA71     		strb	r2, [r7, #7]
+ 792 0018 BB71     		strb	r3, [r7, #6]
+ 226:Core/Src/task.c ****             (
+ 227:Core/Src/task.c ****             "clz %0, %2\n"
+ 228:Core/Src/task.c ****             "mov %1, #31\n"
+ 229:Core/Src/task.c ****             "sub %0, %1, %0\n"
+ 230:Core/Src/task.c ****             :"=r" (top_zero),"=r"(temp)
+ 231:Core/Src/task.c ****             :"r" (ready_bits)
+ 232:Core/Src/task.c ****             );
+ 233:Core/Src/task.c ****     return top_zero;
+ 793              		.loc 1 233 12
+ 794 001a FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 795              	.LBE17:
+ 796              	.LBE16:
+ 185:Core/Src/task.c **** }
+ 797              		.loc 1 185 30 discriminator 1
+ 798 001c 1A46     		mov	r2, r3
+ 185:Core/Src/task.c **** }
+ 799              		.loc 1 185 29 discriminator 1
+ 800 001e 064B     		ldr	r3, .L28+4
+ 801 0020 53F82230 		ldr	r3, [r3, r2, lsl #2]
+ 185:Core/Src/task.c **** }
+ 802              		.loc 1 185 17 discriminator 1
+ 803 0024 054A     		ldr	r2, .L28+8
+ 804 0026 1360     		str	r3, [r2]
+ 186:Core/Src/task.c **** 
+ARM GAS  /tmp//cc05OQ6b.s 			page 20
 
 
- 642              		.loc 1 230 5 view .LVU128
- 230:Core/Src/task.c **** }
- 643              		.loc 1 230 5 is_stmt 0 view .LVU129
- 644              	.LBE17:
- 645              	.LBE16:
- 183:Core/Src/task.c **** }
- 646              		.loc 1 183 29 discriminator 1 view .LVU130
- 647 0012 044A     		ldr	r2, .L29+4
- 648 0014 52F82320 		ldr	r2, [r2, r3, lsl #2]
- 183:Core/Src/task.c **** }
- 649              		.loc 1 183 17 discriminator 1 view .LVU131
- 650 0018 034B     		ldr	r3, .L29+8
- 651 001a 1A60     		str	r2, [r3]
- 184:Core/Src/task.c **** 
- 652              		.loc 1 184 1 view .LVU132
- 653 001c 7047     		bx	lr
- 654              	.L30:
- 655 001e 00BF     		.align	2
- 656              	.L29:
- 657 0020 00000000 		.word	ready_bits
- 658 0024 00000000 		.word	ready_list
- 659 0028 00000000 		.word	current_tcb
- 660              		.cfi_endproc
- 661              	.LFE76:
- 663              		.section	.text.critical_enter,"ax",%progbits
- 664              		.align	1
- 665              		.global	critical_enter
- 666              		.syntax unified
- 667              		.thumb
- 668              		.thumb_func
- 670              	critical_enter:
- 671              	.LFB77:
- 187:Core/Src/task.c ****     uint32_t ret;
- 672              		.loc 1 187 1 is_stmt 1 view -0
- 673              		.cfi_startproc
- 674              		@ args = 0, pretend = 0, frame = 0
- 675              		@ frame_needed = 0, uses_anonymous_args = 0
- 676              		@ link register save eliminated.
- 188:Core/Src/task.c ****     uint32_t temp;
- 677              		.loc 1 188 5 view .LVU134
- 189:Core/Src/task.c ****     __asm volatile(
- 678              		.loc 1 189 5 view .LVU135
- 190:Core/Src/task.c ****             " cpsid i               \n"
- 679              		.loc 1 190 5 view .LVU136
- 680 0000 BF20     		movs	r0, #191
- 681              		.syntax unified
- 682              	@ 190 "Core/Src/task.c" 1
- 683 0002 72B6     		 cpsid i               
- 684 0004 EFF31180 	 mrs r0, basepri       
- 685 0008 0346     	 mov r3, r0            
- 686 000a 83F31188 	 msr basepri, r3       
- 687 000e BFF34F8F 	 dsb                   
- 688 0012 BFF36F8F 	 isb                   
- 689 0016 62B6     	 cpsie i               
- 690              	
- 691              	@ 0 "" 2
- 692              	.LVL23:
-ARM GAS  /tmp/cciKPolz.s 			page 19
+ 805              		.loc 1 186 1
+ 806 0028 00BF     		nop
+ 807 002a 0C37     		adds	r7, r7, #12
+ 808              	.LCFI37:
+ 809              		.cfi_def_cfa_offset 4
+ 810 002c BD46     		mov	sp, r7
+ 811              	.LCFI38:
+ 812              		.cfi_def_cfa_register 13
+ 813              		@ sp needed
+ 814 002e 80BC     		pop	{r7}
+ 815              	.LCFI39:
+ 816              		.cfi_restore 7
+ 817              		.cfi_def_cfa_offset 0
+ 818 0030 7047     		bx	lr
+ 819              	.L29:
+ 820 0032 00BF     		.align	2
+ 821              	.L28:
+ 822 0034 00000000 		.word	ready_bits
+ 823 0038 00000000 		.word	ready_list
+ 824 003c 00000000 		.word	current_tcb
+ 825              		.cfi_endproc
+ 826              	.LFE76:
+ 828              		.section	.text.critical_enter,"ax",%progbits
+ 829              		.align	1
+ 830              		.global	critical_enter
+ 831              		.syntax unified
+ 832              		.thumb
+ 833              		.thumb_func
+ 835              	critical_enter:
+ 836              	.LFB77:
+ 189:Core/Src/task.c ****     uint32_t ret;
+ 837              		.loc 1 189 1
+ 838              		.cfi_startproc
+ 839              		@ args = 0, pretend = 0, frame = 8
+ 840              		@ frame_needed = 1, uses_anonymous_args = 0
+ 841              		@ link register save eliminated.
+ 842 0000 80B4     		push	{r7}
+ 843              	.LCFI40:
+ 844              		.cfi_def_cfa_offset 4
+ 845              		.cfi_offset 7, -4
+ 846 0002 83B0     		sub	sp, sp, #12
+ 847              	.LCFI41:
+ 848              		.cfi_def_cfa_offset 16
+ 849 0004 00AF     		add	r7, sp, #0
+ 850              	.LCFI42:
+ 851              		.cfi_def_cfa_register 7
+ 192:Core/Src/task.c ****             " cpsid i               \n"
+ 852              		.loc 1 192 5
+ 853 0006 BF23     		movs	r3, #191
+ 854              		.syntax unified
+ 855              	@ 192 "Core/Src/task.c" 1
+ 856 0008 72B6     		 cpsid i               
+ 857 000a EFF31182 	 mrs r2, basepri       
+ 858 000e 1B46     	 mov r3, r3            
+ 859 0010 83F31188 	 msr basepri, r3       
+ 860 0014 BFF34F8F 	 dsb                   
+ 861 0018 BFF36F8F 	 isb                   
+ARM GAS  /tmp//cc05OQ6b.s 			page 21
 
 
- 202:Core/Src/task.c **** }
- 693              		.loc 1 202 5 view .LVU137
- 203:Core/Src/task.c **** 
- 694              		.loc 1 203 1 is_stmt 0 view .LVU138
- 695              		.thumb
- 696              		.syntax unified
- 697 0018 7047     		bx	lr
- 698              		.cfi_endproc
- 699              	.LFE77:
- 701              		.section	.text.critical_exit,"ax",%progbits
- 702              		.align	1
- 703              		.global	critical_exit
- 704              		.syntax unified
- 705              		.thumb
- 706              		.thumb_func
- 708              	critical_exit:
- 709              	.LVL24:
- 710              	.LFB78:
- 206:Core/Src/task.c ****     __asm volatile(
- 711              		.loc 1 206 1 is_stmt 1 view -0
- 712              		.cfi_startproc
- 713              		@ args = 0, pretend = 0, frame = 0
- 714              		@ frame_needed = 0, uses_anonymous_args = 0
- 715              		@ link register save eliminated.
- 207:Core/Src/task.c ****             " cpsid i               \n"
- 716              		.loc 1 207 5 view .LVU140
- 717              		.syntax unified
- 718              	@ 207 "Core/Src/task.c" 1
- 719 0000 72B6     		 cpsid i               
- 720 0002 80F31188 	 msr basepri, r0       
- 721 0006 BFF34F8F 	 dsb                   
- 722 000a BFF36F8F 	 isb                   
- 723 000e 62B6     	 cpsie i               
- 724              	
- 725              	@ 0 "" 2
- 216:Core/Src/task.c **** 
- 726              		.loc 1 216 1 is_stmt 0 view .LVU141
- 727              		.thumb
- 728              		.syntax unified
- 729 0010 7047     		bx	lr
- 730              		.cfi_endproc
- 731              	.LFE78:
- 733              		.section	.text.delay_list_switch,"ax",%progbits
- 734              		.align	1
- 735              		.global	delay_list_switch
- 736              		.syntax unified
- 737              		.thumb
- 738              		.thumb_func
- 740              	delay_list_switch:
- 741              	.LFB81:
- 238:Core/Src/task.c **** 
- 239:Core/Src/task.c **** void delay_list_switch(void){
- 742              		.loc 1 239 29 is_stmt 1 view -0
- 743              		.cfi_startproc
- 744              		@ args = 0, pretend = 0, frame = 0
- 745              		@ frame_needed = 0, uses_anonymous_args = 0
- 746              		@ link register save eliminated.
-ARM GAS  /tmp/cciKPolz.s 			page 20
+ 862 001c 62B6     	 cpsie i               
+ 863              	
+ 864              	@ 0 "" 2
+ 865              		.thumb
+ 866              		.syntax unified
+ 867 001e 7A60     		str	r2, [r7, #4]
+ 868 0020 3B60     		str	r3, [r7]
+ 204:Core/Src/task.c **** }
+ 869              		.loc 1 204 12
+ 870 0022 7B68     		ldr	r3, [r7, #4]
+ 205:Core/Src/task.c **** 
+ 871              		.loc 1 205 1
+ 872 0024 1846     		mov	r0, r3
+ 873 0026 0C37     		adds	r7, r7, #12
+ 874              	.LCFI43:
+ 875              		.cfi_def_cfa_offset 4
+ 876 0028 BD46     		mov	sp, r7
+ 877              	.LCFI44:
+ 878              		.cfi_def_cfa_register 13
+ 879              		@ sp needed
+ 880 002a 80BC     		pop	{r7}
+ 881              	.LCFI45:
+ 882              		.cfi_restore 7
+ 883              		.cfi_def_cfa_offset 0
+ 884 002c 7047     		bx	lr
+ 885              		.cfi_endproc
+ 886              	.LFE77:
+ 888              		.section	.text.critical_exit,"ax",%progbits
+ 889              		.align	1
+ 890              		.global	critical_exit
+ 891              		.syntax unified
+ 892              		.thumb
+ 893              		.thumb_func
+ 895              	critical_exit:
+ 896              	.LFB78:
+ 208:Core/Src/task.c ****     __asm volatile(
+ 897              		.loc 1 208 1
+ 898              		.cfi_startproc
+ 899              		@ args = 0, pretend = 0, frame = 8
+ 900              		@ frame_needed = 1, uses_anonymous_args = 0
+ 901              		@ link register save eliminated.
+ 902 0000 80B4     		push	{r7}
+ 903              	.LCFI46:
+ 904              		.cfi_def_cfa_offset 4
+ 905              		.cfi_offset 7, -4
+ 906 0002 83B0     		sub	sp, sp, #12
+ 907              	.LCFI47:
+ 908              		.cfi_def_cfa_offset 16
+ 909 0004 00AF     		add	r7, sp, #0
+ 910              	.LCFI48:
+ 911              		.cfi_def_cfa_register 7
+ 912 0006 7860     		str	r0, [r7, #4]
+ 209:Core/Src/task.c ****             " cpsid i               \n"
+ 913              		.loc 1 209 5
+ 914 0008 7B68     		ldr	r3, [r7, #4]
+ 915              		.syntax unified
+ 916              	@ 209 "Core/Src/task.c" 1
+ARM GAS  /tmp//cc05OQ6b.s 			page 22
 
 
- 240:Core/Src/task.c ****     uint32_t* tmp;
- 747              		.loc 1 240 5 view .LVU143
- 241:Core/Src/task.c ****     tmp = delay_list;
- 748              		.loc 1 241 5 view .LVU144
- 749              		.loc 1 241 9 is_stmt 0 view .LVU145
- 750 0000 034A     		ldr	r2, .L34
- 751 0002 1168     		ldr	r1, [r2]
- 752              	.LVL25:
- 242:Core/Src/task.c ****     delay_list = delay_overflow_list;
- 753              		.loc 1 242 5 is_stmt 1 view .LVU146
- 754              		.loc 1 242 16 is_stmt 0 view .LVU147
- 755 0004 034B     		ldr	r3, .L34+4
- 756 0006 1868     		ldr	r0, [r3]
- 757 0008 1060     		str	r0, [r2]
- 243:Core/Src/task.c ****     delay_overflow_list = tmp;
- 758              		.loc 1 243 5 is_stmt 1 view .LVU148
- 759              		.loc 1 243 25 is_stmt 0 view .LVU149
- 760 000a 1960     		str	r1, [r3]
- 244:Core/Src/task.c **** }
- 761              		.loc 1 244 1 view .LVU150
- 762 000c 7047     		bx	lr
- 763              	.L35:
- 764 000e 00BF     		.align	2
- 765              	.L34:
- 766 0010 00000000 		.word	delay_list
- 767 0014 00000000 		.word	delay_overflow_list
- 768              		.cfi_endproc
- 769              	.LFE81:
- 771              		.section	.text.task_delay,"ax",%progbits
- 772              		.align	1
- 773              		.global	task_delay
- 774              		.syntax unified
- 775              		.thumb
- 776              		.thumb_func
- 778              	task_delay:
- 779              	.LVL26:
- 780              	.LFB82:
- 245:Core/Src/task.c **** 
- 246:Core/Src/task.c **** void task_delay(uint32_t ticks){
- 781              		.loc 1 246 32 is_stmt 1 view -0
- 782              		.cfi_startproc
- 783              		@ args = 0, pretend = 0, frame = 0
- 784              		@ frame_needed = 0, uses_anonymous_args = 0
- 785              		@ link register save eliminated.
- 247:Core/Src/task.c ****     uint32_t time_to_wake = ticks + current_tick_count;
- 786              		.loc 1 247 5 view .LVU152
- 787              		.loc 1 247 35 is_stmt 0 view .LVU153
- 788 0000 0E4B     		ldr	r3, .L39
- 789 0002 1B68     		ldr	r3, [r3]
- 790              	.LVL27:
- 248:Core/Src/task.c ****     uint32_t priority = current_tcb->priority;
- 791              		.loc 1 248 5 is_stmt 1 view .LVU154
- 792              		.loc 1 248 36 is_stmt 0 view .LVU155
- 793 0004 0E4A     		ldr	r2, .L39+4
- 794 0006 1268     		ldr	r2, [r2]
- 795              		.loc 1 248 14 view .LVU156
- 796 0008 5168     		ldr	r1, [r2, #4]
-ARM GAS  /tmp/cciKPolz.s 			page 21
+ 917 000a 72B6     		 cpsid i               
+ 918 000c 83F31188 	 msr basepri, r3       
+ 919 0010 BFF34F8F 	 dsb                   
+ 920 0014 BFF36F8F 	 isb                   
+ 921 0018 62B6     	 cpsie i               
+ 922              	
+ 923              	@ 0 "" 2
+ 218:Core/Src/task.c **** 
+ 924              		.loc 1 218 1
+ 925              		.thumb
+ 926              		.syntax unified
+ 927 001a 00BF     		nop
+ 928 001c 0C37     		adds	r7, r7, #12
+ 929              	.LCFI49:
+ 930              		.cfi_def_cfa_offset 4
+ 931 001e BD46     		mov	sp, r7
+ 932              	.LCFI50:
+ 933              		.cfi_def_cfa_register 13
+ 934              		@ sp needed
+ 935 0020 80BC     		pop	{r7}
+ 936              	.LCFI51:
+ 937              		.cfi_restore 7
+ 938              		.cfi_def_cfa_offset 0
+ 939 0022 7047     		bx	lr
+ 940              		.cfi_endproc
+ 941              	.LFE78:
+ 943              		.section	.text.delay_list_init,"ax",%progbits
+ 944              		.align	1
+ 945              		.syntax unified
+ 946              		.thumb
+ 947              		.thumb_func
+ 949              	delay_list_init:
+ 950              	.LFB80:
+ 234:Core/Src/task.c **** }
+ 235:Core/Src/task.c **** 
+ 236:Core/Src/task.c **** static void delay_list_init(void){
+ 951              		.loc 1 236 34
+ 952              		.cfi_startproc
+ 953              		@ args = 0, pretend = 0, frame = 0
+ 954              		@ frame_needed = 1, uses_anonymous_args = 0
+ 955              		@ link register save eliminated.
+ 956 0000 80B4     		push	{r7}
+ 957              	.LCFI52:
+ 958              		.cfi_def_cfa_offset 4
+ 959              		.cfi_offset 7, -4
+ 960 0002 00AF     		add	r7, sp, #0
+ 961              	.LCFI53:
+ 962              		.cfi_def_cfa_register 7
+ 237:Core/Src/task.c ****     current_tick_count = 0;
+ 963              		.loc 1 237 24
+ 964 0004 064B     		ldr	r3, .L34
+ 965 0006 0022     		movs	r2, #0
+ 966 0008 1A60     		str	r2, [r3]
+ 238:Core/Src/task.c ****     delay_list = delay_lst;
+ 967              		.loc 1 238 16
+ 968 000a 064B     		ldr	r3, .L34+4
+ 969 000c 064A     		ldr	r2, .L34+8
+ARM GAS  /tmp//cc05OQ6b.s 			page 23
 
 
- 797              	.LVL28:
- 249:Core/Src/task.c ****     //overflow
- 250:Core/Src/task.c ****     if(time_to_wake < current_tick_count){
- 798              		.loc 1 250 5 is_stmt 1 view .LVU157
- 799              		.loc 1 250 7 is_stmt 0 view .LVU158
- 800 000a 1B18     		adds	r3, r3, r0
- 801              	.LVL29:
- 802              		.loc 1 250 7 view .LVU159
- 803 000c 11D3     		bcc	.L37
- 251:Core/Src/task.c ****         delay_overflow_list[priority] = time_to_wake;
- 804              		.loc 1 251 9 is_stmt 1 view .LVU160
- 805              		.loc 1 251 28 is_stmt 0 view .LVU161
- 806 000e 0D4A     		ldr	r2, .L39+8
- 807 0010 1268     		ldr	r2, [r2]
- 808              		.loc 1 251 39 view .LVU162
- 809 0012 42F82130 		str	r3, [r2, r1, lsl #2]
- 810              	.L38:
- 252:Core/Src/task.c ****     }else{
- 253:Core/Src/task.c ****         delay_list[priority] = time_to_wake;
- 254:Core/Src/task.c ****     }
- 255:Core/Src/task.c **** 
- 256:Core/Src/task.c ****     ready_bits &= ~(1 << priority);
- 811              		.loc 1 256 5 is_stmt 1 view .LVU163
- 812              		.loc 1 256 23 is_stmt 0 view .LVU164
- 813 0016 0122     		movs	r2, #1
- 814 0018 8A40     		lsls	r2, r2, r1
- 815              		.loc 1 256 16 view .LVU165
- 816 001a 0B49     		ldr	r1, .L39+12
- 817              	.LVL30:
- 818              		.loc 1 256 16 view .LVU166
- 819 001c 0B68     		ldr	r3, [r1]
- 820              	.LVL31:
- 821              		.loc 1 256 16 view .LVU167
- 822 001e 23EA0203 		bic	r3, r3, r2
- 823 0022 0B60     		str	r3, [r1]
- 257:Core/Src/task.c ****     task_switch();
- 824              		.loc 1 257 5 is_stmt 1 view .LVU168
- 825 0024 4FF0E023 		mov	r3, #-536813568
- 826 0028 4FF08052 		mov	r2, #268435456
- 827 002c C3F8042D 		str	r2, [r3, #3332]
- 828              	.LVL32:
- 258:Core/Src/task.c **** }
- 829              		.loc 1 258 1 is_stmt 0 view .LVU169
- 830 0030 7047     		bx	lr
- 831              	.LVL33:
- 832              	.L37:
- 253:Core/Src/task.c ****     }
- 833              		.loc 1 253 9 is_stmt 1 view .LVU170
- 253:Core/Src/task.c ****     }
- 834              		.loc 1 253 19 is_stmt 0 view .LVU171
- 835 0032 064A     		ldr	r2, .L39+16
- 836 0034 1268     		ldr	r2, [r2]
- 253:Core/Src/task.c ****     }
- 837              		.loc 1 253 30 view .LVU172
- 838 0036 42F82130 		str	r3, [r2, r1, lsl #2]
- 839 003a ECE7     		b	.L38
- 840              	.L40:
-ARM GAS  /tmp/cciKPolz.s 			page 22
+ 970 000e 1A60     		str	r2, [r3]
+ 239:Core/Src/task.c ****     delay_overflow_list = delay_overflow_lst;
+ 971              		.loc 1 239 25
+ 972 0010 064B     		ldr	r3, .L34+12
+ 973 0012 074A     		ldr	r2, .L34+16
+ 974 0014 1A60     		str	r2, [r3]
+ 240:Core/Src/task.c **** }
+ 975              		.loc 1 240 1
+ 976 0016 00BF     		nop
+ 977 0018 BD46     		mov	sp, r7
+ 978              	.LCFI54:
+ 979              		.cfi_def_cfa_register 13
+ 980              		@ sp needed
+ 981 001a 80BC     		pop	{r7}
+ 982              	.LCFI55:
+ 983              		.cfi_restore 7
+ 984              		.cfi_def_cfa_offset 0
+ 985 001c 7047     		bx	lr
+ 986              	.L35:
+ 987 001e 00BF     		.align	2
+ 988              	.L34:
+ 989 0020 00000000 		.word	current_tick_count
+ 990 0024 00000000 		.word	delay_list
+ 991 0028 00000000 		.word	delay_lst
+ 992 002c 00000000 		.word	delay_overflow_list
+ 993 0030 00000000 		.word	delay_overflow_lst
+ 994              		.cfi_endproc
+ 995              	.LFE80:
+ 997              		.section	.text.delay_list_switch,"ax",%progbits
+ 998              		.align	1
+ 999              		.global	delay_list_switch
+ 1000              		.syntax unified
+ 1001              		.thumb
+ 1002              		.thumb_func
+ 1004              	delay_list_switch:
+ 1005              	.LFB81:
+ 241:Core/Src/task.c **** 
+ 242:Core/Src/task.c **** void delay_list_switch(void){
+ 1006              		.loc 1 242 29
+ 1007              		.cfi_startproc
+ 1008              		@ args = 0, pretend = 0, frame = 8
+ 1009              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1010              		@ link register save eliminated.
+ 1011 0000 80B4     		push	{r7}
+ 1012              	.LCFI56:
+ 1013              		.cfi_def_cfa_offset 4
+ 1014              		.cfi_offset 7, -4
+ 1015 0002 83B0     		sub	sp, sp, #12
+ 1016              	.LCFI57:
+ 1017              		.cfi_def_cfa_offset 16
+ 1018 0004 00AF     		add	r7, sp, #0
+ 1019              	.LCFI58:
+ 1020              		.cfi_def_cfa_register 7
+ 243:Core/Src/task.c ****     uint32_t* tmp;
+ 244:Core/Src/task.c ****     tmp = delay_list;
+ 1021              		.loc 1 244 9
+ 1022 0006 074B     		ldr	r3, .L37
+ARM GAS  /tmp//cc05OQ6b.s 			page 24
 
 
- 841              		.align	2
- 842              	.L39:
- 843 003c 00000000 		.word	current_tick_count
- 844 0040 00000000 		.word	current_tcb
- 845 0044 00000000 		.word	delay_overflow_list
- 846 0048 00000000 		.word	ready_bits
- 847 004c 00000000 		.word	delay_list
- 848              		.cfi_endproc
- 849              	.LFE82:
- 851              		.global	enter_idle
- 852              		.section	.bss.enter_idle,"aw",%nobits
- 853              		.align	2
- 856              	enter_idle:
- 857 0000 00000000 		.space	4
- 858              		.section	.bss.current_tick_count,"aw",%nobits
- 859              		.align	2
- 862              	current_tick_count:
- 863 0000 00000000 		.space	4
- 864              		.section	.bss.max_priority,"aw",%nobits
- 865              		.align	2
- 868              	max_priority:
- 869 0000 00000000 		.space	4
- 870              		.section	.bss.delay_overflow_list,"aw",%nobits
- 871              		.align	2
- 874              	delay_overflow_list:
- 875 0000 00000000 		.space	4
- 876              		.section	.bss.delay_list,"aw",%nobits
- 877              		.align	2
- 880              	delay_list:
- 881 0000 00000000 		.space	4
- 882              		.section	.bss.delay_overflow_lst,"aw",%nobits
- 883              		.align	2
- 886              	delay_overflow_lst:
- 887 0000 00000000 		.space	128
- 887      00000000 
- 887      00000000 
- 887      00000000 
- 887      00000000 
- 888              		.section	.bss.delay_lst,"aw",%nobits
- 889              		.align	2
- 892              	delay_lst:
- 893 0000 00000000 		.space	128
- 893      00000000 
- 893      00000000 
- 893      00000000 
- 893      00000000 
- 894              		.section	.bss.ready_bits,"aw",%nobits
- 895              		.align	2
- 898              	ready_bits:
- 899 0000 00000000 		.space	4
- 900              		.section	.bss.ready_list,"aw",%nobits
- 901              		.align	2
- 904              	ready_list:
- 905 0000 00000000 		.space	128
- 905      00000000 
- 905      00000000 
- 905      00000000 
-ARM GAS  /tmp/cciKPolz.s 			page 23
+ 1023 0008 1B68     		ldr	r3, [r3]
+ 1024 000a 7B60     		str	r3, [r7, #4]
+ 245:Core/Src/task.c ****     delay_list = delay_overflow_list;
+ 1025              		.loc 1 245 16
+ 1026 000c 064B     		ldr	r3, .L37+4
+ 1027 000e 1B68     		ldr	r3, [r3]
+ 1028 0010 044A     		ldr	r2, .L37
+ 1029 0012 1360     		str	r3, [r2]
+ 246:Core/Src/task.c ****     delay_overflow_list = tmp;
+ 1030              		.loc 1 246 25
+ 1031 0014 044A     		ldr	r2, .L37+4
+ 1032 0016 7B68     		ldr	r3, [r7, #4]
+ 1033 0018 1360     		str	r3, [r2]
+ 247:Core/Src/task.c **** }
+ 1034              		.loc 1 247 1
+ 1035 001a 00BF     		nop
+ 1036 001c 0C37     		adds	r7, r7, #12
+ 1037              	.LCFI59:
+ 1038              		.cfi_def_cfa_offset 4
+ 1039 001e BD46     		mov	sp, r7
+ 1040              	.LCFI60:
+ 1041              		.cfi_def_cfa_register 13
+ 1042              		@ sp needed
+ 1043 0020 80BC     		pop	{r7}
+ 1044              	.LCFI61:
+ 1045              		.cfi_restore 7
+ 1046              		.cfi_def_cfa_offset 0
+ 1047 0022 7047     		bx	lr
+ 1048              	.L38:
+ 1049              		.align	2
+ 1050              	.L37:
+ 1051 0024 00000000 		.word	delay_list
+ 1052 0028 00000000 		.word	delay_overflow_list
+ 1053              		.cfi_endproc
+ 1054              	.LFE81:
+ 1056              		.section	.text.task_delay,"ax",%progbits
+ 1057              		.align	1
+ 1058              		.global	task_delay
+ 1059              		.syntax unified
+ 1060              		.thumb
+ 1061              		.thumb_func
+ 1063              	task_delay:
+ 1064              	.LFB82:
+ 248:Core/Src/task.c **** 
+ 249:Core/Src/task.c **** void task_delay(uint32_t ticks){uint32_t time_to_wake = ticks + current_tick_count; uint32_t priori
+ 1065              		.loc 1 249 32
+ 1066              		.cfi_startproc
+ 1067              		@ args = 0, pretend = 0, frame = 16
+ 1068              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1069              		@ link register save eliminated.
+ 1070 0000 80B4     		push	{r7}
+ 1071              	.LCFI62:
+ 1072              		.cfi_def_cfa_offset 4
+ 1073              		.cfi_offset 7, -4
+ 1074 0002 85B0     		sub	sp, sp, #20
+ 1075              	.LCFI63:
+ 1076              		.cfi_def_cfa_offset 24
+ARM GAS  /tmp//cc05OQ6b.s 			page 25
 
 
- 905      00000000 
- 906              		.section	.bss.idle_task_handler,"aw",%nobits
- 907              		.align	2
- 910              	idle_task_handler:
- 911 0000 00000000 		.space	4
- 912              		.global	current_tcb
- 913              		.section	.bss.current_tcb,"aw",%nobits
- 914              		.align	2
- 917              	current_tcb:
- 918 0000 00000000 		.space	4
- 919              		.text
- 920              	.Letext0:
- 921              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
- 922              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
- 923              		.file 4 "/usr/lib/gcc/arm-none-eabi/14.2.0/include/stddef.h"
- 924              		.file 5 "Drivers/CMSIS/Include/core_cm3.h"
- 925              		.file 6 "Core/Inc/task.h"
- 926              		.file 7 "Core/Inc/mem.h"
-ARM GAS  /tmp/cciKPolz.s 			page 24
+ 1077 0004 00AF     		add	r7, sp, #0
+ 1078              	.LCFI64:
+ 1079              		.cfi_def_cfa_register 7
+ 1080 0006 7860     		str	r0, [r7, #4]
+ 1081              		.loc 1 249 63
+ 1082 0008 184B     		ldr	r3, .L42
+ 1083 000a 1B68     		ldr	r3, [r3]
+ 1084              		.loc 1 249 42
+ 1085 000c 7A68     		ldr	r2, [r7, #4]
+ 1086 000e 1344     		add	r3, r3, r2
+ 1087 0010 FB60     		str	r3, [r7, #12]
+ 1088              		.loc 1 249 116
+ 1089 0012 174B     		ldr	r3, .L42+4
+ 1090 0014 1B68     		ldr	r3, [r3]
+ 1091              		.loc 1 249 94
+ 1092 0016 5B68     		ldr	r3, [r3, #4]
+ 1093 0018 BB60     		str	r3, [r7, #8]
+ 250:Core/Src/task.c ****     //overflow
+ 251:Core/Src/task.c ****     if(time_to_wake < current_tick_count){
+ 1094              		.loc 1 251 21
+ 1095 001a 144B     		ldr	r3, .L42
+ 1096 001c 1B68     		ldr	r3, [r3]
+ 1097              		.loc 1 251 7
+ 1098 001e FA68     		ldr	r2, [r7, #12]
+ 1099 0020 9A42     		cmp	r2, r3
+ 1100 0022 07D2     		bcs	.L40
+ 252:Core/Src/task.c ****         delay_overflow_list[priority] = time_to_wake;
+ 1101              		.loc 1 252 28
+ 1102 0024 134B     		ldr	r3, .L42+8
+ 1103 0026 1A68     		ldr	r2, [r3]
+ 1104 0028 BB68     		ldr	r3, [r7, #8]
+ 1105 002a 9B00     		lsls	r3, r3, #2
+ 1106 002c 1344     		add	r3, r3, r2
+ 1107              		.loc 1 252 39
+ 1108 002e FA68     		ldr	r2, [r7, #12]
+ 1109 0030 1A60     		str	r2, [r3]
+ 1110 0032 06E0     		b	.L41
+ 1111              	.L40:
+ 253:Core/Src/task.c ****     }else{
+ 254:Core/Src/task.c ****         delay_list[priority] = time_to_wake;
+ 1112              		.loc 1 254 19
+ 1113 0034 104B     		ldr	r3, .L42+12
+ 1114 0036 1A68     		ldr	r2, [r3]
+ 1115 0038 BB68     		ldr	r3, [r7, #8]
+ 1116 003a 9B00     		lsls	r3, r3, #2
+ 1117 003c 1344     		add	r3, r3, r2
+ 1118              		.loc 1 254 30
+ 1119 003e FA68     		ldr	r2, [r7, #12]
+ 1120 0040 1A60     		str	r2, [r3]
+ 1121              	.L41:
+ 255:Core/Src/task.c ****     }
+ 256:Core/Src/task.c **** 
+ 257:Core/Src/task.c ****     ready_bits = ready_bits & (~(1 << priority));
+ 1122              		.loc 1 257 36
+ 1123 0042 0122     		movs	r2, #1
+ 1124 0044 BB68     		ldr	r3, [r7, #8]
+ 1125 0046 02FA03F3 		lsl	r3, r2, r3
+ARM GAS  /tmp//cc05OQ6b.s 			page 26
+
+
+ 1126              		.loc 1 257 32
+ 1127 004a DB43     		mvns	r3, r3
+ 1128 004c 1A46     		mov	r2, r3
+ 1129              		.loc 1 257 29
+ 1130 004e 0B4B     		ldr	r3, .L42+16
+ 1131 0050 1B68     		ldr	r3, [r3]
+ 1132 0052 1340     		ands	r3, r3, r2
+ 1133              		.loc 1 257 16
+ 1134 0054 094A     		ldr	r2, .L42+16
+ 1135 0056 1360     		str	r3, [r2]
+ 258:Core/Src/task.c ****     task_switch();
+ 1136              		.loc 1 258 5
+ 1137 0058 094B     		ldr	r3, .L42+20
+ 1138 005a 4FF08052 		mov	r2, #268435456
+ 1139 005e 1A60     		str	r2, [r3]
+ 259:Core/Src/task.c **** }
+ 1140              		.loc 1 259 1
+ 1141 0060 00BF     		nop
+ 1142 0062 1437     		adds	r7, r7, #20
+ 1143              	.LCFI65:
+ 1144              		.cfi_def_cfa_offset 4
+ 1145 0064 BD46     		mov	sp, r7
+ 1146              	.LCFI66:
+ 1147              		.cfi_def_cfa_register 13
+ 1148              		@ sp needed
+ 1149 0066 80BC     		pop	{r7}
+ 1150              	.LCFI67:
+ 1151              		.cfi_restore 7
+ 1152              		.cfi_def_cfa_offset 0
+ 1153 0068 7047     		bx	lr
+ 1154              	.L43:
+ 1155 006a 00BF     		.align	2
+ 1156              	.L42:
+ 1157 006c 00000000 		.word	current_tick_count
+ 1158 0070 00000000 		.word	current_tcb
+ 1159 0074 00000000 		.word	delay_overflow_list
+ 1160 0078 00000000 		.word	delay_list
+ 1161 007c 00000000 		.word	ready_bits
+ 1162 0080 04ED00E0 		.word	-536810236
+ 1163              		.cfi_endproc
+ 1164              	.LFE82:
+ 1166              		.section	.text.increment_tick,"ax",%progbits
+ 1167              		.align	1
+ 1168              		.syntax unified
+ 1169              		.thumb
+ 1170              		.thumb_func
+ 1172              	increment_tick:
+ 1173              	.LFB83:
+ 260:Core/Src/task.c **** 
+ 261:Core/Src/task.c **** static void increment_tick(void){
+ 1174              		.loc 1 261 33
+ 1175              		.cfi_startproc
+ 1176              		@ args = 0, pretend = 0, frame = 8
+ 1177              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1178 0000 80B5     		push	{r7, lr}
+ 1179              	.LCFI68:
+ 1180              		.cfi_def_cfa_offset 8
+ARM GAS  /tmp//cc05OQ6b.s 			page 27
+
+
+ 1181              		.cfi_offset 7, -8
+ 1182              		.cfi_offset 14, -4
+ 1183 0002 82B0     		sub	sp, sp, #8
+ 1184              	.LCFI69:
+ 1185              		.cfi_def_cfa_offset 16
+ 1186 0004 00AF     		add	r7, sp, #0
+ 1187              	.LCFI70:
+ 1188              		.cfi_def_cfa_register 7
+ 262:Core/Src/task.c ****     current_tick_count += 1;
+ 1189              		.loc 1 262 24
+ 1190 0006 1F4B     		ldr	r3, .L49
+ 1191 0008 1B68     		ldr	r3, [r3]
+ 1192 000a 0133     		adds	r3, r3, #1
+ 1193 000c 1D4A     		ldr	r2, .L49
+ 1194 000e 1360     		str	r3, [r2]
+ 263:Core/Src/task.c **** 
+ 264:Core/Src/task.c ****     //the tick count have overflowed
+ 265:Core/Src/task.c ****     if(current_tick_count == 0){
+ 1195              		.loc 1 265 27
+ 1196 0010 1C4B     		ldr	r3, .L49
+ 1197 0012 1B68     		ldr	r3, [r3]
+ 1198              		.loc 1 265 7
+ 1199 0014 002B     		cmp	r3, #0
+ 1200 0016 01D1     		bne	.L45
+ 266:Core/Src/task.c ****         delay_list_switch();
+ 1201              		.loc 1 266 9
+ 1202 0018 FFF7FEFF 		bl	delay_list_switch
+ 1203              	.L45:
+ 1204              	.LBB18:
+ 267:Core/Src/task.c ****     }
+ 268:Core/Src/task.c **** 
+ 269:Core/Src/task.c ****     for(int i = 0; i < configMaxPriority;i++){
+ 1205              		.loc 1 269 13
+ 1206 001c 0023     		movs	r3, #0
+ 1207 001e 7B60     		str	r3, [r7, #4]
+ 1208              		.loc 1 269 5
+ 1209 0020 25E0     		b	.L46
+ 1210              	.L48:
+ 270:Core/Src/task.c ****         if(delay_list[i] > 0){
+ 1211              		.loc 1 270 22
+ 1212 0022 194B     		ldr	r3, .L49+4
+ 1213 0024 1A68     		ldr	r2, [r3]
+ 1214 0026 7B68     		ldr	r3, [r7, #4]
+ 1215 0028 9B00     		lsls	r3, r3, #2
+ 1216 002a 1344     		add	r3, r3, r2
+ 1217 002c 1B68     		ldr	r3, [r3]
+ 1218              		.loc 1 270 11
+ 1219 002e 002B     		cmp	r3, #0
+ 1220 0030 1AD0     		beq	.L47
+ 271:Core/Src/task.c ****             if(current_tick_count >= delay_list[i]){
+ 1221              		.loc 1 271 48
+ 1222 0032 154B     		ldr	r3, .L49+4
+ 1223 0034 1A68     		ldr	r2, [r3]
+ 1224 0036 7B68     		ldr	r3, [r7, #4]
+ 1225 0038 9B00     		lsls	r3, r3, #2
+ 1226 003a 1344     		add	r3, r3, r2
+ 1227 003c 1A68     		ldr	r2, [r3]
+ARM GAS  /tmp//cc05OQ6b.s 			page 28
+
+
+ 1228              		.loc 1 271 35
+ 1229 003e 114B     		ldr	r3, .L49
+ 1230 0040 1B68     		ldr	r3, [r3]
+ 1231              		.loc 1 271 15
+ 1232 0042 9A42     		cmp	r2, r3
+ 1233 0044 10D8     		bhi	.L47
+ 272:Core/Src/task.c ****               delay_list[i]  = 0;
+ 1234              		.loc 1 272 25
+ 1235 0046 104B     		ldr	r3, .L49+4
+ 1236 0048 1A68     		ldr	r2, [r3]
+ 1237 004a 7B68     		ldr	r3, [r7, #4]
+ 1238 004c 9B00     		lsls	r3, r3, #2
+ 1239 004e 1344     		add	r3, r3, r2
+ 1240              		.loc 1 272 30
+ 1241 0050 0022     		movs	r2, #0
+ 1242 0052 1A60     		str	r2, [r3]
+ 273:Core/Src/task.c ****               ready_bits |= (1 << i);
+ 1243              		.loc 1 273 32
+ 1244 0054 0122     		movs	r2, #1
+ 1245 0056 7B68     		ldr	r3, [r7, #4]
+ 1246 0058 02FA03F3 		lsl	r3, r2, r3
+ 1247 005c 1A46     		mov	r2, r3
+ 1248              		.loc 1 273 26
+ 1249 005e 0B4B     		ldr	r3, .L49+8
+ 1250 0060 1B68     		ldr	r3, [r3]
+ 1251 0062 1343     		orrs	r3, r3, r2
+ 1252 0064 094A     		ldr	r2, .L49+8
+ 1253 0066 1360     		str	r3, [r2]
+ 1254              	.L47:
+ 269:Core/Src/task.c ****         if(delay_list[i] > 0){
+ 1255              		.loc 1 269 43 discriminator 2
+ 1256 0068 7B68     		ldr	r3, [r7, #4]
+ 1257 006a 0133     		adds	r3, r3, #1
+ 1258 006c 7B60     		str	r3, [r7, #4]
+ 1259              	.L46:
+ 269:Core/Src/task.c ****         if(delay_list[i] > 0){
+ 1260              		.loc 1 269 22 discriminator 1
+ 1261 006e 7B68     		ldr	r3, [r7, #4]
+ 1262 0070 1F2B     		cmp	r3, #31
+ 1263 0072 D6DD     		ble	.L48
+ 1264              	.LBE18:
+ 274:Core/Src/task.c ****             }
+ 275:Core/Src/task.c ****         }
+ 276:Core/Src/task.c ****     }
+ 277:Core/Src/task.c **** 
+ 278:Core/Src/task.c ****     task_switch();
+ 1265              		.loc 1 278 5
+ 1266 0074 064B     		ldr	r3, .L49+12
+ 1267 0076 4FF08052 		mov	r2, #268435456
+ 1268 007a 1A60     		str	r2, [r3]
+ 279:Core/Src/task.c **** }
+ 1269              		.loc 1 279 1
+ 1270 007c 00BF     		nop
+ 1271 007e 0837     		adds	r7, r7, #8
+ 1272              	.LCFI71:
+ 1273              		.cfi_def_cfa_offset 8
+ 1274 0080 BD46     		mov	sp, r7
+ARM GAS  /tmp//cc05OQ6b.s 			page 29
+
+
+ 1275              	.LCFI72:
+ 1276              		.cfi_def_cfa_register 13
+ 1277              		@ sp needed
+ 1278 0082 80BD     		pop	{r7, pc}
+ 1279              	.L50:
+ 1280              		.align	2
+ 1281              	.L49:
+ 1282 0084 00000000 		.word	current_tick_count
+ 1283 0088 00000000 		.word	delay_list
+ 1284 008c 00000000 		.word	ready_bits
+ 1285 0090 04ED00E0 		.word	-536810236
+ 1286              		.cfi_endproc
+ 1287              	.LFE83:
+ 1289              		.text
+ 1290              	.Letext0:
+ 1291              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
+ 1292              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
+ 1293              		.file 4 "/usr/lib/gcc/arm-none-eabi/14.2.0/include/stddef.h"
+ 1294              		.file 5 "Drivers/CMSIS/Include/core_cm3.h"
+ 1295              		.file 6 "Core/Inc/task.h"
+ 1296              		.file 7 "Core/Inc/mem.h"
+ARM GAS  /tmp//cc05OQ6b.s 			page 30
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 task.c
-     /tmp/cciKPolz.s:19     .text.task_exit_error:00000000 $t
-     /tmp/cciKPolz.s:24     .text.task_exit_error:00000000 task_exit_error
-     /tmp/cciKPolz.s:41     .text.idle_task:00000000 $t
-     /tmp/cciKPolz.s:47     .text.idle_task:00000000 idle_task
-     /tmp/cciKPolz.s:72     .text.idle_task:00000018 $d
-     /tmp/cciKPolz.s:856    .bss.enter_idle:00000000 enter_idle
-     /tmp/cciKPolz.s:77     .text.delay_list_init:00000000 $t
-     /tmp/cciKPolz.s:82     .text.delay_list_init:00000000 delay_list_init
-     /tmp/cciKPolz.s:109    .text.delay_list_init:00000014 $d
-     /tmp/cciKPolz.s:862    .bss.current_tick_count:00000000 current_tick_count
-     /tmp/cciKPolz.s:880    .bss.delay_list:00000000 delay_list
-     /tmp/cciKPolz.s:892    .bss.delay_lst:00000000 delay_lst
-     /tmp/cciKPolz.s:874    .bss.delay_overflow_list:00000000 delay_overflow_list
-     /tmp/cciKPolz.s:886    .bss.delay_overflow_lst:00000000 delay_overflow_lst
-     /tmp/cciKPolz.s:118    .text.PendSV_Handler:00000000 $t
-     /tmp/cciKPolz.s:124    .text.PendSV_Handler:00000000 PendSV_Handler
-     /tmp/cciKPolz.s:159    .text.PendSV_Handler:00000040 pxCurrentTCBConst
-     /tmp/cciKPolz.s:614    .text.vTaskSwitchContext:00000000 vTaskSwitchContext
-     /tmp/cciKPolz.s:159    .text.PendSV_Handler:00000040 $d
-     /tmp/cciKPolz.s:917    .bss.current_tcb:00000000 current_tcb
-     /tmp/cciKPolz.s:169    .text.SVC_Handler:00000000 $t
-     /tmp/cciKPolz.s:175    .text.SVC_Handler:00000000 SVC_Handler
-     /tmp/cciKPolz.s:197    .text.SVC_Handler:00000020 pxCurrentTCBConst2
-     /tmp/cciKPolz.s:197    .text.SVC_Handler:00000020 $d
-     /tmp/cciKPolz.s:207    .text.SysTick_Handler:00000000 $t
-     /tmp/cciKPolz.s:213    .text.SysTick_Handler:00000000 SysTick_Handler
-     /tmp/cciKPolz.s:274    .text.add_to_ready_list:00000000 $t
-     /tmp/cciKPolz.s:280    .text.add_to_ready_list:00000000 add_to_ready_list
-     /tmp/cciKPolz.s:329    .text.add_to_ready_list:00000028 $d
-     /tmp/cciKPolz.s:868    .bss.max_priority:00000000 max_priority
-     /tmp/cciKPolz.s:898    .bss.ready_bits:00000000 ready_bits
-     /tmp/cciKPolz.s:904    .bss.ready_list:00000000 ready_list
-     /tmp/cciKPolz.s:336    .text.stack_init:00000000 $t
-     /tmp/cciKPolz.s:342    .text.stack_init:00000000 stack_init
-     /tmp/cciKPolz.s:386    .text.stack_init:00000020 $d
-     /tmp/cciKPolz.s:391    .text.task_create:00000000 $t
-     /tmp/cciKPolz.s:397    .text.task_create:00000000 task_create
-     /tmp/cciKPolz.s:476    .text.scheduler_init:00000000 $t
-     /tmp/cciKPolz.s:482    .text.scheduler_init:00000000 scheduler_init
-     /tmp/cciKPolz.s:528    .text.scheduler_init:00000028 $d
-     /tmp/cciKPolz.s:910    .bss.idle_task_handler:00000000 idle_task_handler
-     /tmp/cciKPolz.s:536    .text.scheduler_start:00000000 $t
-     /tmp/cciKPolz.s:542    .text.scheduler_start:00000000 scheduler_start
-     /tmp/cciKPolz.s:595    .text.scheduler_start:00000046 $d
-     /tmp/cciKPolz.s:595    .text.scheduler_start:00000048 $d
-     /tmp/cciKPolz.s:603    .text.scheduler_start:0000004c $t
-     /tmp/cciKPolz.s:608    .text.vTaskSwitchContext:00000000 $t
-     /tmp/cciKPolz.s:657    .text.vTaskSwitchContext:00000020 $d
-     /tmp/cciKPolz.s:664    .text.critical_enter:00000000 $t
-     /tmp/cciKPolz.s:670    .text.critical_enter:00000000 critical_enter
-     /tmp/cciKPolz.s:702    .text.critical_exit:00000000 $t
-     /tmp/cciKPolz.s:708    .text.critical_exit:00000000 critical_exit
-     /tmp/cciKPolz.s:734    .text.delay_list_switch:00000000 $t
-     /tmp/cciKPolz.s:740    .text.delay_list_switch:00000000 delay_list_switch
-     /tmp/cciKPolz.s:766    .text.delay_list_switch:00000010 $d
-ARM GAS  /tmp/cciKPolz.s 			page 25
+    /tmp//cc05OQ6b.s:23     .bss.current_tcb:00000000 current_tcb
+    /tmp//cc05OQ6b.s:20     .bss.current_tcb:00000000 $d
+    /tmp//cc05OQ6b.s:26     .bss.idle_task_handler:00000000 $d
+    /tmp//cc05OQ6b.s:29     .bss.idle_task_handler:00000000 idle_task_handler
+    /tmp//cc05OQ6b.s:32     .bss.ready_list:00000000 $d
+    /tmp//cc05OQ6b.s:35     .bss.ready_list:00000000 ready_list
+    /tmp//cc05OQ6b.s:42     .bss.ready_bits:00000000 ready_bits
+    /tmp//cc05OQ6b.s:39     .bss.ready_bits:00000000 $d
+    /tmp//cc05OQ6b.s:45     .bss.delay_lst:00000000 $d
+    /tmp//cc05OQ6b.s:48     .bss.delay_lst:00000000 delay_lst
+    /tmp//cc05OQ6b.s:51     .bss.delay_overflow_lst:00000000 $d
+    /tmp//cc05OQ6b.s:54     .bss.delay_overflow_lst:00000000 delay_overflow_lst
+    /tmp//cc05OQ6b.s:57     .bss.delay_list:00000000 $d
+    /tmp//cc05OQ6b.s:60     .bss.delay_list:00000000 delay_list
+    /tmp//cc05OQ6b.s:63     .bss.delay_overflow_list:00000000 $d
+    /tmp//cc05OQ6b.s:66     .bss.delay_overflow_list:00000000 delay_overflow_list
+    /tmp//cc05OQ6b.s:69     .bss.max_priority:00000000 $d
+    /tmp//cc05OQ6b.s:72     .bss.max_priority:00000000 max_priority
+    /tmp//cc05OQ6b.s:75     .bss.current_tick_count:00000000 $d
+    /tmp//cc05OQ6b.s:78     .bss.current_tick_count:00000000 current_tick_count
+    /tmp//cc05OQ6b.s:81     .text.PendSV_Handler:00000000 $t
+    /tmp//cc05OQ6b.s:87     .text.PendSV_Handler:00000000 PendSV_Handler
+    /tmp//cc05OQ6b.s:122    .text.PendSV_Handler:00000040 pxCurrentTCBConst
+    /tmp//cc05OQ6b.s:760    .text.vTaskSwitchContext:00000000 vTaskSwitchContext
+    /tmp//cc05OQ6b.s:122    .text.PendSV_Handler:00000040 $d
+    /tmp//cc05OQ6b.s:128    .text.PendSV_Handler:00000044 $t
+    /tmp//cc05OQ6b.s:133    .text.SVC_Handler:00000000 $t
+    /tmp//cc05OQ6b.s:139    .text.SVC_Handler:00000000 SVC_Handler
+    /tmp//cc05OQ6b.s:161    .text.SVC_Handler:00000020 pxCurrentTCBConst2
+    /tmp//cc05OQ6b.s:161    .text.SVC_Handler:00000020 $d
+    /tmp//cc05OQ6b.s:167    .text.SVC_Handler:00000024 $t
+    /tmp//cc05OQ6b.s:172    .text.SysTick_Handler:00000000 $t
+    /tmp//cc05OQ6b.s:178    .text.SysTick_Handler:00000000 SysTick_Handler
+    /tmp//cc05OQ6b.s:1172   .text.increment_tick:00000000 increment_tick
+    /tmp//cc05OQ6b.s:257    .text.add_to_ready_list:00000000 $t
+    /tmp//cc05OQ6b.s:263    .text.add_to_ready_list:00000000 add_to_ready_list
+    /tmp//cc05OQ6b.s:329    .text.add_to_ready_list:00000044 $d
+    /tmp//cc05OQ6b.s:336    .text.task_create:00000000 $t
+    /tmp//cc05OQ6b.s:342    .text.task_create:00000000 task_create
+    /tmp//cc05OQ6b.s:461    .text.stack_init:00000000 stack_init
+    /tmp//cc05OQ6b.s:428    .text.task_exit_error:00000000 $t
+    /tmp//cc05OQ6b.s:433    .text.task_exit_error:00000000 task_exit_error
+    /tmp//cc05OQ6b.s:455    .text.stack_init:00000000 $t
+    /tmp//cc05OQ6b.s:541    .text.stack_init:00000054 $d
+    /tmp//cc05OQ6b.s:550    .bss.enter_idle:00000000 enter_idle
+    /tmp//cc05OQ6b.s:547    .bss.enter_idle:00000000 $d
+    /tmp//cc05OQ6b.s:553    .text.idle_task:00000000 $t
+    /tmp//cc05OQ6b.s:559    .text.idle_task:00000000 idle_task
+    /tmp//cc05OQ6b.s:590    .text.idle_task:0000001c $d
+    /tmp//cc05OQ6b.s:596    .text.scheduler_init:00000000 $t
+    /tmp//cc05OQ6b.s:602    .text.scheduler_init:00000000 scheduler_init
+    /tmp//cc05OQ6b.s:949    .text.delay_list_init:00000000 delay_list_init
+    /tmp//cc05OQ6b.s:648    .text.scheduler_init:00000030 $d
+    /tmp//cc05OQ6b.s:656    .text.scheduler_start:00000000 $t
+    /tmp//cc05OQ6b.s:662    .text.scheduler_start:00000000 scheduler_start
+ARM GAS  /tmp//cc05OQ6b.s 			page 31
 
 
-     /tmp/cciKPolz.s:772    .text.task_delay:00000000 $t
-     /tmp/cciKPolz.s:778    .text.task_delay:00000000 task_delay
-     /tmp/cciKPolz.s:843    .text.task_delay:0000003c $d
-     /tmp/cciKPolz.s:853    .bss.enter_idle:00000000 $d
-     /tmp/cciKPolz.s:859    .bss.current_tick_count:00000000 $d
-     /tmp/cciKPolz.s:865    .bss.max_priority:00000000 $d
-     /tmp/cciKPolz.s:871    .bss.delay_overflow_list:00000000 $d
-     /tmp/cciKPolz.s:877    .bss.delay_list:00000000 $d
-     /tmp/cciKPolz.s:883    .bss.delay_overflow_lst:00000000 $d
-     /tmp/cciKPolz.s:889    .bss.delay_lst:00000000 $d
-     /tmp/cciKPolz.s:895    .bss.ready_bits:00000000 $d
-     /tmp/cciKPolz.s:901    .bss.ready_list:00000000 $d
-     /tmp/cciKPolz.s:907    .bss.idle_task_handler:00000000 $d
-     /tmp/cciKPolz.s:914    .bss.current_tcb:00000000 $d
+    /tmp//cc05OQ6b.s:725    .text.scheduler_start:00000050 $d
+    /tmp//cc05OQ6b.s:731    .text.scheduler_start:00000054 $t
+    /tmp//cc05OQ6b.s:748    .text.scheduler_start:00000060 $d
+    /tmp//cc05OQ6b.s:754    .text.vTaskSwitchContext:00000000 $t
+    /tmp//cc05OQ6b.s:822    .text.vTaskSwitchContext:00000034 $d
+    /tmp//cc05OQ6b.s:829    .text.critical_enter:00000000 $t
+    /tmp//cc05OQ6b.s:835    .text.critical_enter:00000000 critical_enter
+    /tmp//cc05OQ6b.s:889    .text.critical_exit:00000000 $t
+    /tmp//cc05OQ6b.s:895    .text.critical_exit:00000000 critical_exit
+    /tmp//cc05OQ6b.s:944    .text.delay_list_init:00000000 $t
+    /tmp//cc05OQ6b.s:989    .text.delay_list_init:00000020 $d
+    /tmp//cc05OQ6b.s:998    .text.delay_list_switch:00000000 $t
+    /tmp//cc05OQ6b.s:1004   .text.delay_list_switch:00000000 delay_list_switch
+    /tmp//cc05OQ6b.s:1051   .text.delay_list_switch:00000024 $d
+    /tmp//cc05OQ6b.s:1057   .text.task_delay:00000000 $t
+    /tmp//cc05OQ6b.s:1063   .text.task_delay:00000000 task_delay
+    /tmp//cc05OQ6b.s:1157   .text.task_delay:0000006c $d
+    /tmp//cc05OQ6b.s:1167   .text.increment_tick:00000000 $t
+    /tmp//cc05OQ6b.s:1282   .text.increment_tick:00000084 $d
 
 UNDEFINED SYMBOLS
 halloc

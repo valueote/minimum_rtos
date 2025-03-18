@@ -1,4 +1,4 @@
-ARM GAS  /tmp//cc087kem.s 			page 1
+ARM GAS  /tmp//cc91k78b.s 			page 1
 
 
    1              		.cpu cortex-m3
@@ -10,7 +10,7 @@ ARM GAS  /tmp//cc087kem.s 			page 1
    7              		.eabi_attribute 24, 1
    8              		.eabi_attribute 25, 1
    9              		.eabi_attribute 26, 1
-  10              		.eabi_attribute 30, 1
+  10              		.eabi_attribute 30, 6
   11              		.eabi_attribute 34, 1
   12              		.eabi_attribute 18, 4
   13              		.file	"stm32f1xx_hal_gpio_ex.c"
@@ -25,8 +25,7 @@ ARM GAS  /tmp//cc087kem.s 			page 1
   22              		.thumb
   23              		.thumb_func
   25              	HAL_GPIOEx_ConfigEventout:
-  26              	.LVL0:
-  27              	.LFB65:
+  26              	.LFB65:
    1:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** /**
    2:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   ******************************************************************************
    3:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   * @file    stm32f1xx_hal_gpio_ex.c
@@ -58,10 +57,10 @@ ARM GAS  /tmp//cc087kem.s 			page 1
   29:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   ==============================================================================
   30:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   [..] This driver provides functions to use EVENTOUT Cortex feature
   31:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****     (#) Configure EVENTOUT Cortex feature using the function HAL_GPIOEx_ConfigEventout()
-ARM GAS  /tmp//cc087kem.s 			page 2
-
-
   32:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****     (#) Activate EVENTOUT Cortex feature using the HAL_GPIOEx_EnableEventout()
+ARM GAS  /tmp//cc91k78b.s 			page 2
+
+
   33:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****     (#) Deactivate EVENTOUT Cortex feature using the HAL_GPIOEx_DisableEventout()
   34:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** 
   35:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   @endverbatim
@@ -112,86 +111,126 @@ ARM GAS  /tmp//cc087kem.s 			page 1
   80:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   */
   81:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** void HAL_GPIOEx_ConfigEventout(uint32_t GPIO_PortSource, uint32_t GPIO_PinSource)
   82:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** {
-  28              		.loc 1 82 1 view -0
-  29              		.cfi_startproc
-  30              		@ args = 0, pretend = 0, frame = 0
-  31              		@ frame_needed = 0, uses_anonymous_args = 0
-  32              		@ link register save eliminated.
+  27              		.loc 1 82 1
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 8
+  30              		@ frame_needed = 1, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+  32 0000 80B4     		push	{r7}
+  33              	.LCFI0:
+ARM GAS  /tmp//cc91k78b.s 			page 3
+
+
+  34              		.cfi_def_cfa_offset 4
+  35              		.cfi_offset 7, -4
+  36 0002 83B0     		sub	sp, sp, #12
+  37              	.LCFI1:
+  38              		.cfi_def_cfa_offset 16
+  39 0004 00AF     		add	r7, sp, #0
+  40              	.LCFI2:
+  41              		.cfi_def_cfa_register 7
+  42 0006 7860     		str	r0, [r7, #4]
+  43 0008 3960     		str	r1, [r7]
   83:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   /* Verify the parameters */
-ARM GAS  /tmp//cc087kem.s 			page 3
-
-
   84:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   assert_param(IS_AFIO_EVENTOUT_PORT(GPIO_PortSource));
-  33              		.loc 1 84 3 view .LVU1
   85:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   assert_param(IS_AFIO_EVENTOUT_PIN(GPIO_PinSource));
-  34              		.loc 1 85 3 view .LVU2
   86:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** 
   87:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   /* Apply the new configuration */
   88:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   MODIFY_REG(AFIO->EVCR, (AFIO_EVCR_PORT) | (AFIO_EVCR_PIN), (GPIO_PortSource) | (GPIO_PinSource));
-  35              		.loc 1 88 3 view .LVU3
-  36 0000 034A     		ldr	r2, .L2
-  37 0002 1368     		ldr	r3, [r2]
-  38 0004 23F07F03 		bic	r3, r3, #127
-  39 0008 0843     		orrs	r0, r0, r1
-  40              	.LVL1:
-  41              		.loc 1 88 3 is_stmt 0 view .LVU4
-  42 000a 0343     		orrs	r3, r3, r0
-  43 000c 1360     		str	r3, [r2]
+  44              		.loc 1 88 3
+  45 000a 074B     		ldr	r3, .L2
+  46 000c 1B68     		ldr	r3, [r3]
+  47 000e 23F07F02 		bic	r2, r3, #127
+  48 0012 7968     		ldr	r1, [r7, #4]
+  49 0014 3B68     		ldr	r3, [r7]
+  50 0016 0B43     		orrs	r3, r3, r1
+  51 0018 0349     		ldr	r1, .L2
+  52 001a 1343     		orrs	r3, r3, r2
+  53 001c 0B60     		str	r3, [r1]
   89:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** }
-  44              		.loc 1 89 1 view .LVU5
-  45 000e 7047     		bx	lr
-  46              	.L3:
-  47              		.align	2
-  48              	.L2:
-  49 0010 00000140 		.word	1073807360
-  50              		.cfi_endproc
-  51              	.LFE65:
-  53              		.section	.text.HAL_GPIOEx_EnableEventout,"ax",%progbits
-  54              		.align	1
-  55              		.global	HAL_GPIOEx_EnableEventout
-  56              		.syntax unified
-  57              		.thumb
-  58              		.thumb_func
-  60              	HAL_GPIOEx_EnableEventout:
-  61              	.LFB66:
+  54              		.loc 1 89 1
+  55 001e 00BF     		nop
+  56 0020 0C37     		adds	r7, r7, #12
+  57              	.LCFI3:
+  58              		.cfi_def_cfa_offset 4
+  59 0022 BD46     		mov	sp, r7
+  60              	.LCFI4:
+  61              		.cfi_def_cfa_register 13
+  62              		@ sp needed
+  63 0024 80BC     		pop	{r7}
+  64              	.LCFI5:
+  65              		.cfi_restore 7
+  66              		.cfi_def_cfa_offset 0
+  67 0026 7047     		bx	lr
+  68              	.L3:
+  69              		.align	2
+  70              	.L2:
+  71 0028 00000140 		.word	1073807360
+  72              		.cfi_endproc
+  73              	.LFE65:
+  75              		.section	.text.HAL_GPIOEx_EnableEventout,"ax",%progbits
+  76              		.align	1
+  77              		.global	HAL_GPIOEx_EnableEventout
+  78              		.syntax unified
+  79              		.thumb
+  80              		.thumb_func
+  82              	HAL_GPIOEx_EnableEventout:
+  83              	.LFB66:
   90:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** 
   91:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** /**
+ARM GAS  /tmp//cc91k78b.s 			page 4
+
+
   92:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   * @brief  Enables the Event Output.
   93:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   * @retval None
   94:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   */
   95:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** void HAL_GPIOEx_EnableEventout(void)
   96:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** {
-  62              		.loc 1 96 1 is_stmt 1 view -0
-  63              		.cfi_startproc
-  64              		@ args = 0, pretend = 0, frame = 0
-  65              		@ frame_needed = 0, uses_anonymous_args = 0
-  66              		@ link register save eliminated.
+  84              		.loc 1 96 1
+  85              		.cfi_startproc
+  86              		@ args = 0, pretend = 0, frame = 0
+  87              		@ frame_needed = 1, uses_anonymous_args = 0
+  88              		@ link register save eliminated.
+  89 0000 80B4     		push	{r7}
+  90              	.LCFI6:
+  91              		.cfi_def_cfa_offset 4
+  92              		.cfi_offset 7, -4
+  93 0002 00AF     		add	r7, sp, #0
+  94              	.LCFI7:
+  95              		.cfi_def_cfa_register 7
   97:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   SET_BIT(AFIO->EVCR, AFIO_EVCR_EVOE);
-  67              		.loc 1 97 3 view .LVU7
-  68 0000 024A     		ldr	r2, .L5
-  69 0002 1368     		ldr	r3, [r2]
-  70 0004 43F08003 		orr	r3, r3, #128
-  71 0008 1360     		str	r3, [r2]
+  96              		.loc 1 97 3
+  97 0004 044B     		ldr	r3, .L5
+  98 0006 1B68     		ldr	r3, [r3]
+  99 0008 034A     		ldr	r2, .L5
+ 100 000a 43F08003 		orr	r3, r3, #128
+ 101 000e 1360     		str	r3, [r2]
   98:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** }
-  72              		.loc 1 98 1 is_stmt 0 view .LVU8
-  73 000a 7047     		bx	lr
-  74              	.L6:
-  75              		.align	2
-  76              	.L5:
-ARM GAS  /tmp//cc087kem.s 			page 4
-
-
-  77 000c 00000140 		.word	1073807360
-  78              		.cfi_endproc
-  79              	.LFE66:
-  81              		.section	.text.HAL_GPIOEx_DisableEventout,"ax",%progbits
-  82              		.align	1
-  83              		.global	HAL_GPIOEx_DisableEventout
-  84              		.syntax unified
-  85              		.thumb
-  86              		.thumb_func
-  88              	HAL_GPIOEx_DisableEventout:
-  89              	.LFB67:
+ 102              		.loc 1 98 1
+ 103 0010 00BF     		nop
+ 104 0012 BD46     		mov	sp, r7
+ 105              	.LCFI8:
+ 106              		.cfi_def_cfa_register 13
+ 107              		@ sp needed
+ 108 0014 80BC     		pop	{r7}
+ 109              	.LCFI9:
+ 110              		.cfi_restore 7
+ 111              		.cfi_def_cfa_offset 0
+ 112 0016 7047     		bx	lr
+ 113              	.L6:
+ 114              		.align	2
+ 115              	.L5:
+ 116 0018 00000140 		.word	1073807360
+ 117              		.cfi_endproc
+ 118              	.LFE66:
+ 120              		.section	.text.HAL_GPIOEx_DisableEventout,"ax",%progbits
+ 121              		.align	1
+ 122              		.global	HAL_GPIOEx_DisableEventout
+ 123              		.syntax unified
+ 124              		.thumb
+ 125              		.thumb_func
+ 127              	HAL_GPIOEx_DisableEventout:
+ 128              	.LFB67:
   99:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** 
  100:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** /**
  101:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   * @brief  Disables the Event Output.
@@ -199,44 +238,64 @@ ARM GAS  /tmp//cc087kem.s 			page 1
  103:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   */
  104:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** void HAL_GPIOEx_DisableEventout(void)
  105:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** {
-  90              		.loc 1 105 1 is_stmt 1 view -0
-  91              		.cfi_startproc
-  92              		@ args = 0, pretend = 0, frame = 0
-  93              		@ frame_needed = 0, uses_anonymous_args = 0
-  94              		@ link register save eliminated.
+ARM GAS  /tmp//cc91k78b.s 			page 5
+
+
+ 129              		.loc 1 105 1
+ 130              		.cfi_startproc
+ 131              		@ args = 0, pretend = 0, frame = 0
+ 132              		@ frame_needed = 1, uses_anonymous_args = 0
+ 133              		@ link register save eliminated.
+ 134 0000 80B4     		push	{r7}
+ 135              	.LCFI10:
+ 136              		.cfi_def_cfa_offset 4
+ 137              		.cfi_offset 7, -4
+ 138 0002 00AF     		add	r7, sp, #0
+ 139              	.LCFI11:
+ 140              		.cfi_def_cfa_register 7
  106:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c ****   CLEAR_BIT(AFIO->EVCR, AFIO_EVCR_EVOE);
-  95              		.loc 1 106 3 view .LVU10
-  96 0000 024A     		ldr	r2, .L8
-  97 0002 1368     		ldr	r3, [r2]
-  98 0004 23F08003 		bic	r3, r3, #128
-  99 0008 1360     		str	r3, [r2]
+ 141              		.loc 1 106 3
+ 142 0004 044B     		ldr	r3, .L8
+ 143 0006 1B68     		ldr	r3, [r3]
+ 144 0008 034A     		ldr	r2, .L8
+ 145 000a 23F08003 		bic	r3, r3, #128
+ 146 000e 1360     		str	r3, [r2]
  107:Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c **** }
- 100              		.loc 1 107 1 is_stmt 0 view .LVU11
- 101 000a 7047     		bx	lr
- 102              	.L9:
- 103              		.align	2
- 104              	.L8:
- 105 000c 00000140 		.word	1073807360
- 106              		.cfi_endproc
- 107              	.LFE67:
- 109              		.text
- 110              	.Letext0:
- 111              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
- 112              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
- 113              		.file 4 "Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103xe.h"
-ARM GAS  /tmp//cc087kem.s 			page 5
+ 147              		.loc 1 107 1
+ 148 0010 00BF     		nop
+ 149 0012 BD46     		mov	sp, r7
+ 150              	.LCFI12:
+ 151              		.cfi_def_cfa_register 13
+ 152              		@ sp needed
+ 153 0014 80BC     		pop	{r7}
+ 154              	.LCFI13:
+ 155              		.cfi_restore 7
+ 156              		.cfi_def_cfa_offset 0
+ 157 0016 7047     		bx	lr
+ 158              	.L9:
+ 159              		.align	2
+ 160              	.L8:
+ 161 0018 00000140 		.word	1073807360
+ 162              		.cfi_endproc
+ 163              	.LFE67:
+ 165              		.text
+ 166              	.Letext0:
+ 167              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
+ 168              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
+ 169              		.file 4 "Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103xe.h"
+ARM GAS  /tmp//cc91k78b.s 			page 6
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 stm32f1xx_hal_gpio_ex.c
-    /tmp//cc087kem.s:19     .text.HAL_GPIOEx_ConfigEventout:00000000 $t
-    /tmp//cc087kem.s:25     .text.HAL_GPIOEx_ConfigEventout:00000000 HAL_GPIOEx_ConfigEventout
-    /tmp//cc087kem.s:49     .text.HAL_GPIOEx_ConfigEventout:00000010 $d
-    /tmp//cc087kem.s:54     .text.HAL_GPIOEx_EnableEventout:00000000 $t
-    /tmp//cc087kem.s:60     .text.HAL_GPIOEx_EnableEventout:00000000 HAL_GPIOEx_EnableEventout
-    /tmp//cc087kem.s:77     .text.HAL_GPIOEx_EnableEventout:0000000c $d
-    /tmp//cc087kem.s:82     .text.HAL_GPIOEx_DisableEventout:00000000 $t
-    /tmp//cc087kem.s:88     .text.HAL_GPIOEx_DisableEventout:00000000 HAL_GPIOEx_DisableEventout
-    /tmp//cc087kem.s:105    .text.HAL_GPIOEx_DisableEventout:0000000c $d
+    /tmp//cc91k78b.s:19     .text.HAL_GPIOEx_ConfigEventout:00000000 $t
+    /tmp//cc91k78b.s:25     .text.HAL_GPIOEx_ConfigEventout:00000000 HAL_GPIOEx_ConfigEventout
+    /tmp//cc91k78b.s:71     .text.HAL_GPIOEx_ConfigEventout:00000028 $d
+    /tmp//cc91k78b.s:76     .text.HAL_GPIOEx_EnableEventout:00000000 $t
+    /tmp//cc91k78b.s:82     .text.HAL_GPIOEx_EnableEventout:00000000 HAL_GPIOEx_EnableEventout
+    /tmp//cc91k78b.s:116    .text.HAL_GPIOEx_EnableEventout:00000018 $d
+    /tmp//cc91k78b.s:121    .text.HAL_GPIOEx_DisableEventout:00000000 $t
+    /tmp//cc91k78b.s:127    .text.HAL_GPIOEx_DisableEventout:00000000 HAL_GPIOEx_DisableEventout
+    /tmp//cc91k78b.s:161    .text.HAL_GPIOEx_DisableEventout:00000018 $d
 
 NO UNDEFINED SYMBOLS
