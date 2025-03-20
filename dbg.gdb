@@ -6,4 +6,3 @@ b led_right
 b led_close
 b idle_task
 b vTaskSwitchContext
-c

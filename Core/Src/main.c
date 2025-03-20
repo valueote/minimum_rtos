@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f1xx_hal_gpio.h"
+#include "stm32f1xx_hal_uart.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -64,13 +65,14 @@ static void MX_USART1_UART_Init(void);
 void led_right() {
   while (1) {
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
-    //HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
+    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
     task_delay(1000);
   }
 }
 void led_close() {
+  uint8_t message[] = "The system is sleeping";
   while (1) {
-    //do noting
+    HAL_UART_Transmit(&huart1, message, sizeof(message), 100);
   }
 }
 /* USER CODE END 0 */
@@ -110,7 +112,7 @@ int main(void) {
   task_handler_t led_right_handler = NULL;
   task_handler_t led_close_handler = NULL;
   task_create(led_right, NULL, 32, 2, &led_right_handler);
-  task_create(led_close, NULL, 32, 1, &led_close_handler);
+  task_create(led_close, NULL, 256, 1, &led_close_handler);
   scheduler_start();
   /* USER CODE END 2 */
 

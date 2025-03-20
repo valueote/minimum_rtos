@@ -1,3 +1,4 @@
 build/
 Core/Src/.cache/
 *.idx
+build
