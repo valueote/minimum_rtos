@@ -21,8 +21,8 @@ void heap_init(void) {
     heap.heap_size -= (size_t)(heap_start - (uint32_t)heap_mem);
   }
   // set the tail node
-  heap_end = heap_start + heap.heap_size - node_struct_size;
-  // make sure the heap_end is 8-byte aligned
+  heap_end = heap_start + heap.heap_size -
+             node_struct_size; // make sure the heap_end is 8-byte aligned
   if ((heap_end & alignment_byte) != 0) {
     heap_end += alignment_byte;
     heap_end &= alignment_byte;
@@ -58,6 +58,7 @@ static void heap_insert_list(heap_node *inserted_node) {
 
   if ((uint8_t *)iter_node + iter_node->node_size == (uint8_t *)inserted_node) {
     iter_node->node_size += inserted_node->node_size;
+    iter_node->next = iter_node->next->next;
   }
 }
 
