@@ -1,26 +1,25 @@
 #ifndef __LIST_H
 #define __LIST_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
-typedef struct list_node{
-    uint32_t val;
-    struct list_node* prev;
-    struct list_node* next;
-    void* owner;
-    void* container;
-}list_node_t;
+typedef struct list_node {
+  uint32_t val;
+  struct list_node *prev;
+  struct list_node *next;
+  void *owner;
+  void *container;
+} list_node_t;
 
-typedef struct list{
-    uint32_t size;
-    list_node_t* iter;
-    list_node_t head;
-}list_t;
+typedef struct list {
+  uint32_t size;
+  list_node_t *index;
+  list_node_t head;
+} list_t;
 
-
-void list_node_init(list_node_t* new_node);
-void list_init(list_t* new_list);
-void list_insert_node(list_t* list, list_node_t* node);
-void list_remove_node(list_t* list, list_node_t* node);
+void list_node_init(list_node_t *new_node);
+void list_init(list_t *new_list);
+void list_insert_node(list_t *list, list_node_t *node);
+void list_remove_node(list_node_t *node);
 #endif /*__LIST_H*/
