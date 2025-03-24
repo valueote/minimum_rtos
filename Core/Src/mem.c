@@ -5,9 +5,9 @@
 const size_t node_struct_size =
     (sizeof(heap_node) + alignment_byte) & ~alignment_byte;
 // alloc mem for the heap ifself
-static uint8_t heap_mem[configHeapSize];
+uint8_t heap_mem[configHeapSize];
 // init the heap struct
-static heap_t heap = {.tail = NULL, .heap_size = configHeapSize};
+heap_t heap = {.tail = NULL, .heap_size = configHeapSize};
 
 void heap_init(void) {
   heap_node *first_node;

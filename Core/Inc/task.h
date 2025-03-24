@@ -2,6 +2,7 @@
 #define __TASK_H
 
 #include "config.h"
+#include "stm32f1xx.h"
 #include "core_cm3.h"
 #include "main.h"
 #include "mem.h"

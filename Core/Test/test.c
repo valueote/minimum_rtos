@@ -1,6 +1,11 @@
 #include "test.h"
 // 暴露内部结构用于测试
 // 辅助函数：遍历空闲链表并打印信息
+extern uint8_t heap_mem[];
+// init the heap struct
+extern heap_t heap;
+
+
 void print_free_list() {
     printf("Free List:\n");
     heap_node *node = heap.head.next;
