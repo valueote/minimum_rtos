@@ -22,16 +22,18 @@ typedef struct tcb {
 typedef void (*task_func_t)(void *);
 typedef tcb_t *task_handler_t;
 
-void task_create_static(task_func_t func, void *func_parameters,
-                        uint32_t stack_depth, uint32_t stack, tcb_t *tcb);
 void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
                  uint32_t priority, task_handler_t *handler);
-
-uint32_t *stack_init(uint32_t *stack_top, task_func_t func, void *parameters);
+void task_delay(uint32_t ticks);
+void task_suspend(task_handler_t *handler);
+void task_resume(task_handler_t *handler);
 
 void scheduler_init(void);
 void scheduler_start(void);
+void scheduler_suspend(void);
+void scheduler_resume(void);
+
 uint32_t critical_enter(void);
 void critical_exit(uint32_t ret);
-void task_delay(uint32_t ticks);
+
 #endif

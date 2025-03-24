@@ -66,7 +66,7 @@ void led_right() {
   while (1) {
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
     // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
-    task_delay(1000);
+    task_delay(2000);
   }
 }
 void led_close() {

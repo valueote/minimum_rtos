@@ -18,7 +18,13 @@ static uint32_t *delay_overflow_list;
 static uint32_t max_priority = 0;
 static uint32_t current_tick_count;
 
-// used for context switch, from freertos
+//Static functions
+static uint32_t *stack_init(uint32_t *stack_top, task_func_t func, void *parameters);
+static inline uint8_t get_highest_priority(void);
+static void delay_list_init(void);
+static void increment_tick(void);
+
+// Used for context switch, from freertos
 __attribute__((naked)) void xPortPendSVHandler(void) {
   __asm volatile("   mrs r0, psp                         \n"
                  "   isb                                 \n"
@@ -48,6 +54,7 @@ __attribute__((naked)) void xPortPendSVHandler(void) {
                  "pxCurrentTCBConst: .word current_tcb  \n" ::"i"(
                      configMAX_SYSCALL_INTERRUPT_PRIORITY));
 }
+
 // SCV handler
 __attribute__((naked)) void vPortSVCHandler(void) {
   __asm volatile(
@@ -72,14 +79,14 @@ __attribute__((naked)) void vPortSVCHandler(void) {
       "pxCurrentTCBConst2: .word current_tcb             \n");
 }
 
-static void increment_tick(void);
+//SysTick Handler
 void SysTick_Handler(void) {
   uint32_t ret = critical_enter();
   increment_tick();
   critical_exit(ret);
 }
 
-// start the first task
+//And config the SysTick and start the first task
 __attribute__((always_inline)) inline static void StartFirstTask(void) {
   (*((volatile uint32_t *)0xe000ed20)) |= (((uint32_t)255UL) << 16UL);
   (*((volatile uint32_t *)0xe000ed20)) |= (((uint32_t)255UL) << 24UL);
@@ -103,6 +110,7 @@ __attribute__((always_inline)) inline static void StartFirstTask(void) {
       " .ltorg                \n");
 }
 
+//Add the task handler to the ready list
 void add_to_ready_list(task_handler_t *handler, uint32_t priority) {
   if (priority < max_priority)
     max_priority = priority;
@@ -111,6 +119,7 @@ void add_to_ready_list(task_handler_t *handler, uint32_t priority) {
   ready_list[priority] = *handler;
 }
 
+//Create a new task
 void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
                  uint32_t priority, task_handler_t *handler) {
   tcb_t *new_tcb;
@@ -130,12 +139,14 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
   add_to_ready_list(handler, priority);
 }
 
+//Task should never return, if so, it will reach here
 static void task_exit_error() {
   while (1) {
   }
 }
 
-uint32_t *stack_init(uint32_t *stack_top, task_func_t func, void *parameters) {
+//Init the task stack
+static uint32_t *stack_init(uint32_t *stack_top, task_func_t func, void *parameters) {
   // set the XPSR
   stack_top--;
   *stack_top = INITIAL_XPSR;
@@ -157,11 +168,10 @@ uint32_t enter_idle = 0;
 void idle_task() {
   while (1) {
     enter_idle++;
-    task_switch();
   }
 }
 
-static void delay_list_init(void);
+//Init the scheduler
 void scheduler_init(void) {
   current_tick_count = 0;
   delay_list_init();
@@ -169,9 +179,10 @@ void scheduler_init(void) {
   current_tcb = idle_task_handler;
 }
 
+//Start
 void scheduler_start(void) { StartFirstTask(); }
 
-static inline uint8_t get_highest_priority(void);
+//Switch task
 void vTaskSwitchContext(void) {
   current_tcb = ready_list[get_highest_priority()];
 }
