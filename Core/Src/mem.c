@@ -4,7 +4,7 @@
 const size_t node_struct_size =
     (sizeof(heap_node) + (size_t)alignment_byte) & ~alignment_byte;
 
-const size_t min_node_size =  (node_struct_size << 1);
+const size_t min_node_size = (node_struct_size << 1);
 // alloc mem for the heap ifself
 static uint8_t heap_mem[configHeapSize];
 // init the heap struct
@@ -65,12 +65,12 @@ static void heap_insert_list(heap_node *inserted_node) {
 }
 
 void *halloc(size_t size) {
-  heap_node *pre_node;
-  heap_node *cur_node;
-  heap_node *new_node;
+  heap_node *pre_node = NULL;
+  heap_node *cur_node = NULL;
+  heap_node *new_node = NULL;
   heap_node *best_fit = NULL;
-  heap_node *best_fit_pre_node;
-  size_t alignment_required;
+  heap_node *best_fit_pre_node = NULL;
+  size_t alignment_required = 0;
 
   size += node_struct_size;
   // make sure the mem size is 8-byte aligned
@@ -102,21 +102,20 @@ void *halloc(size_t size) {
   best_fit->next = NULL;
   // if the node we found have enough mem for a heap node
   // after the allocation, make a new node and put it in the list;
-
   if (best_fit->node_size - size >= min_node_size) {
     // using the left mem to create a new node
-    new_node = (heap_node *)(best_fit + size);
+    new_node = (void *)((uint8_t *)best_fit + size);
     new_node->node_size = best_fit->node_size - size;
-    new_node->next = NULL;
-    // remove the best_fit node from the list
+    new_node->next = best_fit_pre_node->next;
+    best_fit_pre_node->next = new_node;
+    
     best_fit->node_size = size;
-    best_fit_pre_node->next = best_fit->next;
     // insert the new node into the list
     heap_insert_list(new_node);
   }
 
   heap.heap_size -= best_fit->node_size;
-  return (void *)(best_fit + node_struct_size);
+  return (void *)((uint8_t *)best_fit + node_struct_size);
 }
 
 void hfree(void *addr) {
