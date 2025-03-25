@@ -1,10 +1,17 @@
 #include "test.h"
+#include <stdio.h>
+#include <assert.h>
+#include "mem.h"
+#include "stm32f1xx.h"
+#include "stm32f1xx_hal_uart.h"
+
 // 暴露内部结构用于测试
 // 辅助函数：遍历空闲链表并打印信息
 extern uint8_t heap_mem[];
 // init the heap struct
 extern heap_t heap;
-
+extern size_t node_struct_size;
+extern UART_HandleTypeDef huart1;
 
 void print_free_list() {
     printf("Free List:\n");
@@ -46,7 +53,7 @@ void test_basic_alloc_free() {
     assert((uintptr_t)ptr % 8 == 0);
 
     // 分配后堆大小减少
-    size_t allocated_size = ((heap_node*)((uint8_t*)ptr - NODE_STRUCT_SIZE))->node_size;
+    size_t allocated_size = ((heap_node*)((uint8_t*)ptr - node_struct_size))->node_size;
     assert(heap.heap_size == configHeapSize - allocated_size);
 
     // 释放内存
@@ -71,7 +78,7 @@ void test_coalescing() {
 
     // 现在a和b应该合并
     heap_node *node = heap.head.next;
-    assert(node->node_size >= 64 + NODE_STRUCT_SIZE);
+    assert(node->node_size >= 64 + node_struct_size);
 
     // 释放最后一个块
     hfree(c);
@@ -102,7 +109,7 @@ void test_alloc_failure() {
     heap_init();
 
     // 尝试分配整个堆空间（考虑元数据开销）
-    size_t max_alloc = configHeapSize - NODE_STRUCT_SIZE*2;
+    size_t max_alloc = configHeapSize - node_struct_size*2;
     void *big = halloc(max_alloc);
     assert(big != NULL);
 
@@ -120,7 +127,7 @@ void test_min_node_split() {
     heap_init();
 
     // 计算刚好不触发分割的大小
-    size_t test_size = configHeapSize - NODE_STRUCT_SIZE*3 - MIN_NODE_SIZE + 1;
+    size_t test_size = configHeapSize - node_struct_size*3 - MIN_NODE_SIZE + 1;
     void *p = halloc(test_size);
     assert(p != NULL);
 
@@ -143,6 +150,4 @@ void mem_test(){
 
 }
 
-int main() {
-   return 0;
-}
+
