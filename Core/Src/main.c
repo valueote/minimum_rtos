@@ -109,12 +109,13 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   //scheduler_init();
-  tcb_t* new_tcb = halloc(sizeof(tcb_t));
-  //task_handler_t led_right_handler = NULL;
+  //tcb_t* new_tcb = halloc(sizeof(tcb_t));
+  task_handler_t led_right_handler = NULL;
   //task_handler_t led_close_handler = NULL;
-  //task_create(led_right, NULL, 32, 2, &led_right_handler);
+  task_create(led_right, NULL, 32, 2, &led_right_handler);
   //task_create(led_close, NULL, 256, 1, &led_close_handler);
-  //scheduler_start();
+  //scheduler_start(); 
+  //HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
   /* USER CODE END 2 */
 
   /* Infinite loop */

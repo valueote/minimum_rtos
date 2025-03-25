@@ -17,8 +17,8 @@ set(CMAKE_C_EXTENSIONS ON)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug")
   add_compile_options(
-        -g
-        -O0
+    -O0
+    -ggdb
   )
   add_link_options(
         -g
