@@ -15,7 +15,15 @@ set(CMAKE_C_EXTENSIONS ON)
 
 # Define the build type
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Debug")
+  set(CMAKE_BUILD_TYPE "Debug")
+  add_compile_options(
+        -g
+        -O0
+  )
+  add_link_options(
+        -g
+        -Wl,--no-merge-exidx-entries  # 防止调试信息被合并
+  )
 endif()
 
 # Set the project name
@@ -53,14 +61,12 @@ file(GLOB SOURCES
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${SOURCES}
-    "${CMAKE_CURRENT_SOURCE_DIR}/Core/Test/test.c"
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     "${CMAKE_CURRENT_SOURCE_DIR}/Core/Inc/"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Core/Test/"
 )
 
 # Add project symbols (macros)

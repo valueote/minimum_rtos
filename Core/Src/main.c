@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "stm32f103xe.h"
+#include "stm32f1xx_hal_gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -52,7 +54,6 @@ static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 #include "core_cm3.h"
-#include "mem.h"
 #include "task.h"
 #include <stdint.h>
 /* USER CODE END PFP */
@@ -68,9 +69,9 @@ void led_right() {
   }
 }
 void led_close() {
-  uint8_t message[] = "The system is sleeping";
+  //uint8_t message[] = "The system is sleeping";
   while (1) {
-    HAL_UART_Transmit(&huart1, message, sizeof(message), 100);
+    task_delay(100);
   }
 }
 /* USER CODE END 0 */
@@ -106,21 +107,19 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  mem_test();
 
-  //scheduler_init();
+  scheduler_init();
   //task_handler_t led_right_handler = NULL;
   //task_handler_t led_close_handler = NULL;
   //task_create(led_right, NULL, 32, 2, &led_right_handler);
   //task_create(led_close, NULL, 256, 1, &led_close_handler);
-  //scheduler_start();
+  scheduler_start();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
