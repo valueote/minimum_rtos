@@ -132,9 +132,9 @@ void mem_debug_print_free_list(void) {
   printf("Free List:\r\n");
   heap_node *node = heap.head.next;
   while (node != heap.tail) {
-    printf("  Node @%p: size=%zu, next=%p\r\n", (void *)node, node->node_size,
+    printf("  Node @%p: size=%u, next=%p\r\n", (void *)node, node->node_size,
            (void *)node->next);
     node = node->next;
   }
-  printf("Total heap size: %zu\r\n", heap.heap_size);
+  printf("Total heap size: %u\r\n", heap.heap_size);
 }

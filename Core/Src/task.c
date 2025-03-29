@@ -115,6 +115,7 @@ __attribute__((always_inline)) inline static void StartFirstTask(void) {
 /* Task API part
  */
 
+void add_to_ready_list(task_handler_t *handler, uint32_t priority);
 // Create a new task
 void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
                  uint32_t priority, task_handler_t *handler) {

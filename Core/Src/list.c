@@ -47,7 +47,7 @@ void list_debug_print_list(list_t *list) {
   printf("List:\r\n");
   list_node_t *node = list->head.next;
   while (node != &(list->head)) {
-    printf("  Node @%p: val=%zu, next=%p\r\n", (void *)node, node->val,
+    printf("Node @%p: val=%lu, next=%p\r\n", (void *)node, node->val,
            (void *)node->next);
     node = node->next;
   }
