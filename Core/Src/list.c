@@ -42,3 +42,13 @@ void list_remove_node(list_node_t *node) {
   node->prev = NULL;
   node->next = NULL;
 }
+
+void list_debug_print_list(list_t *list) {
+  printf("List:\r\n");
+  list_node_t *node = list->head.next;
+  while (node != &(list->head)) {
+    printf("  Node @%p: val=%zu, next=%p\r\n", (void *)node, node->val,
+           (void *)node->next);
+    node = node->next;
+  }
+}

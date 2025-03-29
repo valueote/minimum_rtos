@@ -19,4 +19,5 @@ typedef struct heap {
 void heap_init(void);
 void *halloc(size_t size);
 void hfree(void *addr);
+void mem_debug_print_free_list(void);
 #endif
