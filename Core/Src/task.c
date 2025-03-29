@@ -1,5 +1,6 @@
 #include "task.h"
 #include "config.h"
+#include "core_cm3.h"
 
 // The current running task
 __attribute__((used)) volatile tcb_t *current_tcb = NULL;
@@ -18,8 +19,9 @@ static uint32_t *delay_overflow_list;
 static uint32_t max_priority = 0;
 static uint32_t current_tick_count;
 
-//Static functions
-static uint32_t *stack_init(uint32_t *stack_top, task_func_t func, void *parameters);
+// Static functions
+static uint32_t *stack_init(uint32_t *stack_top, task_func_t func,
+                            void *parameters);
 static inline uint8_t get_highest_priority(void);
 static void delay_list_init(void);
 static void increment_tick(void);
@@ -79,14 +81,14 @@ __attribute__((naked)) void vPortSVCHandler(void) {
       "pxCurrentTCBConst2: .word current_tcb             \n");
 }
 
-//SysTick Handler
+// SysTick Handler
 void SysTick_Handler(void) {
   uint32_t ret = critical_enter();
   increment_tick();
   critical_exit(ret);
 }
 
-//And config the SysTick and start the first task
+// And config the SysTick and start the first task
 __attribute__((always_inline)) inline static void StartFirstTask(void) {
   (*((volatile uint32_t *)0xe000ed20)) |= (((uint32_t)255UL) << 16UL);
   (*((volatile uint32_t *)0xe000ed20)) |= (((uint32_t)255UL) << 24UL);
@@ -110,16 +112,10 @@ __attribute__((always_inline)) inline static void StartFirstTask(void) {
       " .ltorg                \n");
 }
 
-//Add the task handler to the ready list
-void add_to_ready_list(task_handler_t *handler, uint32_t priority) {
-  if (priority < max_priority)
-    max_priority = priority;
+/* Task API part
+ */
 
-  ready_bits |= (1 << priority);
-  ready_list[priority] = *handler;
-}
-
-//Create a new task
+// Create a new task
 void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
                  uint32_t priority, task_handler_t *handler) {
   tcb_t *new_tcb;
@@ -139,14 +135,45 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
   add_to_ready_list(handler, priority);
 }
 
-//Task should never return, if so, it will reach here
+void task_delete(task_handler_t *handler) {
+  tcb_t *tcb = *handler;
+  uint32_t priority = tcb->priority;
+  ready_bits &= ~(1 << priority);
+  ready_list[priority] = NULL;
+}
+
+void task_delay(uint32_t ticks) {
+  uint32_t time_to_wake = ticks + current_tick_count;
+  uint32_t priority = current_tcb->priority;
+  // overflow
+  if (time_to_wake < current_tick_count) {
+    delay_overflow_list[priority] = time_to_wake;
+  } else {
+    delay_list[priority] = time_to_wake;
+  }
+
+  ready_bits = ready_bits & (~(1 << priority));
+  task_switch();
+}
+
+// Add the task handler to the ready list
+void add_to_ready_list(task_handler_t *handler, uint32_t priority) {
+  if (priority < max_priority)
+    max_priority = priority;
+
+  ready_bits |= (1 << priority);
+  ready_list[priority] = *handler;
+}
+
+// Task should never return, if so, it will reach here
 static void task_exit_error() {
   while (1) {
   }
 }
 
-//Init the task stack
-static uint32_t *stack_init(uint32_t *stack_top, task_func_t func, void *parameters) {
+// Init the task stack
+static uint32_t *stack_init(uint32_t *stack_top, task_func_t func,
+                            void *parameters) {
   // set the XPSR
   stack_top--;
   *stack_top = INITIAL_XPSR;
@@ -171,7 +198,10 @@ void idle_task() {
   }
 }
 
-//Init the scheduler
+/*Scheduler API
+ */
+
+// Init the scheduler
 void scheduler_init(void) {
   current_tick_count = 0;
   delay_list_init();
@@ -179,10 +209,10 @@ void scheduler_init(void) {
   current_tcb = idle_task_handler;
 }
 
-//Start
+// Start
 void scheduler_start(void) { StartFirstTask(); }
 
-//Switch task
+// Switch task
 void vTaskSwitchContext(void) {
   current_tcb = ready_list[get_highest_priority()];
 }
@@ -236,20 +266,6 @@ void delay_list_switch(void) {
   tmp = delay_list;
   delay_list = delay_overflow_list;
   delay_overflow_list = tmp;
-}
-
-void task_delay(uint32_t ticks) {
-  uint32_t time_to_wake = ticks + current_tick_count;
-  uint32_t priority = current_tcb->priority;
-  // overflow
-  if (time_to_wake < current_tick_count) {
-    delay_overflow_list[priority] = time_to_wake;
-  } else {
-    delay_list[priority] = time_to_wake;
-  }
-
-  ready_bits = ready_bits & (~(1 << priority));
-  task_switch();
 }
 
 static void increment_tick(void) {

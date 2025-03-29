@@ -1,5 +1,6 @@
 #include "mem.h"
 #include "config.h"
+#include <stdio.h>
 // the size of the heap node struct
 const size_t node_struct_size =
     (sizeof(heap_node) + (size_t)alignment_byte) & ~alignment_byte;
@@ -96,10 +97,10 @@ void *halloc(size_t size) {
     cur_node = cur_node->next;
   }
 
-  if (!best_fit){
+  if (!best_fit) {
     return NULL;
   }
-  
+
   // remove the node from the list
   best_fit_pre_node->next = best_fit->next;
   best_fit->next = NULL;
@@ -110,7 +111,7 @@ void *halloc(size_t size) {
     new_node = (void *)((uint8_t *)best_fit + size);
     new_node->node_size = best_fit->node_size - size;
     new_node->next = NULL;
-    
+
     best_fit->node_size = size;
     // insert the new node into the list
     heap_insert_list(new_node);

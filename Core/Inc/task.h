@@ -2,10 +2,10 @@
 #define __TASK_H
 
 #include "config.h"
-#include "stm32f1xx.h"
-#include "core_cm3.h"
+#include "list.h"
 #include "main.h"
 #include "mem.h"
+#include "stm32f1xx.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -25,6 +25,7 @@ typedef tcb_t *task_handler_t;
 
 void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
                  uint32_t priority, task_handler_t *handler);
+void task_delete(task_handler_t *handler);
 void task_delay(uint32_t ticks);
 void task_suspend(task_handler_t *handler);
 void task_resume(task_handler_t *handler);

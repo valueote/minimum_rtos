@@ -116,7 +116,6 @@ int main(void) {
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
   // scheduler_init();
   // tcb_t *new_tcb = halloc(sizeof(tcb_t));
   // task_handler_t led_right_handler = NULL;
@@ -131,9 +130,9 @@ int main(void) {
   /* USER CODE BEGIN WHILE */
   while (1) {
     /* USER CODE END WHILE */
-    printf("hello\r\n");
-    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
-    HAL_Delay(1000);
+    // printf("hello\r\n");
+    // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
+    // HAL_Delay(1000);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
