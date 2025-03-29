@@ -3,8 +3,6 @@
 
 #include "config.h"
 #include "list.h"
-#include "main.h"
-#include "mem.h"
 #include "stm32f1xx.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -19,6 +17,7 @@ typedef struct tcb {
   uint32_t *stack_top;
   uint32_t priority;
   uint32_t *stack;
+  list_node_t list_node;
 } tcb_t;
 typedef void (*task_func_t)(void *);
 typedef tcb_t *task_handler_t;

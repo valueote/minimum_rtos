@@ -31,6 +31,10 @@ void list_insert_node(list_t *list, list_node_t *new_node) {
 }
 
 void list_remove_node(list_node_t *node) {
+  if (node == NULL || node->prev == NULL || node->next == NULL) {
+    return;
+  }
+
   list_t *node_list = node->container;
   node->prev->next = node->next;
   node->next->prev = node->prev;
@@ -43,6 +47,13 @@ void list_remove_node(list_node_t *node) {
   node->next = NULL;
 }
 
+int list_is_empty(list_t *list) {
+  if (list->head.next == &(list->head)) {
+    return 1;
+  }
+  return 0;
+}
+
 void list_debug_print_list(list_t *list) {
   printf("List:\r\n");
   list_node_t *node = list->head.next;
@@ -52,3 +63,5 @@ void list_debug_print_list(list_t *list) {
     node = node->next;
   }
 }
+
+void list_test(void) { list_t list; }

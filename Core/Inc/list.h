@@ -24,5 +24,5 @@ void list_init(list_t *new_list);
 void list_insert_node(list_t *list, list_node_t *node);
 void list_remove_node(list_node_t *node);
 void list_debug_print_list(list_t *list);
-
+int list_is_empty(list_t *list);
 #endif /*__LIST_H*/
