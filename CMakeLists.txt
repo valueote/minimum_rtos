@@ -16,14 +16,6 @@ set(CMAKE_C_EXTENSIONS ON)
 # Define the build type
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug")
-  add_compile_options(
-    -O0
-    -ggdb
-  )
-  add_link_options(
-        -g
-        -Wl,--no-merge-exidx-entries  # 防止调试信息被合并
-  )
 endif()
 
 # Set the project name
