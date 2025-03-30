@@ -230,7 +230,7 @@ void scheduler_init(void) {
   current_tick_count = 0;
   ready_lists_init();
   delay_list_init();
-  task_create(idle_task, NULL, 512, 0, &idle_task_handler);
+  task_create(idle_task, NULL, 64, 0, &idle_task_handler);
 }
 
 // Start

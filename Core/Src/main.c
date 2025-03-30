@@ -82,7 +82,7 @@ void led_right() {
 void led_close() {
   // uint8_t message[] = "The system is sleeping";
   while (1) {
-    // mem_debug_print_free_list();
+    printf("in led_close\n");
     task_delay(10000);
   }
 }
@@ -122,9 +122,9 @@ int main(void) {
   /* USER CODE BEGIN 2 */
   scheduler_init();
   task_handler_t led_right_handler = NULL;
-  //    task_handler_t led_close_handler = NULL;
-  task_create(led_right, NULL, 256, 2, &led_right_handler);
-  //    task_create(led_close, NULL, 256, 1, &led_close_handler);
+  task_handler_t led_close_handler = NULL;
+  task_create(led_right, NULL, 128, 2, &led_right_handler);
+  task_create(led_close, NULL, 128, 1, &led_close_handler);
   scheduler_start();
   /* USER CODE END 2 */
   /* Infinite loop */
