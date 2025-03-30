@@ -219,7 +219,6 @@ uint32_t enter_idle = 0;
 void idle_task() {
   while (1) {
     enter_idle++;
-    task_switch();
   }
 }
 
@@ -317,14 +316,13 @@ static void increment_tick(void) {
     if (list_is_empty(delay_list)) {
       break;
     }
+    list_node_t *first_node = delay_list->head.next;
+    if (first_node->val <= current_tick_count) {
+      tcb_t *tcb = (tcb_t *)(first_node->owner);
+      list_remove_node(first_node);
 
-    if (delay_list->head.next->val <= current_tick_count) {
-      list_node_t *node_to_resume = delay_list->head.next;
-      tcb_t *tcb = (tcb_t *)node_to_resume->owner;
-      list_t *list = &ready_lists[tcb->priority];
-      list_remove_node(node_to_resume);
-
-      list_insert_node(list, node_to_resume);
+      list_insert_node(&(ready_lists[tcb->priority]), first_node);
+      ready_bits |= (1 << tcb->priority);
     } else {
       break;
     }
