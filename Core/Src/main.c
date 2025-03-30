@@ -18,8 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "list.h"
 #include "stm32f103xe.h"
 #include "stm32f1xx_hal.h"
+#include "stm32f1xx_hal_def.h"
 #include "stm32f1xx_hal_gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -118,22 +120,18 @@ int main(void) {
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  // scheduler_init();
-  // task_handler_t led_right_handler = NULL;
-  // task_handler_t led_close_handler = NULL;
-  // task_create(led_right, NULL, 256, 2, &led_right_handler);
-  // task_create(led_close, NULL, 256, 1, &led_close_handler);
-  // scheduler_start();
-  //   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
+  scheduler_init();
+  task_handler_t led_right_handler = NULL;
+  //    task_handler_t led_close_handler = NULL;
+  task_create(led_right, NULL, 256, 2, &led_right_handler);
+  //    task_create(led_close, NULL, 256, 1, &led_close_handler);
+  scheduler_start();
   /* USER CODE END 2 */
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
     /* USER CODE END WHILE */
-    printf("hello\r\n");
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
-    HAL_Delay(1000);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

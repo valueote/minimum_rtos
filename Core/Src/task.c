@@ -5,7 +5,7 @@
 #include "mem.h"
 
 // The current running task
-__attribute__((used)) volatile tcb_t *current_tcb = NULL;
+__attribute__((used)) tcb_t *volatile current_tcb = NULL;
 // handler for the idle task
 static task_handler_t idle_task_handler = NULL;
 // task table
@@ -15,16 +15,15 @@ uint32_t ready_bits = 0;
 // delay lists
 static list_t actual_delay_list;
 static list_t actual_delay_overflow_list;
-static list_t *delay_list;
-static list_t *delay_overflow_list;
+static list_t *delay_list = NULL;
+static list_t *delay_overflow_list = NULL;
 
-static uint32_t max_priority = 0;
-static uint32_t current_tick_count;
+static uint32_t current_tick_count = 0;
 
 // Static functions
 
 static void ready_lists_init(void);
-static void add_to_ready_lists(task_handler_t *handler, uint32_t priority);
+static void add_to_ready_lists(tcb_t *handler, uint32_t priority);
 static uint32_t *stack_init(uint32_t *stack_top, task_func_t func,
                             void *parameters);
 static inline uint8_t get_highest_priority(void);
@@ -134,13 +133,13 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
   // initialize the stack
   new_tcb->stack_top = stack_init(stack_top, func, func_parameters);
   new_tcb->priority = priority;
+  // put the tcb into ready_lists
+  list_node_init(&(new_tcb->list_node));
+  new_tcb->list_node.owner = new_tcb;
   // set the task handler
   *handler = (task_handler_t)new_tcb;
-
-  // put the tcb into ready_lists
-  list_node_init(&new_tcb->list_node);
-  new_tcb->list_node.owner = new_tcb;
-  add_to_ready_lists(handler, priority);
+  // add the new tcb to the ready list
+  add_to_ready_lists(new_tcb, priority);
 }
 
 // Have not finished
@@ -157,15 +156,14 @@ void task_delay(uint32_t ticks) {
   uint32_t time_to_wake = ticks + current_tick_count;
   current_tcb->list_node.val = time_to_wake;
   uint32_t priority = current_tcb->priority;
-  list_node_t *current_tcb_node = &current_tcb->list_node;
   list_t *prev_ready_list = &ready_lists[priority];
 
-  list_remove_node(current_tcb_node);
+  list_remove_node(&(current_tcb->list_node));
   // overflow
   if (time_to_wake < current_tick_count) {
-    list_insert_node(delay_overflow_list, current_tcb_node);
+    list_insert_node(delay_overflow_list, &(current_tcb->list_node));
   } else {
-    list_insert_node(delay_list, current_tcb_node);
+    list_insert_node(delay_list, &(current_tcb->list_node));
   }
 
   if (list_is_empty(prev_ready_list))
@@ -177,19 +175,18 @@ void task_delay(uint32_t ticks) {
 
 static void ready_lists_init(void) {
   for (int i = 0; i < configMaxPriority; i++) {
-    list_init(&ready_lists[i]);
+    list_init(&(ready_lists[i]));
   }
 }
 
 // Add the task handler to the ready list
-static void add_to_ready_lists(task_handler_t *handler, uint32_t priority) {
-  if (priority < max_priority)
-    max_priority = priority;
+static void add_to_ready_lists(tcb_t *tcb, uint32_t priority) {
+  uint32_t ret = critical_enter();
 
   ready_bits |= (1 << priority);
-  tcb_t *tcb = *handler;
-  list_t *list = &ready_lists[priority];
-  list_insert_node(list, &tcb->list_node);
+  list_insert_node(&ready_lists[priority], &(tcb->list_node));
+
+  critical_exit(ret);
 }
 
 // Task should never return, if so, it will reach here
@@ -222,6 +219,7 @@ uint32_t enter_idle = 0;
 void idle_task() {
   while (1) {
     enter_idle++;
+    task_switch();
   }
 }
 
@@ -233,21 +231,26 @@ void scheduler_init(void) {
   current_tick_count = 0;
   ready_lists_init();
   delay_list_init();
-  task_create(idle_task, NULL, 64, 0, &idle_task_handler);
-  current_tcb = idle_task_handler;
+  task_create(idle_task, NULL, 512, 0, &idle_task_handler);
 }
 
 // Start
-void scheduler_start(void) { StartFirstTask(); }
+void scheduler_start(void) {
+  current_tcb = idle_task_handler;
+  StartFirstTask();
+}
 
 // Switch task
 void vTaskSwitchContext(void) {
-  list_t *list = &ready_lists[get_highest_priority()];
-  if (list->index == &(list->head)) {
-    list->index = list->index->next;
+  uint8_t priority = get_highest_priority();
+  if (priority == configMaxPriority) {
+    current_tcb = idle_task_handler;
+    return;
   }
-  current_tcb = list->index->owner;
-  list->index = list->index->next;
+
+  list_t *list = &ready_lists[priority];
+  list_node_t *next_node = list_get_next_index(list);
+  current_tcb = next_node->owner;
 }
 
 __attribute__((always_inline)) inline uint32_t critical_enter(void) {
