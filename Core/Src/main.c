@@ -76,14 +76,12 @@ void led_right() {
   while (1) {
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
     // printf("In led_right\r\n");
-    task_delay(3000);
   }
 }
 void led_close() {
   // uint8_t message[] = "The system is sleeping";
   while (1) {
-    printf("in led_close\n");
-    task_delay(10000);
+    printf("hello\r\n");
   }
 }
 
@@ -124,7 +122,7 @@ int main(void) {
   task_handler_t led_right_handler = NULL;
   task_handler_t led_close_handler = NULL;
   task_create(led_right, NULL, 128, 2, &led_right_handler);
-  task_create(led_close, NULL, 128, 1, &led_close_handler);
+  task_create(led_close, NULL, 128, 2, &led_close_handler);
   scheduler_start();
   /* USER CODE END 2 */
   /* Infinite loop */
