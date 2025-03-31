@@ -3,6 +3,7 @@
 #include "core_cm3.h"
 #include "list.h"
 #include "mem.h"
+#include <stdint.h>
 
 // The current running task
 __attribute__((used)) tcb_t *volatile current_tcb = NULL;
@@ -13,6 +14,7 @@ static list_t ready_lists[configMaxPriority];
 // ready bits for task table
 uint32_t ready_bits = 0;
 // delay lists
+static list_t suspended_list;
 static list_t actual_delay_list;
 static list_t actual_delay_overflow_list;
 static list_t *delay_list = NULL;
@@ -142,12 +144,16 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
   add_to_ready_lists(new_tcb, priority);
 }
 
-// Have not finished
 void task_delete(task_handler_t *handler) {
-  tcb_t *tcb = *handler;
-  uint32_t priority = tcb->priority;
-  ready_bits &= ~(1 << priority);
-  list_remove_node(&tcb->list_node);
+  tcb_t *tcb;
+  if (handler == NULL) {
+    tcb = current_tcb;
+  } else {
+    tcb = *handler;
+  }
+  uint32_t ret = critical_enter();
+  list_remove_node(&(tcb->list_node));
+  critical_exit(ret);
 }
 
 void task_delay(uint32_t ticks) {
@@ -171,6 +177,26 @@ void task_delay(uint32_t ticks) {
 
   critical_exit(ret);
   task_switch();
+}
+
+void task_suspend(task_handler_t *handler) {
+  uint32_t ret = critical_enter();
+
+  tcb_t *tcb = *handler;
+  list_remove_node(&(tcb->list_node));
+  list_insert_node(&suspended_list, &(tcb->list_node));
+
+  critical_exit(ret);
+}
+
+void task_resume(task_handler_t *handler) {
+  uint32_t ret = critical_enter();
+
+  tcb_t *tcb = *handler;
+  list_remove_node(&(tcb->list_node));
+  list_insert_node(&(ready_lists[tcb->priority]), &(tcb->list_node));
+
+  critical_exit(ret);
 }
 
 static void ready_lists_init(void) {
