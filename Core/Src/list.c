@@ -32,10 +32,18 @@ void list_insert_node(list_t *const list, list_node_t *const new_node) {
   list->size++;
 }
 
-int list_remove_node(list_node_t *const node) {
-  if (node == NULL || node->prev == NULL || node->next == NULL) {
-    return -1;
-  }
+void list_insert_end(list_t *const list, list_node_t *const new_node) {
+  list_node_t *index = list->index;
+  new_node->next = index;
+  new_node->prev = index->prev;
+  index->prev->next = new_node;
+  index->prev = new_node;
+
+  new_node->container = list;
+  list->size++;
+}
+
+void list_remove_node(list_node_t *const node) {
 
   list_t *node_list = node->container;
   node->prev->next = node->next;
@@ -48,7 +56,6 @@ int list_remove_node(list_node_t *const node) {
   node->container = NULL;
   node->prev = NULL;
   node->next = NULL;
-  return 0;
 }
 
 int list_is_empty(list_t *const list) {

@@ -9,12 +9,13 @@
 __attribute__((used)) tcb_t *volatile current_tcb = NULL;
 // handler for the idle task
 static task_handler_t idle_task_handler = NULL;
-// task table
+// ready lists
 static list_t ready_lists[configMaxPriority];
 // ready bits for task table
 uint32_t ready_bits = 0;
-// delay lists
+// suspended_list
 static list_t suspended_list;
+// delay lists
 static list_t actual_delay_list;
 static list_t actual_delay_overflow_list;
 static list_t *delay_list = NULL;
@@ -210,7 +211,7 @@ static void add_to_ready_lists(tcb_t *tcb, uint32_t priority) {
   uint32_t ret = critical_enter();
 
   ready_bits |= (1 << priority);
-  list_insert_node(&ready_lists[priority], &(tcb->list_node));
+  list_insert_end(&ready_lists[priority], &(tcb->list_node));
 
   critical_exit(ret);
 }
@@ -264,6 +265,10 @@ void scheduler_start(void) {
   current_tcb = idle_task_handler;
   StartFirstTask();
 }
+// TODO
+void scheduler_suspend(void) { schdueler_is return; }
+
+void scheduler_resume(void) { return; }
 
 // Switch task
 void vTaskSwitchContext(void) {
