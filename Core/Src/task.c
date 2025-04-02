@@ -20,9 +20,10 @@ static list_t actual_delay_list;
 static list_t actual_delay_overflow_list;
 static list_t *delay_list = NULL;
 static list_t *delay_overflow_list = NULL;
-
+// tick count
 static uint32_t current_tick_count = 0;
-
+// scheduelr suspended or not
+static uint32_t scheduler_is_suspending = 0;
 // Static functions
 
 static void ready_lists_init(void);
@@ -90,9 +91,9 @@ __attribute__((naked)) void vPortSVCHandler(void) {
 
 // SysTick Handler
 void SysTick_Handler(void) {
-  uint32_t ret = critical_enter();
+  uint32_t saved = critical_enter();
   increment_tick();
-  critical_exit(ret);
+  critical_exit(saved);
 }
 
 // And config the SysTick and start the first task
@@ -152,13 +153,13 @@ void task_delete(task_handler_t *handler) {
   } else {
     tcb = *handler;
   }
-  uint32_t ret = critical_enter();
+  uint32_t saved = critical_enter();
   list_remove_node(&(tcb->list_node));
-  critical_exit(ret);
+  critical_exit(saved);
 }
 
 void task_delay(uint32_t ticks) {
-  uint32_t ret = critical_enter();
+  uint32_t saved = critical_enter();
 
   uint32_t time_to_wake = ticks + current_tick_count;
   current_tcb->list_node.val = time_to_wake;
@@ -176,28 +177,34 @@ void task_delay(uint32_t ticks) {
   if (list_is_empty(prev_ready_list))
     ready_bits = ready_bits & (~(1 << priority));
 
-  critical_exit(ret);
+  critical_exit(saved);
   task_switch();
 }
 
 void task_suspend(task_handler_t *handler) {
-  uint32_t ret = critical_enter();
+  uint32_t saved = critical_enter();
 
   tcb_t *tcb = *handler;
   list_remove_node(&(tcb->list_node));
-  list_insert_node(&suspended_list, &(tcb->list_node));
+  list_insert_end(&suspended_list, &(tcb->list_node));
 
-  critical_exit(ret);
+  critical_exit(saved);
 }
 
 void task_resume(task_handler_t *handler) {
-  uint32_t ret = critical_enter();
-
   tcb_t *tcb = *handler;
-  list_remove_node(&(tcb->list_node));
-  list_insert_node(&(ready_lists[tcb->priority]), &(tcb->list_node));
+  if (tcb != NULL && tcb != current_tcb) {
+    uint32_t saved = critical_enter();
 
-  critical_exit(ret);
+    list_remove_node(&(tcb->list_node));
+    list_insert_node(&(ready_lists[tcb->priority]), &(tcb->list_node));
+
+    if (tcb->priority > current_tcb->priority) {
+      task_switch();
+    }
+
+    critical_exit(saved);
+  }
 }
 
 static void ready_lists_init(void) {
@@ -265,10 +272,22 @@ void scheduler_start(void) {
   current_tcb = idle_task_handler;
   StartFirstTask();
 }
-// TODO
-void scheduler_suspend(void) { schdueler_is return; }
 
-void scheduler_resume(void) { return; }
+// NOT FINISHED suspended the scheduler
+void scheduler_suspend(void) {
+  uint32_t saved = critical_enter();
+  scheduler_is_suspending++;
+  critical_exit(saved);
+}
+// NOT FINISHED
+void scheduler_resume(void) {
+  uint32_t saved = critical_enter();
+  scheduler_is_suspending--;
+  if (scheduler_is_suspending == 0) {
+  }
+  critical_exit(saved);
+  return;
+}
 
 // Switch task
 void vTaskSwitchContext(void) {
@@ -284,7 +303,7 @@ void vTaskSwitchContext(void) {
 }
 
 __attribute__((always_inline)) inline uint32_t critical_enter(void) {
-  uint32_t ret;
+  uint32_t saved;
   uint32_t temp;
   __asm volatile(" cpsid i               \n"
                  " mrs %0, basepri       \n"
@@ -293,18 +312,18 @@ __attribute__((always_inline)) inline uint32_t critical_enter(void) {
                  " dsb                   \n"
                  " isb                   \n"
                  " cpsie i               \n"
-                 : "=r"(ret), "=r"(temp)
+                 : "=r"(saved), "=r"(temp)
                  : "r"(configMAX_SYSCALL_INTERRUPT_PRIORITY)
                  : "memory");
-  return ret;
+  return saved;
 }
 
-__attribute__((always_inline)) inline void critical_exit(uint32_t ret) {
+__attribute__((always_inline)) inline void critical_exit(uint32_t saved) {
   __asm volatile(" cpsid i               \n"
                  " msr basepri, %0       \n"
                  " dsb                   \n"
                  " isb                   \n"
-                 " cpsie i               \n" ::"r"(ret)
+                 " cpsie i               \n" ::"r"(saved)
                  : "memory");
 }
 
