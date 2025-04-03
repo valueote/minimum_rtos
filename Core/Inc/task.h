@@ -17,7 +17,7 @@ typedef struct tcb {
   uint32_t *stack_top;
   uint32_t priority;
   uint32_t *stack;
-  list_node_t list_node;
+  list_node_t state_node;
 } tcb_t;
 typedef void (*task_func_t)(void *);
 typedef tcb_t *task_handler_t;
@@ -28,6 +28,7 @@ void task_delete(task_handler_t *handler);
 void task_delay(uint32_t ticks);
 void task_suspend(task_handler_t *handler);
 void task_resume(task_handler_t *handler);
+tcb_t *get_current_tcb(void);
 
 void scheduler_init(void);
 void scheduler_start(void);

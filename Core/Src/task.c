@@ -13,6 +13,8 @@ static task_handler_t idle_task_handler = NULL;
 static list_t ready_lists[configMaxPriority];
 // ready bits for task table
 uint32_t ready_bits = 0;
+// zombie list
+static list_t zombie_list;
 // suspended_list
 static list_t suspended_list;
 // delay lists
@@ -137,40 +139,46 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
   new_tcb->stack_top = stack_init(stack_top, func, func_parameters);
   new_tcb->priority = priority;
   // put the tcb into ready_lists
-  list_node_init(&(new_tcb->list_node));
-  new_tcb->list_node.owner = new_tcb;
+  list_node_init(&(new_tcb->state_node));
+  new_tcb->state_node.owner = new_tcb;
   // set the task handler
   *handler = (task_handler_t)new_tcb;
   // add the new tcb to the ready list
   add_to_ready_lists(new_tcb, priority);
 }
 
+// delete task
 void task_delete(task_handler_t *handler) {
   tcb_t *tcb;
+
+  uint32_t saved = critical_enter();
+
   if (handler == NULL) {
     tcb = current_tcb;
   } else {
     tcb = *handler;
   }
-  uint32_t saved = critical_enter();
-  list_remove_node(&(tcb->list_node));
+  list_remove_node(&(tcb->state_node));
+  list_insert_end(&zombie_list, &(tcb->state_node));
+
   critical_exit(saved);
 }
 
+// Delay current task for given ticks
 void task_delay(uint32_t ticks) {
   uint32_t saved = critical_enter();
 
   uint32_t time_to_wake = ticks + current_tick_count;
-  current_tcb->list_node.val = time_to_wake;
+  current_tcb->state_node.val = time_to_wake;
   uint32_t priority = current_tcb->priority;
   list_t *prev_ready_list = &ready_lists[priority];
 
-  list_remove_node(&(current_tcb->list_node));
-  // overflow
+  list_remove_node(&(current_tcb->state_node));
+  // time_to wake overflow, put it in the overflow list
   if (time_to_wake < current_tick_count) {
-    list_insert_node(delay_overflow_list, &(current_tcb->list_node));
+    list_insert_node(delay_overflow_list, &(current_tcb->state_node));
   } else {
-    list_insert_node(delay_list, &(current_tcb->list_node));
+    list_insert_node(delay_list, &(current_tcb->state_node));
   }
 
   if (list_is_empty(prev_ready_list))
@@ -181,13 +189,22 @@ void task_delay(uint32_t ticks) {
 }
 
 void task_suspend(task_handler_t *handler) {
+  tcb_t *tcb;
+  uint32_t yield = 0;
   uint32_t saved = critical_enter();
+  if (handler == NULL) {
+    tcb = current_tcb;
+  } else {
+    tcb = *handler;
+  }
 
-  tcb_t *tcb = *handler;
-  list_remove_node(&(tcb->list_node));
-  list_insert_end(&suspended_list, &(tcb->list_node));
+  list_remove_node(&(tcb->state_node));
+  list_insert_end(&suspended_list, &(tcb->state_node));
 
   critical_exit(saved);
+  if (yield) {
+    task_switch();
+  }
 }
 
 void task_resume(task_handler_t *handler) {
@@ -195,8 +212,8 @@ void task_resume(task_handler_t *handler) {
   if (tcb != NULL && tcb != current_tcb) {
     uint32_t saved = critical_enter();
 
-    list_remove_node(&(tcb->list_node));
-    list_insert_node(&(ready_lists[tcb->priority]), &(tcb->list_node));
+    list_remove_node(&(tcb->state_node));
+    list_insert_node(&(ready_lists[tcb->priority]), &(tcb->state_node));
 
     if (tcb->priority > current_tcb->priority) {
       task_switch();
@@ -206,18 +223,15 @@ void task_resume(task_handler_t *handler) {
   }
 }
 
-static void ready_lists_init(void) {
-  for (int i = 0; i < configMaxPriority; i++) {
-    list_init(&(ready_lists[i]));
-  }
-}
+// Get the current running tcb
+tcb_t *get_current_tcb(void) { return current_tcb; }
 
 // Add the task handler to the ready list
 static void add_to_ready_lists(tcb_t *tcb, uint32_t priority) {
   uint32_t ret = critical_enter();
 
   ready_bits |= (1 << priority);
-  list_insert_end(&ready_lists[priority], &(tcb->list_node));
+  list_insert_end(&ready_lists[priority], &(tcb->state_node));
 
   critical_exit(ret);
 }
@@ -251,7 +265,9 @@ static uint32_t *stack_init(uint32_t *stack_top, task_func_t func,
 uint32_t enter_idle = 0;
 void idle_task() {
   while (1) {
-    enter_idle++;
+    while (!list_is_empty(&zombie_list)) {
+      list_remove_next_node(&zombie_list);
+    }
   }
 }
 
@@ -263,6 +279,8 @@ void scheduler_init(void) {
   current_tick_count = 0;
   ready_lists_init();
   delay_list_init();
+  list_init(&suspended_list);
+  list_init(&zombie_list);
   task_create(idle_task, NULL, 64, 0, &idle_task_handler);
 }
 
@@ -337,6 +355,12 @@ get_highest_priority(void) {
                  : "=r"(top_zero), "=r"(temp)
                  : "r"(ready_bits));
   return top_zero;
+}
+
+static void ready_lists_init(void) {
+  for (int i = 0; i < configMaxPriority; i++) {
+    list_init(&(ready_lists[i]));
+  }
 }
 
 static void delay_list_init(void) {

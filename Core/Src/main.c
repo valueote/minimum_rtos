@@ -72,16 +72,39 @@ int __io_putchar(int ch) {
   return (ch);
 }
 
-void led_right() {
+void led_light() {
   while (1) {
-    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
     // printf("In led_right\r\n");
+    task_delay(2000);
   }
 }
 void led_close() {
   // uint8_t message[] = "The system is sleeping";
   while (1) {
+    task_delay(1000);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
+    // printf("hello\r\n");
+  }
+}
+
+void hello() {
+  while (1) {
     printf("hello\r\n");
+    task_delay(1000);
+  }
+}
+
+uint32_t cnt = 0;
+void hi() {
+  while (1) {
+    cnt++;
+    if (cnt == 10) {
+      printf("try to task_suspend\r\n");
+      task_suspend(NULL);
+    }
+    printf("hi\r\n");
+    task_delay(500);
   }
 }
 
@@ -119,10 +142,14 @@ int main(void) {
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   scheduler_init();
-  task_handler_t led_right_handler = NULL;
+  task_handler_t led_light_handler = NULL;
   task_handler_t led_close_handler = NULL;
-  task_create(led_right, NULL, 128, 2, &led_right_handler);
-  task_create(led_close, NULL, 128, 2, &led_close_handler);
+  task_handler_t hello_handler = NULL;
+  task_handler_t hi_handler = NULL;
+  task_create(led_light, NULL, 128, 4, &led_light_handler);
+  task_create(led_close, NULL, 128, 1, &led_close_handler);
+  task_create(hello, NULL, 128, 3, &hello_handler);
+  task_create(hi, NULL, 128, 2, &hi_handler);
   scheduler_start();
   /* USER CODE END 2 */
   /* Infinite loop */

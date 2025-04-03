@@ -24,8 +24,9 @@ void list_init(list_t *const new_list);
 void list_insert_node(list_t *const list, list_node_t *const new_node);
 void list_insert_end(list_t *const list, list_node_t *const new_node);
 void list_remove_node(list_node_t *const node);
-void list_debug_print_list(list_t *const list);
 int list_is_empty(list_t *const list);
 list_node_t *list_get_next_index(list_t *const list);
+void list_remove_next_node(list_t *const list);
+void list_debug_print_list(list_t *const list);
 void list_test(void);
 #endif /*__LIST_H*/
