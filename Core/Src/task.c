@@ -65,7 +65,7 @@ __attribute__((naked)) void xPortPendSVHandler(void) {
                      configMAX_SYSCALL_INTERRUPT_PRIORITY));
 }
 
-// SCV handler
+// SVC handler
 __attribute__((naked)) void vPortSVCHandler(void) {
   __asm volatile(
       "   ldr r3, pxCurrentTCBConst2      \n" /* Restore the context. */
@@ -95,7 +95,6 @@ void SysTick_Handler(void) {
   increment_tick();
   critical_exit(saved);
 }
-
 // And config the SysTick and start the first task
 __attribute__((always_inline)) inline static void StartFirstTask(void) {
   (*((volatile uint32_t *)0xe000ed20)) |= (((uint32_t)255UL) << 16UL);
