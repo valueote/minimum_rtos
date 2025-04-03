@@ -190,21 +190,26 @@ void task_delay(uint32_t ticks) {
 
 void task_suspend(task_handler_t *handler) {
   tcb_t *tcb;
-  uint32_t yield = 0;
+  uint32_t yield = FALSE;
   uint32_t saved = critical_enter();
+
   if (handler == NULL) {
     tcb = current_tcb;
+    yield = TRUE;
   } else {
     tcb = *handler;
   }
 
   list_remove_node(&(tcb->state_node));
+  if (list_is_empty(&(ready_lists[tcb->priority]))) {
+    ready_bits &= ~(1 << tcb->priority);
+  }
   list_insert_end(&suspended_list, &(tcb->state_node));
 
   critical_exit(saved);
-  if (yield) {
+  // we suspend current running tcb, so switch to another task
+  if (yield)
     task_switch();
-  }
 }
 
 void task_resume(task_handler_t *handler) {
@@ -214,6 +219,7 @@ void task_resume(task_handler_t *handler) {
 
     list_remove_node(&(tcb->state_node));
     list_insert_node(&(ready_lists[tcb->priority]), &(tcb->state_node));
+    ready_bits |= (1 << tcb->priority);
 
     if (tcb->priority > current_tcb->priority) {
       task_switch();
@@ -262,12 +268,13 @@ static uint32_t *stack_init(uint32_t *stack_top, task_func_t func,
   return stack_top;
 }
 
-uint32_t enter_idle = 0;
 void idle_task() {
   while (1) {
+    uint32_t saved = critical_enter();
     while (!list_is_empty(&zombie_list)) {
       list_remove_next_node(&zombie_list);
     }
+    critical_exit(saved);
   }
 }
 
@@ -281,7 +288,7 @@ void scheduler_init(void) {
   delay_list_init();
   list_init(&suspended_list);
   list_init(&zombie_list);
-  task_create(idle_task, NULL, 64, 0, &idle_task_handler);
+  task_create(idle_task, NULL, 128, 0, &idle_task_handler);
 }
 
 // Start

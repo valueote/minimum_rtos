@@ -12,6 +12,8 @@
 #define vPortSVCHandler SVC_Handler
 #define xPortPendSVHandler PendSV_Handler
 #define task_switch() *((volatile uint32_t *)0xe000ed04) = 1UL << 28UL
+#define TRUE 1
+#define FALSE 0
 
 typedef struct tcb {
   uint32_t *stack_top;

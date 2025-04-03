@@ -88,10 +88,17 @@ void led_close() {
   }
 }
 
+task_handler_t hi_handler = NULL;
+
+uint32_t count = 0;
 void hello() {
   while (1) {
-    printf("hello\r\n");
+    count++;
+    printf("hello, %lu\r\n", count);
     task_delay(1000);
+    if (count == 100) {
+      printf("hi task will be resume\r\n");
+    }
   }
 }
 
@@ -99,11 +106,11 @@ uint32_t cnt = 0;
 void hi() {
   while (1) {
     cnt++;
-    if (cnt == 10) {
-      printf("try to task_suspend\r\n");
+    if (cnt == 100) {
+      printf("The hi task will be suspended\r\n");
       task_suspend(NULL);
     }
-    printf("hi\r\n");
+    printf("hi %lu\r\n", cnt);
     task_delay(500);
   }
 }
@@ -145,11 +152,10 @@ int main(void) {
   task_handler_t led_light_handler = NULL;
   task_handler_t led_close_handler = NULL;
   task_handler_t hello_handler = NULL;
-  task_handler_t hi_handler = NULL;
   task_create(led_light, NULL, 128, 4, &led_light_handler);
   task_create(led_close, NULL, 128, 1, &led_close_handler);
   task_create(hello, NULL, 128, 3, &hello_handler);
-  task_create(hi, NULL, 128, 2, &hi_handler);
+  task_create(hi, NULL, 328, 2, &hi_handler);
   scheduler_start();
   /* USER CODE END 2 */
   /* Infinite loop */
