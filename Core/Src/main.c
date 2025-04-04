@@ -97,8 +97,8 @@ void hello() {
     printf("hello, %lu\r\n", count);
     task_delay(1000);
     if (count == 100) {
-      printf("hi task will be deleted\r\n");
-      task_delete(&hi_handler);
+      // printf("hi task will be deleted\r\n");
+      // task_delete(&hi_handler);
     }
   }
 }
@@ -108,7 +108,8 @@ void hi() {
   while (1) {
     cnt++;
     if (cnt == 100) {
-      // printf("The hi task will be delete\r\n");
+      printf("The hi task will be delete\r\n");
+      task_delete(NULL);
     }
     printf("hi %lu\r\n", cnt);
     task_delay(500);

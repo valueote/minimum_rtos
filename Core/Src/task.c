@@ -28,12 +28,15 @@ static uint32_t current_tick_count = 0;
 static uint32_t scheduler_is_suspending = 0;
 // Static functions
 
-static void ready_lists_init(void);
-static void add_to_ready_lists(tcb_t *handler, uint32_t priority);
+// task port
 static uint32_t *stack_init(uint32_t *stack_top, task_func_t func,
                             void *parameters);
-static inline uint8_t get_highest_priority(void);
+static void free_tcb(tcb_t *tcb);
+// Schduler part
+static void ready_lists_init(void);
 static void delay_list_init(void);
+static void add_to_ready_lists(tcb_t *handler, uint32_t priority);
+static inline uint8_t get_highest_priority(void);
 static void increment_tick(void);
 
 // Used for context switch, from freertos
@@ -73,13 +76,15 @@ __attribute__((naked)) void vPortSVCHandler(void) {
       "   ldr r3, pxCurrentTCBConst2      \n" /* Restore the context. */
       "   ldr r1, [r3]                    \n" /* Use pxCurrentTCBConst to get
                                                  the pxCurrentTCB address. */
-      "   ldr r0, [r1]                    \n" /* The first item in pxCurrentTCB
-                                                 is the task top of stack. */
-      "   ldmia r0!, {r4-r11}             \n" /* Pop the registers that are not
-                                                 automatically saved on
+      "   ldr r0, [r1]                    \n" /* The first item in
+                                                 pxCurrentTCB is the task top
+                                                 of stack. */
+      "   ldmia r0!, {r4-r11}             \n" /* Pop the registers that are
+                                                 not automatically saved on
                                                  exception entry and the
                                                  critical nesting count. */
-      "   msr psp, r0                     \n" /* Restore the task stack pointer.
+      "   msr psp, r0                     \n" /* Restore the task stack
+                                               * pointer.
                                                */
       "   isb                             \n"
       "   mov r0, #0                      \n"
@@ -108,11 +113,12 @@ __attribute__((always_inline)) inline static void StartFirstTask(void) {
   SysTick->LOAD = (configSysTickClockHz / configSysTickClockRateHz) - 1UL;
   SysTick->CTRL = ((1UL << 2UL) | (1UL << 1UL) | (1UL << 0UL));
   __asm volatile(
-      " ldr r0, =0xE000ED08   \n" /* Use the NVIC offset register to locate the
-                                     stack. */
+      " ldr r0, =0xE000ED08   \n" /* Use the NVIC offset register to locate
+                                     the stack. */
       " ldr r0, [r0]          \n"
       " ldr r0, [r0]          \n"
-      " msr msp, r0           \n" /* Set the msp back to the start of the stack.
+      " msr msp, r0           \n" /* Set the msp back to the start of the
+                                   * stack.
                                    */
       " cpsie i               \n" /* Globally enable interrupts. */
       " cpsie f               \n"
@@ -166,8 +172,12 @@ void task_delete(task_handler_t *handler) {
   if (tcb == current_tcb) {
     list_insert_end(&zombie_list, &(tcb->state_node));
   } else {
-    hfree(tcb->stack);
-    hfree(tcb);
+    free_tcb(tcb);
+  }
+
+  list_t *list = &ready_lists[tcb->priority];
+  if (list_is_empty(list)) {
+    ready_bits &= ~(1 << tcb->priority);
   }
 
   critical_exit(saved);
@@ -288,11 +298,19 @@ void idle_task() {
     while (!list_is_empty(&zombie_list)) {
       list_node_t *node = list_get_next_index(&zombie_list);
       tcb_t *tcb = node->owner;
-      hfree(tcb->stack);
-      hfree(tcb);
+      list_remove_node(node);
+      if (list_is_empty(&ready_lists[tcb->priority])) {
+        ready_bits &= ~(1 << tcb->priority);
+      }
+      free_tcb(tcb);
     }
     critical_exit(saved);
   }
+}
+
+static void free_tcb(tcb_t *tcb) {
+  hfree(tcb->stack);
+  hfree(tcb);
 }
 
 /*Scheduler API
