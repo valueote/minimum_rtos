@@ -94,7 +94,9 @@ __attribute__((naked)) void vPortSVCHandler(void) {
 // SysTick Handler
 void SysTick_Handler(void) {
   uint32_t saved = critical_enter();
-  increment_tick();
+  if (scheduler_is_suspending == FALSE) {
+    increment_tick();
+  }
   critical_exit(saved);
 }
 // And config the SysTick and start the first task
@@ -150,18 +152,29 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
 // delete task
 void task_delete(task_handler_t *handler) {
   tcb_t *tcb;
-
+  uint32_t yield = FALSE;
   uint32_t saved = critical_enter();
 
   if (handler == NULL) {
     tcb = current_tcb;
+    yield = TRUE;
   } else {
     tcb = *handler;
   }
+
   list_remove_node(&(tcb->state_node));
-  list_insert_end(&zombie_list, &(tcb->state_node));
+  if (tcb == current_tcb) {
+    list_insert_end(&zombie_list, &(tcb->state_node));
+  } else {
+    hfree(tcb->stack);
+    hfree(tcb);
+  }
 
   critical_exit(saved);
+
+  if (yield) {
+    task_switch();
+  }
 }
 
 // Delay current task for given ticks
@@ -188,6 +201,7 @@ void task_delay(uint32_t ticks) {
   task_switch();
 }
 
+// Suspend the task, if the handler is NULL, suspend the current running task
 void task_suspend(task_handler_t *handler) {
   tcb_t *tcb;
   uint32_t yield = FALSE;
@@ -272,7 +286,10 @@ void idle_task() {
   while (1) {
     uint32_t saved = critical_enter();
     while (!list_is_empty(&zombie_list)) {
-      list_remove_next_node(&zombie_list);
+      list_node_t *node = list_get_next_index(&zombie_list);
+      tcb_t *tcb = node->owner;
+      hfree(tcb->stack);
+      hfree(tcb);
     }
     critical_exit(saved);
   }
