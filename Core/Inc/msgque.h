@@ -7,6 +7,7 @@ typedef struct msgque {
   uint8_t *front;
   uint8_t *tail;
   uint8_t *next_write;
+  uint8_t *next_read;
   size_t length;
   size_t msg_count;
   size_t msg_size;
