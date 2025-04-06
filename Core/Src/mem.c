@@ -1,5 +1,6 @@
 #include "mem.h"
 #include "config.h"
+#include "task.h"
 #include <stdio.h>
 // the size of the heap node struct
 const size_t node_struct_size =
@@ -79,6 +80,7 @@ void *halloc(size_t size) {
     alignment_required = (alignment_byte + 1) - (size & alignment_byte);
     size += alignment_required;
   }
+  uint32_t saved = critical_enter();
   // make sure the heap is initialized
   if (heap.tail == NULL) {
     heap_init();
@@ -98,6 +100,7 @@ void *halloc(size_t size) {
   }
 
   if (!best_fit) {
+    critical_exit(saved);
     return NULL;
   }
 
@@ -118,14 +121,17 @@ void *halloc(size_t size) {
   }
 
   heap.heap_size -= best_fit->node_size;
+  critical_exit(saved);
   return (void *)((uint8_t *)best_fit + node_struct_size);
 }
 
 void hfree(void *addr) {
   heap_node *addr_node;
   addr_node = (heap_node *)((size_t)addr - node_struct_size);
+  uint32_t saved = critical_enter();
   heap.heap_size += addr_node->node_size;
   heap_insert_list(addr_node);
+  critical_exit(saved);
 }
 
 void mem_debug_print_free_list(void) {
