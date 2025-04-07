@@ -89,6 +89,13 @@ void led_close() {
 }
 
 task_handler_t hi_handler = NULL;
+task_handler_t higher = NULL;
+
+void high() {
+  while (1) {
+    printf("do nothing\r\n");
+  }
+}
 
 uint32_t count = 0;
 void hello() {
@@ -97,8 +104,8 @@ void hello() {
     printf("hello, %lu\r\n", count);
     task_delay(1000);
     if (count == 100) {
-      // printf("hi task will be deleted\r\n");
-      // task_delete(&hi_handler);
+      printf("try to create higher task\r\n");
+      task_create(high, NULL, 64, 8, &higher);
     }
   }
 }
@@ -155,7 +162,7 @@ int main(void) {
   task_handler_t hello_handler = NULL;
   task_create(led_light, NULL, 128, 4, &led_light_handler);
   task_create(led_close, NULL, 128, 1, &led_close_handler);
-  task_create(hello, NULL, 128, 3, &hello_handler);
+  task_create(hello, NULL, 256, 3, &hello_handler);
   task_create(hi, NULL, 328, 2, &hi_handler);
   scheduler_start();
   /* USER CODE END 2 */
@@ -311,7 +318,7 @@ void Error_Handler(void) {
 void assert_failed(uint8_t *file, uint32_t line) {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line
-     number, ex: printf("Wrong parameters value: file %s on line %d\r\n", file,
+     number,
      line) */
   /* USER CODE END 6 */
 }

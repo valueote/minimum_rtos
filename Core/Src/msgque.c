@@ -48,12 +48,20 @@ uint32_t msgque_send(msgque_handler target_que, const void *const msg,
 
     target_que->msg_count++;
     success = TRUE;
-  } else if (wait_ticks == 0) {
+    if (!list_is_empty(&(target_que->read_waiting_list))) {
+      // unblock the task
+    }
     critical_exit(saved);
     return success;
-  } else {
+  } else if (wait_ticks > 0) {
     // block
-  }
 
-  return success;
+  } else {
+    critical_exit(saved);
+    return success;
+  }
+  critical_exit(saved);
+
+  scheduler_suspend();
+  scheduler_resume();
 }

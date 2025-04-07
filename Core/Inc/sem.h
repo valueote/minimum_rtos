@@ -11,7 +11,7 @@ typedef struct semaphore {
 
 semaphore_t *semaphore_create(const uint32_t count);
 void semaphore_delete(semaphore_t *sem);
-void semaphore_lock(semaphore_t *sem, uint32_t block_time);
+uint32_t semaphore_lock(semaphore_t *sem, uint32_t block_time);
 void semaphore_release(semaphore_t *sem);
 
 #endif /*__SEM_H*/

@@ -58,11 +58,14 @@ void list_remove_node(list_node_t *const node) {
   node->next = NULL;
 }
 
-void list_remove_next_node(list_t *list) {
+list_node_t *list_remove_next_node(list_t *list) {
   // make sure the list is not empty
   if (list->size > 0) {
-    list_remove_node(list->head.next);
+    list_node_t *node = list->head.next;
+    list_remove_node(node);
+    return node;
   }
+  return NULL;
 }
 
 int list_is_empty(list_t *const list) {
