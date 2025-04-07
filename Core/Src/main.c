@@ -75,7 +75,6 @@ int __io_putchar(int ch) {
 void led_light() {
   while (1) {
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
-    // printf("In led_right\r\n");
     task_delay(2000);
   }
 }
@@ -84,7 +83,6 @@ void led_close() {
   while (1) {
     task_delay(1000);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
-    // printf("hello\r\n");
   }
 }
 
@@ -104,7 +102,7 @@ void hello() {
     printf("hello, %lu\r\n", count);
     task_delay(1000);
     if (count == 100) {
-      printf("try to create higher task\r\n");
+      task_create(high, NULL, 128, 7, &higher);
     }
   }
 }
@@ -114,8 +112,7 @@ void hi() {
   while (1) {
     cnt++;
     if (cnt == 50) {
-      printf("The high task will be create\r\n");
-      task_create(high, NULL, 128, 6, &higher);
+      task_delete(NULL);
     }
     printf("hi %lu\r\n", cnt);
     task_delay(500);
@@ -159,9 +156,9 @@ int main(void) {
   task_handler_t led_light_handler = NULL;
   task_handler_t led_close_handler = NULL;
   task_handler_t hello_handler = NULL;
-  // task_create(led_light, NULL, 128, 4, &led_light_handler);
-  // task_create(led_close, NULL, 128, 1, &led_close_handler);
-  //  task_create(hello, NULL, 512, 3, &hello_handler);
+  task_create(led_light, NULL, 128, 4, &led_light_handler);
+  task_create(led_close, NULL, 128, 1, &led_close_handler);
+  task_create(hello, NULL, 512, 3, &hello_handler);
   task_create(hi, NULL, 512, 2, &hi_handler);
   scheduler_start();
   /* USER CODE END 2 */

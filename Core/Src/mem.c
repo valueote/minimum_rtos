@@ -55,7 +55,7 @@ static void heap_insert_list(heap_node *inserted_node) {
   if (((uint8_t *)inserted_node + inserted_node->node_size ==
        (uint8_t *)inserted_node->next)) {
     if (inserted_node->next != heap.tail) {
-      inserted_node->node_size += inserted_node->node_size;
+      inserted_node->node_size += inserted_node->next->node_size;
       inserted_node->next = inserted_node->next->next;
     }
   }
@@ -114,7 +114,6 @@ void *halloc(size_t size) {
     new_node = (void *)((uint8_t *)best_fit + size);
     new_node->node_size = best_fit->node_size - size;
     new_node->next = NULL;
-
     best_fit->node_size = size;
     // insert the new node into the list
     heap_insert_list(new_node);

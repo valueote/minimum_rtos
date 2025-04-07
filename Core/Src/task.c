@@ -173,18 +173,18 @@ void task_delete(task_handler_t *handler) {
   }
 
   list_remove_node(&(tcb->state_node));
-  if (tcb == current_tcb) {
-    list_insert_end(&zombie_list, &(tcb->state_node));
-  } else {
-    free_tcb(tcb);
-  }
-
   list_t *list = &ready_lists[tcb->priority];
   if (list_is_empty(list)) {
     ready_bits &= ~(1 << tcb->priority);
   }
 
-  critical_exit(saved);
+  if (tcb == current_tcb) {
+    list_insert_end(&zombie_list, &(tcb->state_node));
+    critical_exit(saved);
+  } else {
+    critical_exit(saved);
+    free_tcb(tcb);
+  }
 
   if (yield) {
     task_switch();
