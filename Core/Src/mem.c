@@ -121,6 +121,7 @@ void *halloc(size_t size) {
   }
 
   heap.heap_size -= best_fit->node_size;
+  mem_debug_print_free_list();
   critical_exit(saved);
   return (void *)((uint8_t *)best_fit + node_struct_size);
 }
@@ -143,4 +144,5 @@ void mem_debug_print_free_list(void) {
     node = node->next;
   }
   printf("Total heap size: %u\r\n", heap.heap_size);
+  printf("----------------------------\r\n");
 }

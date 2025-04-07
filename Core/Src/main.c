@@ -105,7 +105,6 @@ void hello() {
     task_delay(1000);
     if (count == 100) {
       printf("try to create higher task\r\n");
-      task_create(high, NULL, 64, 8, &higher);
     }
   }
 }
@@ -114,9 +113,9 @@ uint32_t cnt = 0;
 void hi() {
   while (1) {
     cnt++;
-    if (cnt == 100) {
-      printf("The hi task will be delete\r\n");
-      task_delete(NULL);
+    if (cnt == 50) {
+      printf("The high task will be create\r\n");
+      task_create(high, NULL, 128, 6, &higher);
     }
     printf("hi %lu\r\n", cnt);
     task_delay(500);
@@ -160,10 +159,10 @@ int main(void) {
   task_handler_t led_light_handler = NULL;
   task_handler_t led_close_handler = NULL;
   task_handler_t hello_handler = NULL;
-  task_create(led_light, NULL, 128, 4, &led_light_handler);
-  task_create(led_close, NULL, 128, 1, &led_close_handler);
-  task_create(hello, NULL, 256, 3, &hello_handler);
-  task_create(hi, NULL, 328, 2, &hi_handler);
+  // task_create(led_light, NULL, 128, 4, &led_light_handler);
+  // task_create(led_close, NULL, 128, 1, &led_close_handler);
+  //  task_create(hello, NULL, 512, 3, &hello_handler);
+  task_create(hi, NULL, 512, 2, &hi_handler);
   scheduler_start();
   /* USER CODE END 2 */
   /* Infinite loop */
