@@ -451,28 +451,50 @@ void delay_list_switch(void) {
 
 static void increment_tick(void) {
   current_tick_count += 1;
-
   // the tick count have overflowed
   if (current_tick_count == 0) {
     delay_list_switch();
   }
 
-  for (;;) {
-    if (list_is_empty(delay_list)) {
-      break;
-    }
+  while (!list_is_empty(delay_list)) {
     list_node_t *first_node = delay_list->head.next;
     if (first_node->val <= current_tick_count) {
       tcb_t *tcb = (tcb_t *)(first_node->owner);
       list_remove_node(first_node);
 
-      list_insert_node(&(ready_lists[tcb->priority]), first_node);
+      list_insert_end(&(ready_lists[tcb->priority]), first_node);
       ready_bits |= (1 << tcb->priority);
     } else {
       break;
     }
   }
+
   task_switch();
 }
 
 uint32_t get_current_tick(void) { return current_tick_count; }
+
+uint32_t block_timer_check(block_timer_t *timer, uint32_t *block_ticks) {
+  if (*block_ticks == MAX_DELAY) {
+    return FALSE;
+  }
+
+  uint32_t elapse_ticks = 0;
+
+  // current tick count has overflowed
+  if (current_tick_count < timer->start_tick) {
+    elapse_ticks = (uint32_t)(-1) - timer->start_tick + current_tick_count;
+
+  } else {
+    elapse_ticks = current_tick_count - timer->start_tick;
+  }
+
+  if (elapse_ticks > *block_ticks) {
+    *block_ticks = 0;
+    return TRUE;
+  } else {
+    timer->start_tick = current_tick_count;
+    block_ticks -= elapse_ticks;
+    return FALSE;
+  }
+}

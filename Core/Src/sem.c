@@ -35,12 +35,12 @@ uint32_t semaphore_lock(semaphore_t *sem, uint32_t block_ticks) {
     tcb_t *current_tcb = get_current_tcb();
     list_remove_node(&(current_tcb->state_node));
     list_insert_node(&(sem->block_list), &(current_tcb->event_node));
-    add_tcb_to_delay_list(current_tcb, block_ticks);
     critical_exit(saved);
 
     saved = critical_enter();
     if (!block_timer_check(&block_timer, &block_ticks)) {
       if (sem->count == 0) {
+        add_tcb_to_delay_list(current_tcb, block_ticks);
       }
     } else {
       critical_exit(saved);
