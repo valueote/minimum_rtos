@@ -36,7 +36,6 @@ static void free_tcb(tcb_t *tcb);
 // Schduler part
 static void ready_lists_init(void);
 static void delay_list_init(void);
-static uint32_t add_tcb_to_ready_lists(tcb_t *tcb);
 static uint32_t add_new_tcb_to_ready_lists(tcb_t *tcb);
 static inline uint8_t get_highest_priority(void);
 static void increment_tick(void);
@@ -151,7 +150,9 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
   new_tcb->priority = priority;
   // put the tcb into ready_lists
   list_node_init(&(new_tcb->state_node));
+  list_node_init(&(new_tcb->event_node));
   new_tcb->state_node.owner = new_tcb;
+  new_tcb->event_node.owner = new_tcb;
   // set the task handler
   *handler = (task_handler_t)new_tcb;
   // add the new tcb to the ready list
@@ -193,16 +194,12 @@ void task_delete(task_handler_t *handler) {
   }
 }
 
-// Delay current task for given ticks
-void task_delay(uint32_t ticks) {
-  uint32_t saved = critical_enter();
-
+void add_tcb_to_delay_list(tcb_t *tcb, uint32_t ticks) {
   uint32_t time_to_wake = ticks + current_tick_count;
-  current_tcb->state_node.val = time_to_wake;
-  uint32_t priority = current_tcb->priority;
-  list_t *prev_ready_list = &ready_lists[priority];
-
+  tcb->state_node.val = time_to_wake;
+  uint32_t priority = tcb->priority;
   list_remove_node(&(current_tcb->state_node));
+
   // time_to wake overflow, put it in the overflow list
   if (time_to_wake < current_tick_count) {
     list_insert_node(delay_overflow_list, &(current_tcb->state_node));
@@ -210,9 +207,14 @@ void task_delay(uint32_t ticks) {
     list_insert_node(delay_list, &(current_tcb->state_node));
   }
 
-  if (list_is_empty(prev_ready_list))
+  if (list_is_empty((&ready_lists[priority])))
     ready_bits = ready_bits & (~(1 << priority));
+}
 
+// Delay current task for given ticks
+void task_delay(uint32_t ticks) {
+  uint32_t saved = critical_enter();
+  add_tcb_to_delay_list(current_tcb, ticks);
   critical_exit(saved);
   task_switch();
 }
@@ -263,7 +265,7 @@ void task_resume(task_handler_t *handler) {
 tcb_t *get_current_tcb(void) { return current_tcb; }
 
 // Add the task handler to the ready list
-static uint32_t add_tcb_to_ready_lists(tcb_t *tcb) {
+uint32_t add_tcb_to_ready_lists(tcb_t *tcb) {
   uint32_t yield = FALSE;
   ready_bits |= (1 << (tcb->priority));
   list_insert_end(&ready_lists[(tcb->priority)], &(tcb->state_node));
@@ -289,7 +291,7 @@ static uint32_t add_new_tcb_to_ready_lists(tcb_t *tcb) {
   return yield;
 }
 
-// Task should never return, if so, it will reach here
+// NOTE: Task should never return, if so, it will reach here
 static void task_exit_error() {
   while (1) {
   }
@@ -357,14 +359,14 @@ void scheduler_start(void) {
   StartFirstTask();
 }
 
-// NOT FINISHED suspended the scheduler
+// TODO: suspended the scheduler
 void scheduler_suspend(void) {
   uint32_t saved = critical_enter();
   scheduler_is_suspending++;
   scheduler_is_running = FALSE;
   critical_exit(saved);
 }
-// NOT FINISHED
+// TODO: resume the schdueler
 void scheduler_resume(void) {
   uint32_t saved = critical_enter();
   scheduler_is_suspending--;
@@ -471,3 +473,5 @@ static void increment_tick(void) {
   }
   task_switch();
 }
+
+uint32_t get_current_tick(void) { return current_tick_count; }

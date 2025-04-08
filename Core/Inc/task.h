@@ -12,15 +12,14 @@
 #define vPortSVCHandler SVC_Handler
 #define xPortPendSVHandler PendSV_Handler
 #define task_switch() *((volatile uint32_t *)0xe000ed04) = 1UL << 28UL
-#define TRUE 1
-#define FALSE 0
-
 typedef struct tcb {
   uint32_t *stack_top;
   uint32_t priority;
   uint32_t *stack;
   list_node_t state_node;
+  list_node_t event_node;
 } tcb_t;
+
 typedef void (*task_func_t)(void *);
 typedef tcb_t *task_handler_t;
 
@@ -31,8 +30,9 @@ void task_delay(uint32_t ticks);
 void task_suspend(task_handler_t *handler);
 void task_resume(task_handler_t *handler);
 tcb_t *get_current_tcb(void);
+uint32_t add_tcb_to_ready_lists(tcb_t *tcb);
+uint32_t add_tcb_to_delay_list(tcb_t *tcb, uint32_t ticks);
 
-void scheduler_init(void);
 void scheduler_start(void);
 void scheduler_suspend(void);
 void scheduler_resume(void);

@@ -1,0 +1,29 @@
+* Todo list
+** TODO add task_suspend(), task_resume()
+** TODO scheduler_suspend(), scheduler_start.
+** TODO finish list_t
+** TODO modify task table to support time slice
+** TODO add a simple shell
+** TODO finish msgque
+** TODO finish semaphore
+
+
+* Test list
+- Task:
+- task_create done
+task_delete done
+task_suspend done
+task_resume done
+task_switch done
+
+Scheduler:
+scheduler_start done
+scheduler init done
+scheduler_suspend 
+
+list:
+done
+
+sem:
+
+msgque
