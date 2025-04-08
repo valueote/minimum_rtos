@@ -16,7 +16,8 @@ void semaphore_delete(semaphore_t *sem) {
 }
 
 uint32_t semaphore_lock(semaphore_t *sem, uint32_t block_ticks) {
-
+  uint32_t timer_set = FALSE;
+  block_timer_t block_timer;
   for (;;) {
     uint32_t saved = critical_enter();
     if (sem->count > 0) {
@@ -27,14 +28,25 @@ uint32_t semaphore_lock(semaphore_t *sem, uint32_t block_ticks) {
       critical_exit(saved);
       return FALSE;
     }
+    if (!timer_set) {
+      block_timer.start_tick = get_current_tick();
+      timer_set = TRUE;
+    }
     tcb_t *current_tcb = get_current_tcb();
     list_remove_node(&(current_tcb->state_node));
     list_insert_node(&(sem->block_list), &(current_tcb->event_node));
     add_tcb_to_delay_list(current_tcb, block_ticks);
     critical_exit(saved);
 
-    while (TRUE) {
+    saved = critical_enter();
+    if (!block_timer_check(&block_timer, &block_ticks)) {
+      if (sem->count == 0) {
+      }
+    } else {
+      critical_exit(saved);
+      return FALSE;
     }
+    critical_exit(saved);
     // task_switch();
     //  block
   }

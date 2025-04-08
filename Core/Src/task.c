@@ -213,6 +213,7 @@ void add_tcb_to_delay_list(tcb_t *tcb, uint32_t ticks) {
 
 // Delay current task for given ticks
 void task_delay(uint32_t ticks) {
+
   uint32_t saved = critical_enter();
   add_tcb_to_delay_list(current_tcb, ticks);
   critical_exit(saved);

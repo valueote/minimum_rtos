@@ -20,6 +20,10 @@ typedef struct tcb {
   list_node_t event_node;
 } tcb_t;
 
+typedef struct block_timer {
+  uint32_t start_tick;
+} block_timer_t;
+
 typedef void (*task_func_t)(void *);
 typedef tcb_t *task_handler_t;
 
@@ -32,12 +36,16 @@ void task_resume(task_handler_t *handler);
 tcb_t *get_current_tcb(void);
 uint32_t add_tcb_to_ready_lists(tcb_t *tcb);
 uint32_t add_tcb_to_delay_list(tcb_t *tcb, uint32_t ticks);
+uint32_t get_current_tick(void);
 
 void scheduler_start(void);
 void scheduler_suspend(void);
 void scheduler_resume(void);
 
 uint32_t critical_enter(void);
-void critical_exit(uint32_t ret);
+void critical_exit(uint32_t saved);
+
+uint32_t block_timer_set(block_timer_t *timer);
+uint32_t block_timer_check(block_timer_t *timer, uint32_t *block_ticks);
 
 #endif
