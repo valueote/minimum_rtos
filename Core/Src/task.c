@@ -25,7 +25,8 @@ static list_t *delay_overflow_list = NULL;
 // tick count
 static uint32_t current_tick_count = 0;
 // scheduelr suspended or not
-static uint32_t scheduler_is_suspending = 1;
+static uint32_t scheduler_is_suspending = 0;
+static uint32_t scheduler_is_running = FALSE;
 // Static functions
 
 // task port
@@ -36,6 +37,7 @@ static void free_tcb(tcb_t *tcb);
 static void ready_lists_init(void);
 static void delay_list_init(void);
 static uint32_t add_tcb_to_ready_lists(tcb_t *tcb);
+static uint32_t add_new_tcb_to_ready_lists(tcb_t *tcb);
 static inline uint8_t get_highest_priority(void);
 static void increment_tick(void);
 
@@ -153,7 +155,7 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
   // set the task handler
   *handler = (task_handler_t)new_tcb;
   // add the new tcb to the ready list
-  yield = add_tcb_to_ready_lists(new_tcb);
+  yield = add_new_tcb_to_ready_lists(new_tcb);
   if (yield) {
     task_switch();
   }
@@ -242,18 +244,18 @@ void task_suspend(task_handler_t *handler) {
 
 void task_resume(task_handler_t *handler) {
   tcb_t *tcb = *handler;
+  uint32_t yield;
+
   if (tcb != NULL && tcb != current_tcb) {
     uint32_t saved = critical_enter();
 
     list_remove_node(&(tcb->state_node));
-    list_insert_node(&(ready_lists[tcb->priority]), &(tcb->state_node));
-    ready_bits |= (1 << tcb->priority);
-
-    if (tcb->priority > current_tcb->priority) {
-      task_switch();
-    }
+    yield = add_tcb_to_ready_lists(tcb);
 
     critical_exit(saved);
+    if (yield) {
+      task_switch();
+    }
   }
 }
 
@@ -262,21 +264,29 @@ tcb_t *get_current_tcb(void) { return current_tcb; }
 
 // Add the task handler to the ready list
 static uint32_t add_tcb_to_ready_lists(tcb_t *tcb) {
-  uint32_t saved = critical_enter();
-
+  uint32_t yield = FALSE;
   ready_bits |= (1 << (tcb->priority));
   list_insert_end(&ready_lists[(tcb->priority)], &(tcb->state_node));
-
-  if (scheduler_is_suspending) {
-    critical_exit(saved);
-    return FALSE;
-  }
   if (tcb->priority > current_tcb->priority) {
-    critical_exit(saved);
-    return TRUE;
+    yield = TRUE;
+  }
+  return yield;
+}
+
+static uint32_t add_new_tcb_to_ready_lists(tcb_t *tcb) {
+  uint32_t saved = critical_enter();
+  uint32_t yield = FALSE;
+  ready_bits |= (1 << (tcb->priority));
+  list_insert_end(&ready_lists[(tcb->priority)], &(tcb->state_node));
+  if (current_tcb == NULL) {
+    current_tcb = tcb;
+  } else {
+    if (tcb->priority > current_tcb->priority && scheduler_is_running) {
+      yield = TRUE;
+    }
   }
   critical_exit(saved);
-  return FALSE;
+  return yield;
 }
 
 // Task should never return, if so, it will reach here
@@ -342,6 +352,7 @@ void scheduler_init(void) {
 // Start
 void scheduler_start(void) {
   current_tcb = idle_task_handler;
+  scheduler_is_running = TRUE;
   scheduler_is_suspending = 0;
   StartFirstTask();
 }
@@ -350,6 +361,7 @@ void scheduler_start(void) {
 void scheduler_suspend(void) {
   uint32_t saved = critical_enter();
   scheduler_is_suspending++;
+  scheduler_is_running = FALSE;
   critical_exit(saved);
 }
 // NOT FINISHED
@@ -357,6 +369,7 @@ void scheduler_resume(void) {
   uint32_t saved = critical_enter();
   scheduler_is_suspending--;
   if (scheduler_is_suspending == 0) {
+    scheduler_is_running = TRUE;
   }
   critical_exit(saved);
   return;
