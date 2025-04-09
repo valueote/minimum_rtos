@@ -75,13 +75,13 @@ int __io_putchar(int ch) {
 void led_light() {
   while (1) {
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
-    task_delay(2000);
+    task_delay(1000);
   }
 }
 void led_close() {
   // uint8_t message[] = "The system is sleeping";
   while (1) {
-    task_delay(1000);
+    task_delay(4000);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
   }
 }
