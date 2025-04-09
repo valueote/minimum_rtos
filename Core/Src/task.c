@@ -484,7 +484,6 @@ uint32_t block_timer_check(block_timer_t *timer, uint32_t *block_ticks) {
   // current tick count has overflowed
   if (current_tick_count < timer->start_tick) {
     elapse_ticks = (uint32_t)(-1) - timer->start_tick + current_tick_count;
-
   } else {
     elapse_ticks = current_tick_count - timer->start_tick;
   }

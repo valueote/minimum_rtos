@@ -82,6 +82,13 @@ list_node_t *list_get_next_index(list_t *const list) {
   return list->index;
 }
 
+uint32_t list_contain(list_t *list, list_node_t *node) {
+  if (node->container == list) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
 void list_debug_print_list(list_t *const list) {
   printf("List:\r\n");
   list_node_t *node = list->head.next;

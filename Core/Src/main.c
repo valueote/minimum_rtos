@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "list.h"
 #include "stm32f103xe.h"
 #include "stm32f1xx_hal.h"
 #include "stm32f1xx_hal_def.h"
@@ -58,6 +57,7 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 #include "core_cm3.h"
 #include "mem.h"
+#include "sem.h"
 #include "task.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -119,6 +119,63 @@ void hi() {
   }
 }
 
+// semaphore test
+#include "sem.h"
+uint32_t resource = 0;
+sem_handler sem = NULL;
+void consumer_first() {
+  while (1) {
+    printf("consumer: try to get semaphore\r\n");
+    if (semaphore_lock(sem, 2000)) {
+      printf("consumer: get semaphore\r\n");
+      if (resource > 0) {
+        resource--;
+        printf("consume resource\r\n");
+      } else {
+        printf("consumer: no resource--");
+      }
+      semaphore_release(sem);
+    } else {
+      printf("consumer: get sem fail");
+    }
+    task_delay(2000);
+  }
+}
+
+void consumer_second() {
+  while (1) {
+    printf("consumer 2: try to get semaphore\r\n");
+    if (semaphore_lock(sem, 2000)) {
+      printf("consumer 2: get semaphore\r\n");
+      if (resource > 0) {
+        resource--;
+        printf("consume resource\r\n");
+      } else {
+        printf("consumer 2: no resource--");
+      }
+      semaphore_release(sem);
+    } else {
+      printf("consumer 2: get sem fail");
+    }
+    task_delay(2000);
+  }
+}
+
+void producer() {
+  while (1) {
+    printf("producer: try to get semaphore\r\n");
+    if (semaphore_lock(sem, 2000)) {
+      printf("producer: get semaphore\r\n");
+      resource++;
+      printf("producer: produce resoure\r\n");
+      semaphore_release(sem);
+    } else {
+      printf("producer: get sem fail");
+    }
+    task_delay(2000);
+  }
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -156,10 +213,17 @@ int main(void) {
   task_handler_t led_light_handler = NULL;
   task_handler_t led_close_handler = NULL;
   task_handler_t hello_handler = NULL;
-  task_create(led_light, NULL, 128, 4, &led_light_handler);
+  task_handler_t consumer_handler = NULL;
+  task_handler_t consumer2_handler = NULL;
+  task_handler_t producer_handler = NULL;
+  sem = semaphore_create(1);
+  task_create(led_light, NULL, 128, 2, &led_light_handler);
   task_create(led_close, NULL, 128, 1, &led_close_handler);
-  task_create(hello, NULL, 512, 3, &hello_handler);
-  task_create(hi, NULL, 512, 2, &hi_handler);
+  task_create(producer, NULL, 128, 4, &producer_handler);
+  task_create(consumer_first, NULL, 128, 3, &consumer_handler);
+  task_create(consumer_second, NULL, 128, 3, &consumer2_handler);
+  // task_create(hello, NULL, 512, 3, &hello_handler);
+  // task_create(hi, NULL, 512, 2, &hi_handler);
   scheduler_start();
   /* USER CODE END 2 */
   /* Infinite loop */

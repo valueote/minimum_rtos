@@ -35,9 +35,10 @@ void task_suspend(task_handler_t *handler);
 void task_resume(task_handler_t *handler);
 tcb_t *get_current_tcb(void);
 uint32_t add_tcb_to_ready_lists(tcb_t *tcb);
-uint32_t add_tcb_to_delay_list(tcb_t *tcb, uint32_t ticks);
+void add_tcb_to_delay_list(tcb_t *tcb, uint32_t ticks);
 uint32_t get_current_tick(void);
 
+void scheduler_init(void);
 void scheduler_start(void);
 void scheduler_suspend(void);
 void scheduler_resume(void);

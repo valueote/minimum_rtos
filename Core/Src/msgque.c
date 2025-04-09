@@ -3,6 +3,7 @@
 #include "mem.h"
 #include "task.h"
 #include <stdint.h>
+#include <string.h>
 
 msgque_handler msgque_create(const uint32_t length, const uint32_t msg_size) {
   msgque_t *new_que = NULL;
