@@ -3,7 +3,7 @@
 #include "core_cm3.h"
 #include "list.h"
 #include "mem.h"
-#include <stdint.h>
+#include "stm32f103xe.h"
 
 // The current running task
 __attribute__((used)) tcb_t *volatile current_tcb = NULL;
@@ -148,10 +148,12 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
   // initialize the stack
   new_tcb->stack_top = stack_init(stack_top, func, func_parameters);
   new_tcb->priority = priority;
+  new_tcb->base_priority = priority;
   // put the tcb into ready_lists
   list_node_init(&(new_tcb->state_node));
   list_node_init(&(new_tcb->event_node));
   new_tcb->state_node.owner = new_tcb;
+  new_tcb->event_node.val = configMaxPriority - priority;
   new_tcb->event_node.owner = new_tcb;
   // set the task handler
   *handler = (task_handler_t)new_tcb;
@@ -495,5 +497,55 @@ uint32_t block_timer_check(block_timer_t *timer, uint32_t *block_ticks) {
     timer->start_tick = current_tick_count;
     block_ticks -= elapse_ticks;
     return FALSE;
+  }
+}
+
+void task_priority_inherit(mutex_t *mutex) {
+  tcb_t *current_tcb = NULL;
+
+  if (mutex->holder == NULL) {
+    current_tcb = get_current_tcb();
+    if (mutex->holder->priority < current_tcb->priority) {
+      if (list_contain(&(ready_lists[mutex->holder->priority]),
+                       mutex->holder->state_node)) {
+        list_remove_node(&(mutex->holder->state_node));
+        if (list_is_empty(&(ready_lists[mutex->holder->priority]))) {
+          ready_lists &= ~(1 << mutex->holder->priority);
+        }
+
+        add_tcb_to_ready_lists(mutex->holder);
+      }
+      mutex->holder->priority = current_tcb->priority;
+    }
+  }
+}
+
+void task_priority_disinherit(mutex_t *mutex) {
+  tcb_t *holder = mutex->holder;
+
+  if (holder->base_priority != holder->priority) {
+    holder->priority = holder->base_priority;
+
+    list_remove_node(&(mutex->holder->state_node));
+    if (list_is_empty(&ready_lists[mutex->holder->priority])) {
+      ready_lists &= ~(1 << mutex->holder->priority);
+    }
+
+    add_tcb_to_ready_lists(holder);
+  }
+}
+
+void task_priority_disinherit_timeout(mutex_t *mutex) {
+  tcb_t *holder = mutex->holder;
+
+  if (holder->base_priority != holder->priority) {
+    holder->priority = holder->base_priority;
+
+    list_remove_node(&(mutex->holder->state_node));
+    if (list_is_empty(&ready_lists[mutex->holder->priority])) {
+      ready_lists &= ~(1 << mutex->holder->priority);
+    }
+
+    add_tcb_to_ready_lists(holder);
   }
 }

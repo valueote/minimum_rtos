@@ -1,5 +1,7 @@
 #include "mutex.h"
+#include "list.h"
 #include "mem.h"
+#include "task.h"
 
 mutex_handler mutex_create(void) {
   mutex_t *new_mutex = halloc(sizeof(mutex_t));
@@ -37,6 +39,7 @@ uint32_t mutex_lock(mutex_handler mutex, uint32_t block_ticks) {
     if (!block_timer_check(&block_timer, &block_ticks)) {
       if (mutex->locked) {
         list_insert_node(&(mutex->block_list), &(current_tcb->event_node));
+        task_priority_inherit(mutex);
         add_tcb_to_delay_list(current_tcb, block_ticks);
         task_switch();
       }
@@ -47,10 +50,12 @@ uint32_t mutex_lock(mutex_handler mutex, uint32_t block_ticks) {
     critical_exit(saved);
   }
 }
+
 uint32_t mutex_release(mutex_handler mutex) {
   uint32_t yield = FALSE;
   uint32_t saved = critical_enter();
 
+  task_priority_disinherit(mutex);
   mutex->locked = FALSE;
   mutex->holder = NULL;
   if (!list_is_empty(&(mutex->block_list))) {
@@ -64,5 +69,11 @@ uint32_t mutex_release(mutex_handler mutex) {
 
   if (yield) {
     task_switch();
+  }
+}
+
+void priority_disinherit(mutex_t *mutex) {
+  tcb_t *holder = mutex->holder;
+  if (holder->priority != 1) {
   }
 }

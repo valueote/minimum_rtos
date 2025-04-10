@@ -1,8 +1,8 @@
 #ifndef __TASK_H
 #define __TASK_H
 
-#include "config.h"
 #include "list.h"
+#include "mutex.h"
 #include "stm32f1xx.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -15,6 +15,7 @@
 typedef struct tcb {
   uint32_t *stack_top;
   uint32_t priority;
+  uint32_t base_priority;
   uint32_t *stack;
   list_node_t state_node;
   list_node_t event_node;
@@ -37,6 +38,8 @@ tcb_t *get_current_tcb(void);
 uint32_t add_tcb_to_ready_lists(tcb_t *tcb);
 void add_tcb_to_delay_list(tcb_t *tcb, uint32_t ticks);
 uint32_t get_current_tick(void);
+void task_priority_inherit(mutex_t *mutex);
+void task_priority_disinherit(mutex_t *mutex);
 
 void scheduler_init(void);
 void scheduler_start(void);
