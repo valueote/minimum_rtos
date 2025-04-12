@@ -40,6 +40,7 @@ void add_tcb_to_delay_list(tcb_t *tcb, uint32_t ticks);
 uint32_t get_current_tick(void);
 void task_priority_inherit(mutex_t *mutex);
 void task_priority_disinherit(mutex_t *mutex);
+void task_priority_disinherit_timeout(mutex_t *mutex);
 
 void scheduler_init(void);
 void scheduler_start(void);

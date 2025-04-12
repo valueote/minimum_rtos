@@ -10,12 +10,12 @@ semaphore_t *semaphore_create(const uint32_t count) {
   return new_sem;
 }
 
-void semaphore_delete(semaphore_t *sem) {
+void semaphore_delete(sem_handler sem) {
   hfree(sem);
   return;
 }
 
-uint32_t semaphore_lock(semaphore_t *sem, uint32_t block_ticks) {
+uint32_t semaphore_lock(sem_handler sem, uint32_t block_ticks) {
   uint32_t timer_set = FALSE;
   block_timer_t block_timer;
   for (;;) {
@@ -48,7 +48,7 @@ uint32_t semaphore_lock(semaphore_t *sem, uint32_t block_ticks) {
   }
 }
 
-void semaphore_release(semaphore_t *sem) {
+void semaphore_release(sem_handler sem) {
   uint32_t yield = FALSE;
   uint32_t saved = critical_enter();
 

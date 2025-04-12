@@ -524,27 +524,36 @@ void task_priority_disinherit(mutex_t *mutex) {
   tcb_t *holder = mutex->holder;
 
   if (holder->base_priority != holder->priority) {
-    holder->priority = holder->base_priority;
 
     list_remove_node(&(mutex->holder->state_node));
     if (list_is_empty(&ready_lists[mutex->holder->priority])) {
-      ready_lists &= ~(1 << mutex->holder->priority);
+      ready_bits &= ~(1 << mutex->holder->priority);
     }
 
+    holder->priority = holder->base_priority;
     add_tcb_to_ready_lists(holder);
   }
 }
 
 void task_priority_disinherit_timeout(mutex_t *mutex) {
   tcb_t *holder = mutex->holder;
+  uint32_t restore_priority;
 
   if (holder->base_priority != holder->priority) {
-    holder->priority = holder->base_priority;
 
-    list_remove_node(&(mutex->holder->state_node));
-    if (list_is_empty(&ready_lists[mutex->holder->priority])) {
-      ready_lists &= ~(1 << mutex->holder->priority);
+    if (!list_is_empty(&(mutex->block_list))) {
+      tcb_t *head_next = mutex->block_list.head.next->owner;
+      restore_priority = head_next->priority;
+    } else {
+      restore_priority = holder->base_priority;
     }
+
+    list_remove_node(&(holder->state_node));
+    if (list_is_empty(&ready_lists[mutex->holder->priority])) {
+      ready_bits &= ~(1 << (holder->priority));
+    }
+
+    holder->priority = restore_priority;
 
     add_tcb_to_ready_lists(holder);
   }

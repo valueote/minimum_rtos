@@ -14,6 +14,7 @@ void mutex_delete(mutex_handler mutex) {
   hfree(mutex);
   return;
 }
+
 uint32_t mutex_lock(mutex_handler mutex, uint32_t block_ticks) {
   uint32_t timer_set = FALSE;
   block_timer_t block_timer;
@@ -44,6 +45,7 @@ uint32_t mutex_lock(mutex_handler mutex, uint32_t block_ticks) {
         task_switch();
       }
     } else {
+      task_priority_disinherit_timeout(mutex);
       critical_exit(saved);
       return FALSE;
     }
@@ -69,11 +71,5 @@ uint32_t mutex_release(mutex_handler mutex) {
 
   if (yield) {
     task_switch();
-  }
-}
-
-void priority_disinherit(mutex_t *mutex) {
-  tcb_t *holder = mutex->holder;
-  if (holder->priority != 1) {
   }
 }
