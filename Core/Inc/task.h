@@ -12,6 +12,9 @@
 #define vPortSVCHandler SVC_Handler
 #define xPortPendSVHandler PendSV_Handler
 #define task_switch() *((volatile uint32_t *)0xe000ed04) = 1UL << 28UL
+
+typedef struct mutex mutex_t;
+
 typedef struct tcb {
   uint32_t *stack_top;
   uint32_t priority;

@@ -21,6 +21,6 @@ msgque_handler msgque_create(const uint32_t length, const uint32_t msg_size);
 void msgque_delete(msgque_handler msg_que);
 uint32_t msgque_send(msgque_handler target_que, const void *const msg,
                      uint32_t block_ticks);
-uint32_t msgque_read(msgque_handler source_que, void *msg_buf,
-                     uint32_t block_ticks);
+uint32_t msgque_recieve(msgque_handler source_que, void *msg_buf,
+                        uint32_t block_ticks);
 #endif /*__MSGQUE_H*/

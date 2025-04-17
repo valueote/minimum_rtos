@@ -507,10 +507,9 @@ void task_priority_inherit(mutex_t *mutex) {
     current_tcb = get_current_tcb();
     if (mutex->holder->priority < current_tcb->priority) {
       if (list_contain(&(ready_lists[mutex->holder->priority]),
-                       mutex->holder->state_node)) {
-        list_remove_node(&(mutex->holder->state_node));
-        if (list_is_empty(&(ready_lists[mutex->holder->priority]))) {
-          ready_lists &= ~(1 << mutex->holder->priority);
+                       &(mutex->holder->state_node))) {
+        if (list_remove_node(&(mutex->holder->state_node))) {
+          ready_bits &= ~(1 << mutex->holder->priority);
         }
 
         add_tcb_to_ready_lists(mutex->holder);
@@ -525,8 +524,7 @@ void task_priority_disinherit(mutex_t *mutex) {
 
   if (holder->base_priority != holder->priority) {
 
-    list_remove_node(&(mutex->holder->state_node));
-    if (list_is_empty(&ready_lists[mutex->holder->priority])) {
+    if (list_remove_node(&(mutex->holder->state_node)) == 0) {
       ready_bits &= ~(1 << mutex->holder->priority);
     }
 
@@ -542,14 +540,13 @@ void task_priority_disinherit_timeout(mutex_t *mutex) {
   if (holder->base_priority != holder->priority) {
 
     if (!list_is_empty(&(mutex->block_list))) {
-      tcb_t *head_next = mutex->block_list.head.next->owner;
-      restore_priority = head_next->priority;
+      list_node_t *node = list_remove_next_node(&(mutex->block_list));
+      restore_priority = ((tcb_t *)node->owner)->priority;
     } else {
       restore_priority = holder->base_priority;
     }
 
-    list_remove_node(&(holder->state_node));
-    if (list_is_empty(&ready_lists[mutex->holder->priority])) {
+    if (list_remove_node(&(holder->state_node)) == 0) {
       ready_bits &= ~(1 << (holder->priority));
     }
 

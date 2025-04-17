@@ -2,8 +2,9 @@
 #define __MUTEX_H
 
 #include "list.h"
-#include "task.h"
 #include <stdint.h>
+
+typedef struct tcb tcb_t;
 
 typedef struct mutex {
   uint32_t locked;

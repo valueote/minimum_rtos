@@ -43,7 +43,7 @@ void list_insert_end(list_t *const list, list_node_t *const new_node) {
   list->size++;
 }
 
-void list_remove_node(list_node_t *const node) {
+uint32_t list_remove_node(list_node_t *const node) {
 
   list_t *node_list = node->container;
   node->prev->next = node->next;
@@ -56,6 +56,7 @@ void list_remove_node(list_node_t *const node) {
   node->container = NULL;
   node->prev = NULL;
   node->next = NULL;
+  return node_list->size;
 }
 
 list_node_t *list_remove_next_node(list_t *list) {

@@ -72,8 +72,8 @@ uint32_t msgque_send(msgque_handler target_que, const void *const msg,
   critical_exit(saved);
 }
 
-uint32_t msgque_read(msgque_handler source_que, void *msg_buf,
-                     uint32_t block_ticks) {
+uint32_t msgque_recieve(msgque_handler source_que, void *msg_buf,
+                        uint32_t block_ticks) {
   uint32_t timer_set = FALSE;
   block_timer_t block_timer;
   for (;;) {
@@ -109,3 +109,14 @@ uint32_t msgque_read(msgque_handler source_que, void *msg_buf,
   uint32_t saved = critical_enter();
   critical_exit(saved);
 }
+
+static void copy_msg_to_queue(msgque_t *target_que, void *msg) {
+  memmove(target_que->next_write, msg, target_que->msg_size);
+  target_que->next_write += target_que->msg_size;
+  if (target_que->next_write > target_que->tail) {
+    target_que->next_write = target_que->front;
+  }
+  target_que->msg_count++;
+}
+
+static void copy_msg_from_queue(msgque_t *source_que, void *msg) {}
