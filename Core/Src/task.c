@@ -179,7 +179,7 @@ void task_delete(task_handler_t *handler) {
 
   list_remove_node(&(tcb->state_node));
   list_t *list = &ready_lists[tcb->priority];
-  if (list_is_empty(list)) {
+  if (LIST_IS_EMPTY(list)) {
     ready_bits &= ~(1 << tcb->priority);
   }
 
@@ -209,7 +209,7 @@ void add_tcb_to_delay_list(tcb_t *tcb, uint32_t ticks) {
     list_insert_node(delay_list, &(current_tcb->state_node));
   }
 
-  if (list_is_empty((&ready_lists[priority])))
+  if (LIST_IS_EMPTY((&ready_lists[priority])))
     ready_bits = ready_bits & (~(1 << priority));
 }
 
@@ -236,7 +236,7 @@ void task_suspend(task_handler_t *handler) {
   }
 
   list_remove_node(&(tcb->state_node));
-  if (list_is_empty(&(ready_lists[tcb->priority]))) {
+  if (LIST_IS_EMPTY(&(ready_lists[tcb->priority]))) {
     ready_bits &= ~(1 << tcb->priority);
   }
   list_insert_end(&suspended_list, &(tcb->state_node));
@@ -323,11 +323,11 @@ static uint32_t *stack_init(uint32_t *stack_top, task_func_t func,
 void idle_task() {
   while (1) {
     uint32_t saved = critical_enter();
-    while (!list_is_empty(&zombie_list)) {
+    while (!LIST_IS_EMPTY(&zombie_list)) {
       list_node_t *node = list_get_next_index(&zombie_list);
       tcb_t *tcb = node->owner;
       list_remove_node(node);
-      if (list_is_empty(&ready_lists[tcb->priority])) {
+      if (LIST_IS_EMPTY(&ready_lists[tcb->priority])) {
         ready_bits &= ~(1 << tcb->priority);
       }
       free_tcb(tcb);
@@ -458,7 +458,7 @@ static void increment_tick(void) {
     delay_list_switch();
   }
 
-  while (!list_is_empty(delay_list)) {
+  while (!LIST_IS_EMPTY(delay_list)) {
     list_node_t *first_node = delay_list->head.next;
     if (first_node->val <= current_tick_count) {
       tcb_t *tcb = (tcb_t *)(first_node->owner);
@@ -500,6 +500,15 @@ uint32_t block_timer_check(block_timer_t *timer, uint32_t *block_ticks) {
   }
 }
 
+uint32_t task_resume_from_block(list_t *block_list) {
+  uint32_t yield = 0;
+  list_node_t *block_node = list_remove_next_node(block_list);
+  tcb_t *block_tcb = block_node->owner;
+  list_remove_node(&(block_tcb->state_node));
+  yield = add_tcb_to_ready_lists(block_tcb);
+  return yield;
+}
+
 void task_priority_inherit(mutex_t *mutex) {
   tcb_t *current_tcb = NULL;
 
@@ -539,7 +548,7 @@ void task_priority_disinherit_timeout(mutex_t *mutex) {
 
   if (holder->base_priority != holder->priority) {
 
-    if (!list_is_empty(&(mutex->block_list))) {
+    if (!LIST_IS_EMPTY(&(mutex->block_list))) {
       list_node_t *node = list_remove_next_node(&(mutex->block_list));
       restore_priority = ((tcb_t *)node->owner)->priority;
     } else {

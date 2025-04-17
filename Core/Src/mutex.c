@@ -53,14 +53,14 @@ uint32_t mutex_lock(mutex_handler mutex, uint32_t block_ticks) {
   }
 }
 
-uint32_t mutex_release(mutex_handler mutex) {
+void mutex_release(mutex_handler mutex) {
   uint32_t yield = FALSE;
   uint32_t saved = critical_enter();
 
   task_priority_disinherit(mutex);
   mutex->locked = FALSE;
   mutex->holder = NULL;
-  if (!list_is_empty(&(mutex->block_list))) {
+  if (!LIST_IS_EMPTY(&(mutex->block_list))) {
     list_node_t *block_node = list_remove_next_node(&(mutex->block_list));
     tcb_t *block_tcb = block_node->owner;
     list_remove_node(&(block_tcb->state_node));

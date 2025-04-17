@@ -41,6 +41,7 @@ tcb_t *get_current_tcb(void);
 uint32_t add_tcb_to_ready_lists(tcb_t *tcb);
 void add_tcb_to_delay_list(tcb_t *tcb, uint32_t ticks);
 uint32_t get_current_tick(void);
+uint32_t task_resume_from_block(list_t *block_list);
 void task_priority_inherit(mutex_t *mutex);
 void task_priority_disinherit(mutex_t *mutex);
 void task_priority_disinherit_timeout(mutex_t *mutex);

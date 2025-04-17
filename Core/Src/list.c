@@ -69,12 +69,6 @@ list_node_t *list_remove_next_node(list_t *list) {
   return NULL;
 }
 
-int list_is_empty(list_t *const list) {
-  if (list->size == 0)
-    return 1;
-  return 0;
-}
-
 list_node_t *list_get_next_index(list_t *const list) {
   list->index = list->index->next;
   if (list->index == &(list->head)) {

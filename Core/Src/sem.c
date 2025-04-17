@@ -53,7 +53,7 @@ void semaphore_release(sem_handler sem) {
   uint32_t saved = critical_enter();
 
   sem->count++;
-  if (!list_is_empty(&(sem->block_list))) {
+  if (!LIST_IS_EMPTY(&(sem->block_list))) {
     list_node_t *block_node = list_remove_next_node(&(sem->block_list));
     tcb_t *block_tcb = block_node->owner;
     list_remove_node(&(block_tcb->state_node));
