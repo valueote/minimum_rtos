@@ -156,7 +156,9 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
   new_tcb->event_node.val = configMaxPriority - priority;
   new_tcb->event_node.owner = new_tcb;
   // set the task handler
-  *handler = (task_handler_t)new_tcb;
+  if (handler != NULL) {
+    *handler = (task_handler_t)new_tcb;
+  }
   // add the new tcb to the ready list
   yield = add_new_tcb_to_ready_lists(new_tcb);
   if (yield) {

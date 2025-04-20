@@ -1,0 +1,16 @@
+#ifndef __TEST_H
+#define __TEST_H
+
+// sem test
+#include "mutex.h"
+void sem_consumer_first(void);
+void sem_consumer_second(void);
+void sem_producer(void);
+
+// mutex test
+void mutex_consumer_a(void *mutex);
+void mutex_consumer_b(void *mutex);
+void mutex_consumer_c(void *mutex);
+void mutex_test();
+void mutex_produce(void);
+#endif //__TEST_H

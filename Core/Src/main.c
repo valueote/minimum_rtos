@@ -119,62 +119,7 @@ void hi() {
   }
 }
 
-// semaphore test
-#include "sem.h"
-uint32_t resource = 0;
-sem_handler sem = NULL;
-void consumer_first() {
-  while (1) {
-    printf("consumer: try to get semaphore\r\n");
-    if (semaphore_lock(sem, 2000)) {
-      printf("consumer: get semaphore\r\n");
-      if (resource > 0) {
-        resource--;
-        printf("consume resource\r\n");
-      } else {
-        printf("consumer: no resource--");
-      }
-      semaphore_release(sem);
-    } else {
-      printf("consumer: get sem fail");
-    }
-    task_delay(2000);
-  }
-}
-
-void consumer_second() {
-  while (1) {
-    printf("consumer 2: try to get semaphore\r\n");
-    if (semaphore_lock(sem, 2000)) {
-      printf("consumer 2: get semaphore\r\n");
-      if (resource > 0) {
-        resource--;
-        printf("consume resource\r\n");
-      } else {
-        printf("consumer 2: no resource--");
-      }
-      semaphore_release(sem);
-    } else {
-      printf("consumer 2: get sem fail");
-    }
-    task_delay(2000);
-  }
-}
-
-void producer() {
-  while (1) {
-    printf("producer: try to get semaphore\r\n");
-    if (semaphore_lock(sem, 2000)) {
-      printf("producer: get semaphore\r\n");
-      resource++;
-      printf("producer: produce resoure\r\n");
-      semaphore_release(sem);
-    } else {
-      printf("producer: get sem fail");
-    }
-    task_delay(2000);
-  }
-}
+#include "test.h"
 
 /* USER CODE END 0 */
 
@@ -210,18 +155,7 @@ int main(void) {
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   scheduler_init();
-  task_handler_t led_light_handler = NULL;
-  task_handler_t led_close_handler = NULL;
-  task_handler_t hello_handler = NULL;
-  task_handler_t consumer_handler = NULL;
-  task_handler_t consumer2_handler = NULL;
-  task_handler_t producer_handler = NULL;
-  sem = semaphore_create(1);
-  task_create(led_light, NULL, 128, 2, &led_light_handler);
-  task_create(led_close, NULL, 128, 1, &led_close_handler);
-  task_create(producer, NULL, 128, 4, &producer_handler);
-  task_create(consumer_first, NULL, 128, 3, &consumer_handler);
-  task_create(consumer_second, NULL, 128, 3, &consumer2_handler);
+  mutex_test();
   // task_create(hello, NULL, 512, 3, &hello_handler);
   // task_create(hi, NULL, 512, 2, &hi_handler);
   scheduler_start();
