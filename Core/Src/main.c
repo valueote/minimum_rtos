@@ -67,26 +67,6 @@ static void MX_USART1_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-int __io_putchar(int ch) {
-  uint8_t temp[1] = {ch};
-  HAL_UART_Transmit(&huart1, temp, 1, 10);
-  return (ch);
-}
-
-void led_light() {
-  while (1) {
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
-    task_delay(1000);
-  }
-}
-void led_close() {
-  // uint8_t message[] = "The system is sleeping";
-  while (1) {
-    task_delay(4000);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
-  }
-}
-
 task_handler_t hi_handler = NULL;
 task_handler_t higher = NULL;
 
