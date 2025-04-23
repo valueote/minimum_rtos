@@ -190,17 +190,18 @@ void Low_Task(void *arg) {
   tcb_t *tcb = get_current_tcb();
   printf_("Low_Task: the priority before Releasing is %d\r\n", tcb->priority);
   printf_("Low_Task: Releasing mutex...\r\n");
-  tcb = get_current_tcb();
-  printf_("Low_Task: the priority after Releasing is %d\r\n", tcb->priority);
   mutex_release(test_mutex);
-  while (1)
-    ;
+  while (1) {
+    printf_("Low_Task: Running\r\n");
+    task_delay(1000);
+  }
 }
 
 void Med_Task(void *arg) {
+  task_delay(100);
   while (1) {
-    task_delay(100);
     printf_("Med_Task: Running...\r\n");
+    task_delay(1000);
   }
 }
 
@@ -212,8 +213,10 @@ void High_Task(void *arg) {
   mutex_lock(test_mutex, MAX_DELAY);
   printf_("High_Task: Acquired mutex!\r\n");
   mutex_release(test_mutex);
-  while (1)
-    ;
+  while (1) {
+    printf_("High_Task: sleep...\r\n");
+    task_delay(1000);
+  }
 }
 
 void mutex_priority_inheritance_test(void) {
