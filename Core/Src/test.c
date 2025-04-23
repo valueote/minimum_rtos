@@ -6,9 +6,7 @@
 #include "stm32f1xx_hal_gpio.h"
 #include "task.h"
 
-// LED
-//
-//
+// LED TEST
 void led_toggle() {
   while (1) {
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
@@ -30,8 +28,9 @@ void led_close() {
   }
 }
 
-void basic_led_test() { task_create(led_toggle, NULL, 128, 5, NULL); }
+void led_basic_test() { task_create(led_toggle, NULL, 128, 5, NULL); }
 
+// SEMAPHORE TEST
 sem_handler sem = NULL;
 uint32_t resource = 0;
 
@@ -102,7 +101,6 @@ static uint32_t mutex_resource = 0;
 void mutex_consumer_a(void *mutex) {
   int loop_val = 0;
   while (1) {
-    printf_("consumer a with 1 priority \r\n");
     if (mutex_lock(mutex, 1000)) {
       printf_("consumer a get mutex\r\n");
       if (mutex_resource > 0) {
@@ -121,7 +119,6 @@ void mutex_consumer_a(void *mutex) {
 void mutex_consumer_b(void *mutex) {
   int loop_val = 0;
   while (1) {
-    printf_("consumer b with 1 priority \r\n");
     if (mutex_lock(mutex, 1000)) {
       printf_("consumer b get mutex\r\n");
       if (mutex_resource > 0) {
@@ -140,7 +137,6 @@ void mutex_consumer_b(void *mutex) {
 void mutex_consumer_c(void *mutex) {
   int loop_val = 0;
   while (1) {
-    printf_("consumer c with 1 priority \r\n");
     if (mutex_lock(mutex, 1000)) {
       printf_("consumer c get mutex\r\n");
       if (mutex_resource > 0) {
@@ -151,14 +147,13 @@ void mutex_consumer_c(void *mutex) {
       printf_("consumer c get mutex fail\r\n");
     }
     mutex_release(mutex);
-    task_delay(1000);
+    task_delay(4000);
   }
 }
 
 void mutex_producer(void *mutex) {
   while (1) {
     int loop_val = 0;
-    printf_("mutex producer start\r\n");
     if (mutex_lock(mutex, 1000)) {
       printf_("mutex producer get mutex\r\n");
       mutex_resource++;
@@ -171,11 +166,60 @@ void mutex_producer(void *mutex) {
   }
 }
 
-void mutex_test() {
+void mutex_basic_test() {
   mutex_handler mutex = mutex_create();
-  basic_led_test();
+  led_basic_test();
   task_create(mutex_consumer_a, mutex, 256, 1, NULL);
-  // task_create(mutex_consumer_b, mutex, 128, 1, NULL);
-  // task_create(mutex_consumer_c, mutex, 128, 1, NULL);
+  task_create(mutex_consumer_b, mutex, 128, 1, NULL);
+  task_create(mutex_consumer_c, mutex, 128, 1, NULL);
   task_create(mutex_producer, mutex, 256, 1, NULL);
+}
+
+// MUTEX TEST for pirority inheritance test
+
+static mutex_handler test_mutex;
+
+void Low_Task(void *arg) {
+  mutex_lock(test_mutex, MAX_DELAY);
+  printf_("Low_Task: Holding mutex...\r\n");
+  for (int i = 0; i < 5000000; i++) {
+    if (i % 100000 == 0) {
+      printf_("Low_Task: Running...\r\n");
+    }
+  }
+  tcb_t *tcb = get_current_tcb();
+  printf_("Low_Task: the priority before Releasing is %d\r\n", tcb->priority);
+  printf_("Low_Task: Releasing mutex...\r\n");
+  tcb = get_current_tcb();
+  printf_("Low_Task: the priority after Releasing is %d\r\n", tcb->priority);
+  mutex_release(test_mutex);
+  while (1)
+    ;
+}
+
+void Med_Task(void *arg) {
+  while (1) {
+    task_delay(100);
+    printf_("Med_Task: Running...\r\n");
+  }
+}
+
+void High_Task(void *arg) {
+  printf_("High_Task: Go to sleep...\r\n");
+  task_delay(50);
+
+  printf_("High_Task: Trying to get mutex...\r\n");
+  mutex_lock(test_mutex, MAX_DELAY);
+  printf_("High_Task: Acquired mutex!\r\n");
+  mutex_release(test_mutex);
+  while (1)
+    ;
+}
+
+void mutex_priority_inheritance_test(void) {
+  test_mutex = mutex_create();
+  led_basic_test();
+  task_create(High_Task, NULL, 256, 3, NULL);
+  task_create(Med_Task, NULL, 256, 2, NULL);
+  task_create(Low_Task, NULL, 256, 1, NULL);
 }

@@ -56,6 +56,7 @@ uint32_t list_remove_node(list_node_t *const node) {
   node->container = NULL;
   node->prev = NULL;
   node->next = NULL;
+
   return node_list->size;
 }
 

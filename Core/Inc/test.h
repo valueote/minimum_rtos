@@ -11,6 +11,7 @@ void sem_producer(void);
 void mutex_consumer_a(void *mutex);
 void mutex_consumer_b(void *mutex);
 void mutex_consumer_c(void *mutex);
-void mutex_test();
+void mutex_basic_test(void);
+void mutex_priority_inheritance_test(void);
 void mutex_produce(void);
 #endif //__TEST_H

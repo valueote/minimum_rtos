@@ -512,20 +512,20 @@ uint32_t task_resume_from_block(list_t *block_list) {
 }
 
 void task_priority_inherit(mutex_t *mutex) {
-  tcb_t *current_tcb = NULL;
-
-  if (mutex->holder == NULL) {
-    current_tcb = get_current_tcb();
+  if (mutex->holder != NULL) {
     if (mutex->holder->priority < current_tcb->priority) {
       if (list_contain(&(ready_lists[mutex->holder->priority]),
                        &(mutex->holder->state_node))) {
-        if (list_remove_node(&(mutex->holder->state_node))) {
+
+        if (list_remove_node(&(mutex->holder->state_node)) == 0) {
           ready_bits &= ~(1 << mutex->holder->priority);
         }
 
+        mutex->holder->priority = current_tcb->priority;
         add_tcb_to_ready_lists(mutex->holder);
+      } else {
+        mutex->holder->priority = current_tcb->priority;
       }
-      mutex->holder->priority = current_tcb->priority;
     }
   }
 }
