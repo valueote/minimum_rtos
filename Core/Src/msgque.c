@@ -105,7 +105,7 @@ uint32_t msgque_recieve(msgque_handler source_que, void *msg_buf,
     tcb_t *current_tcb = get_current_tcb();
     if (!block_timer_check(&block_timer, &block_ticks)) {
       if (source_que->msg_count == 0) {
-        list_insert_node(&(source_que->send_waiting_list),
+        list_insert_node(&(source_que->read_waiting_list),
                          &(current_tcb->event_node));
         add_tcb_to_delay_list(current_tcb, block_ticks);
         task_switch();

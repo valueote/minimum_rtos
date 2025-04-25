@@ -2,7 +2,6 @@
 #define __TEST_H
 
 // sem test
-#include "mutex.h"
 void sem_consumer_first(void);
 void sem_consumer_second(void);
 void sem_producer(void);
@@ -14,4 +13,6 @@ void mutex_consumer_c(void *mutex);
 void mutex_basic_test(void);
 void mutex_priority_inheritance_test(void);
 void mutex_produce(void);
+
+void msgque_basic_test(void);
 #endif //__TEST_H

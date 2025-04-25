@@ -1,10 +1,12 @@
 #include "test.h"
+#include "msgque.h"
 #include "mutex.h"
 #include "printf.h"
 #include "sem.h"
 #include "stm32f1xx.h"
 #include "stm32f1xx_hal_gpio.h"
 #include "task.h"
+#include <stdint.h>
 
 // LED TEST
 void led_toggle() {
@@ -153,12 +155,12 @@ void mutex_consumer_c(void *mutex) {
 
 void mutex_producer(void *mutex) {
   while (1) {
-    int loop_val = 0;
+    mutex_release(mutex);
+    uint32_t loop_val = 0;
     if (mutex_lock(mutex, 1000)) {
-      printf_("mutex producer get mutex\r\n");
+      printf_("producer get mutex\r\n");
       mutex_resource++;
       CONSUME_TIME(loop_val);
-      mutex_release(mutex);
     } else {
       printf_("mutex producer get mutex fail\r\n");
     }
@@ -180,6 +182,7 @@ void mutex_basic_test() {
 static mutex_handler test_mutex;
 
 void Low_Task(void *arg) {
+  (void)arg;
   mutex_lock(test_mutex, MAX_DELAY);
   printf_("Low_Task: Holding mutex...\r\n");
   for (int i = 0; i < 5000000; i++) {
@@ -198,6 +201,7 @@ void Low_Task(void *arg) {
 }
 
 void Med_Task(void *arg) {
+  (void)arg;
   task_delay(100);
   while (1) {
     printf_("Med_Task: Running...\r\n");
@@ -206,6 +210,7 @@ void Med_Task(void *arg) {
 }
 
 void High_Task(void *arg) {
+  (void)arg;
   printf_("High_Task: Go to sleep...\r\n");
   task_delay(50);
 
@@ -225,4 +230,42 @@ void mutex_priority_inheritance_test(void) {
   task_create(High_Task, NULL, 256, 3, NULL);
   task_create(Med_Task, NULL, 256, 2, NULL);
   task_create(Low_Task, NULL, 256, 1, NULL);
+}
+
+/*Msgque test*/
+
+// Msgque basic test
+
+msgque_handler basic_test_que;
+void msgque_basic_sender(void *arg) {
+  (void)arg;
+  uint32_t data;
+  while (1) {
+    for (int i = 0; i < 10; i++) {
+      data = i;
+      msgque_send(basic_test_que, &data, MAX_DELAY);
+    }
+  }
+}
+
+void msgque_basic_reciever(void *arg) {
+  (void)arg;
+  uint32_t data;
+  uint32_t sum = 0;
+  int cnt = 0;
+  while (1) {
+    for (int i = 0; i < 10; i++) {
+      msgque_recieve(basic_test_que, &data, MAX_DELAY);
+      sum += data;
+    }
+    cnt++;
+    printf_("%d :the sum is %lu\r\n", cnt, sum);
+  }
+}
+
+void msgque_basic_test() {
+  led_basic_test();
+  basic_test_que = msgque_create(10, sizeof(uint32_t));
+  task_create(msgque_basic_reciever, NULL, 256, 1, NULL);
+  task_create(msgque_basic_sender, NULL, 256, 1, NULL);
 }
