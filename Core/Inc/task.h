@@ -12,6 +12,8 @@
 #define vPortSVCHandler SVC_Handler
 #define xPortPendSVHandler PendSV_Handler
 #define task_switch() *((volatile uint32_t *)0xe000ed04) = 1UL << 28UL
+#define STACK_GUARD_SIZE (uint32_t)4
+#define STACK_GUARD_MAGIC (uint32_t)0xdeadbeee
 
 typedef struct mutex mutex_t;
 

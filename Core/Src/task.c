@@ -4,10 +4,10 @@
 #include "list.h"
 #include "mem.h"
 #include "stm32f103xe.h"
+#include <stdint.h>
 
-// The current running task
-__attribute__((used)) tcb_t *volatile current_tcb = NULL;
-// handler for the idle task
+// The current running task __attribute__((used)) tcb_t *volatile current_tcb =
+// NULL; handler for the idle task
 static task_handler_t idle_task_handler = NULL;
 // ready lists
 static list_t ready_lists[configMaxPriority];
@@ -39,6 +39,7 @@ static void delay_list_init(void);
 static uint32_t add_new_tcb_to_ready_lists(tcb_t *tcb);
 static inline uint8_t get_highest_priority(void);
 static void increment_tick(void);
+static void check_stack_overflow(tcb_t *tcb);
 
 // Used for context switch, from freertos
 __attribute__((naked)) void xPortPendSVHandler(void) {
@@ -97,14 +98,6 @@ __attribute__((naked)) void vPortSVCHandler(void) {
       "pxCurrentTCBConst2: .word current_tcb             \n");
 }
 
-// SysTick Handler
-void SysTick_Handler(void) {
-  uint32_t saved = critical_enter();
-  if (scheduler_is_suspending == FALSE) {
-    increment_tick();
-  }
-  critical_exit(saved);
-}
 // And config the SysTick and start the first task
 __attribute__((always_inline)) inline static void StartFirstTask(void) {
   (*((volatile uint32_t *)0xe000ed20)) |= (((uint32_t)255UL) << 16UL);
@@ -130,6 +123,15 @@ __attribute__((always_inline)) inline static void StartFirstTask(void) {
       " .ltorg                \n");
 }
 
+// SysTick Handler
+void SysTick_Handler(void) {
+  uint32_t saved = critical_enter();
+  if (scheduler_is_suspending == FALSE) {
+    increment_tick();
+  }
+  critical_exit(saved);
+}
+
 /* Task API part
  */
 
@@ -141,10 +143,20 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
   uint32_t yield;
   // allocate memory for the tcb and stack
   new_tcb = (tcb_t *)halloc(sizeof(tcb_t));
-  new_tcb->stack = (uint32_t *)halloc((size_t)stack_depth * sizeof(uint32_t));
+
+  uint32_t stack_size = stack_depth + STACK_GUARD_SIZE;
+  new_tcb->stack = (uint32_t *)halloc((size_t)stack_size * sizeof(uint32_t));
+
+  for (uint32_t i = 0; i < STACK_GUARD_SIZE; i++) {
+    new_tcb->stack[i] = STACK_GUARD_MAGIC;
+  }
+
+  uint32_t *real_stack = new_tcb->stack + STACK_GUARD_SIZE;
+  stack_top = real_stack + stack_depth - 1;
   // get the stack top addresss and align
-  stack_top = new_tcb->stack + (stack_depth - (uint32_t)1);
+  // stack_top = new_tcb->stack + (stack_depth - (uint32_t)1);
   stack_top = (uint32_t *)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
+
   // initialize the stack
   new_tcb->stack_top = stack_init(stack_top, func, func_parameters);
   new_tcb->priority = priority;
@@ -297,6 +309,7 @@ static uint32_t add_new_tcb_to_ready_lists(tcb_t *tcb) {
 }
 
 // NOTE: Task should never return, if so, it will reach here
+// wichi indicates an error
 static void task_exit_error() {
   while (1) {
   }
@@ -334,6 +347,28 @@ void idle_task() {
       }
       free_tcb(tcb);
     }
+
+    // check stack overflow of the task in the ready list
+    // for (int i = 0; i < configMaxPriority; i++) {
+    //  list_node_t *node = ready_lists[i].head.next;
+    //  while (node != &ready_lists[i].head) {
+    //    check_stack_overflow(node->owner);
+    //    node = node->next;
+    //  }
+    //}
+
+    list_node_t *delay_node = delay_list->head.next;
+    while (delay_node != &(delay_list->head)) {
+      check_stack_overflow(delay_node->owner);
+      delay_node = delay_node->next;
+    }
+
+    list_node_t *suspend_node = suspended_list.head.next;
+    while (suspend_node != &(suspended_list.head)) {
+      check_stack_overflow(suspend_node->owner);
+      suspend_node = suspend_node->next;
+    }
+
     critical_exit(saved);
   }
 }
@@ -564,5 +599,18 @@ void task_priority_disinherit_timeout(mutex_t *mutex) {
     holder->priority = restore_priority;
 
     add_tcb_to_ready_lists(holder);
+  }
+}
+
+static void task_error_handler() {
+  while (1) {
+  }
+}
+
+static void check_stack_overflow(tcb_t *tcb) {
+  for (uint32_t i = 0; i < STACK_GUARD_SIZE; i++) {
+    if (tcb->stack[i] != STACK_GUARD_MAGIC) {
+      task_error_handler();
+    }
   }
 }
