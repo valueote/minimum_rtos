@@ -3,3 +3,4 @@ Core/Src/.cache/
 *.idx
 build
 .gdb_history
+compile_commands.json
