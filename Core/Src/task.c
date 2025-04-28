@@ -34,7 +34,7 @@ static list_t *delay_overflow_list = NULL;
 static uint32_t current_tick_count = 0;
 
 // scheduelr suspended or not
-static uint32_t scheduler_is_suspending = 0;
+static uint32_t scheduler_is_suspending = FALSE;
 static uint32_t scheduler_is_running = FALSE;
 
 // Static functions
@@ -397,22 +397,20 @@ void scheduler_init(void) {
 void scheduler_start(void) {
   current_tcb = idle_task_handler;
   scheduler_is_running = TRUE;
-  scheduler_is_suspending = 0;
   StartFirstTask();
 }
 
-// TODO: suspended the scheduler
 void scheduler_suspend(void) {
   uint32_t saved = critical_enter();
   scheduler_is_suspending++;
   scheduler_is_running = FALSE;
   critical_exit(saved);
 }
-// TODO: resume the schdueler
+
 void scheduler_resume(void) {
   uint32_t saved = critical_enter();
   scheduler_is_suspending--;
-  if (scheduler_is_suspending == 0) {
+  if (scheduler_is_suspending == FALSE) {
     scheduler_is_running = TRUE;
   }
   critical_exit(saved);

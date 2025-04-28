@@ -46,15 +46,18 @@ uint32_t msgque_send(msgque_handler target_que, const void *const msg,
     if (target_que->msg_count < target_que->length) {
       copy_msg_to_queue(target_que, msg);
       target_que->msg_count++;
+
       if (!LIST_IS_EMPTY(&(target_que->read_waiting_list))) {
         task_resume_from_block(&(target_que->read_waiting_list));
       }
+
       critical_exit(saved);
       return TRUE;
     } else if (block_ticks == 0) {
       critical_exit(saved);
       return FALSE;
     }
+
     if (!timer_set) {
       block_timer.start_tick = get_current_tick();
       timer_set = TRUE;
@@ -72,6 +75,7 @@ uint32_t msgque_send(msgque_handler target_que, const void *const msg,
       critical_exit(saved);
       return FALSE;
     }
+
     critical_exit(saved);
   }
 
@@ -79,24 +83,46 @@ uint32_t msgque_send(msgque_handler target_que, const void *const msg,
   critical_exit(saved);
 }
 
+uint32_t msgque_send_isr(msgque_handler target_que, const void *const msg) {
+  uint32_t saved = critical_enter();
+  if (target_que->msg_count < target_que->length) {
+    copy_msg_to_queue(target_que, msg);
+    target_que->msg_count++;
+
+    if (!LIST_IS_EMPTY(&(target_que->read_waiting_list))) {
+      task_resume_from_block(&(target_que->read_waiting_list));
+    }
+
+    critical_exit(saved);
+    return TRUE;
+  }
+  critical_exit(saved);
+  return FALSE;
+}
+
 uint32_t msgque_recieve(msgque_handler source_que, void *msg_buf,
                         uint32_t block_ticks) {
   uint32_t timer_set = FALSE;
   block_timer_t block_timer;
+
   for (;;) {
     uint32_t saved = critical_enter();
     if (source_que->msg_count > 0) {
       copy_msg_from_queue(source_que, msg_buf);
       source_que->msg_count--;
+
       if (!LIST_IS_EMPTY(&(source_que->send_waiting_list))) {
         task_resume_from_block(&(source_que->send_waiting_list));
       }
+
       critical_exit(saved);
       return TRUE;
     } else if (block_ticks == 0) {
+
       critical_exit(saved);
       return FALSE;
     }
+
     if (!timer_set) {
       block_timer.start_tick = get_current_tick();
       timer_set = TRUE;
@@ -124,6 +150,7 @@ uint32_t msgque_recieve(msgque_handler source_que, void *msg_buf,
 static void copy_msg_to_queue(msgque_t *target_que, const void *msg) {
   memcpy(target_que->next_write, msg, target_que->msg_size);
   target_que->next_write += target_que->msg_size;
+
   if (target_que->next_write >= target_que->tail) {
     target_que->next_write = target_que->front;
   }
@@ -134,5 +161,6 @@ static void copy_msg_from_queue(msgque_t *source_que, void *msg) {
   if (source_que->next_read >= source_que->tail) {
     source_que->next_read = source_que->front;
   }
+
   memcpy(msg, source_que->next_read, source_que->msg_size);
 }
