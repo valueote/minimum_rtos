@@ -6,9 +6,12 @@
 #include "stm32f103xe.h"
 #include <stdint.h>
 
-// The current running task __attribute__((used)) tcb_t *volatile current_tcb =
-// NULL; handler for the idle task
+// The current running task
+__attribute__((used)) tcb_t *volatile current_tcb = NULL;
+
+// Task Handler for the idle task
 static task_handler_t idle_task_handler = NULL;
+
 // ready lists
 static list_t ready_lists[configMaxPriority];
 // ready bits for task table
@@ -39,7 +42,7 @@ static void delay_list_init(void);
 static uint32_t add_new_tcb_to_ready_lists(tcb_t *tcb);
 static inline uint8_t get_highest_priority(void);
 static void increment_tick(void);
-static void check_stack_overflow(tcb_t *tcb);
+static void check_stack_overflow();
 
 // Used for context switch, from freertos
 __attribute__((naked)) void xPortPendSVHandler(void) {
@@ -348,27 +351,6 @@ void idle_task() {
       free_tcb(tcb);
     }
 
-    // check stack overflow of the task in the ready list
-    // for (int i = 0; i < configMaxPriority; i++) {
-    //  list_node_t *node = ready_lists[i].head.next;
-    //  while (node != &ready_lists[i].head) {
-    //    check_stack_overflow(node->owner);
-    //    node = node->next;
-    //  }
-    //}
-
-    list_node_t *delay_node = delay_list->head.next;
-    while (delay_node != &(delay_list->head)) {
-      check_stack_overflow(delay_node->owner);
-      delay_node = delay_node->next;
-    }
-
-    list_node_t *suspend_node = suspended_list.head.next;
-    while (suspend_node != &(suspended_list.head)) {
-      check_stack_overflow(suspend_node->owner);
-      suspend_node = suspend_node->next;
-    }
-
     critical_exit(saved);
   }
 }
@@ -419,6 +401,8 @@ void scheduler_resume(void) {
 
 // Switch task
 void vTaskSwitchContext(void) {
+  check_stack_overflow();
+
   uint8_t priority = get_highest_priority();
   if (priority == configMaxPriority) {
     current_tcb = idle_task_handler;
@@ -602,15 +586,15 @@ void task_priority_disinherit_timeout(mutex_t *mutex) {
   }
 }
 
-static void task_error_handler() {
-  while (1) {
-  }
+static void task_overflow_hander() {
+  while (1)
+    ;
 }
 
-static void check_stack_overflow(tcb_t *tcb) {
+static void check_stack_overflow() {
   for (uint32_t i = 0; i < STACK_GUARD_SIZE; i++) {
-    if (tcb->stack[i] != STACK_GUARD_MAGIC) {
-      task_error_handler();
+    if (current_tcb->stack[i] != STACK_GUARD_MAGIC) {
+      task_overflow_hander();
     }
   }
 }

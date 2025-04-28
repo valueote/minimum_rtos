@@ -269,3 +269,21 @@ void msgque_basic_test() {
   task_create(msgque_basic_reciever, NULL, 256, 1, NULL);
   task_create(msgque_basic_sender, NULL, 256, 1, NULL);
 }
+
+// Test for stack checker
+
+void overflow_func(void *arg) {
+  (void)arg;
+  while (1) {
+    uint32_t buf[32];
+    for (int i = 0; i < 32; i++) {
+      buf[i] = i;
+    }
+  }
+}
+
+void stack_checker_test() {
+  led_basic_test();
+  task_create(overflow_func, 0, 32, 1, NULL);
+  return;
+}

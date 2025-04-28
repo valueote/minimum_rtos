@@ -136,7 +136,7 @@ int main(void) {
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   scheduler_init();
-  msgque_basic_test();
+  stack_checker_test();
   // task_create(hello, NULL, 512, 3, &hello_handler);
   // task_create(hi, NULL, 512, 2, &hi_handler);
   scheduler_start();

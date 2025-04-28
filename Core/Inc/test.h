@@ -14,5 +14,6 @@ void mutex_basic_test(void);
 void mutex_priority_inheritance_test(void);
 void mutex_produce(void);
 
+void stack_checker_test(void);
 void msgque_basic_test(void);
 #endif //__TEST_H
