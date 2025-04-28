@@ -41,8 +41,10 @@ uint32_t msgque_send(msgque_handler target_que, const void *const msg,
                      uint32_t block_ticks) {
   uint32_t timer_set = FALSE;
   block_timer_t block_timer;
+  uint32_t saved;
+
   for (;;) {
-    uint32_t saved = critical_enter();
+    saved = critical_enter();
     if (target_que->msg_count < target_que->length) {
       copy_msg_to_queue(target_que, msg);
       target_que->msg_count++;
@@ -78,8 +80,6 @@ uint32_t msgque_send(msgque_handler target_que, const void *const msg,
 
     critical_exit(saved);
   }
-
-  uint32_t saved = critical_enter();
   critical_exit(saved);
 }
 
@@ -104,9 +104,10 @@ uint32_t msgque_recieve(msgque_handler source_que, void *msg_buf,
                         uint32_t block_ticks) {
   uint32_t timer_set = FALSE;
   block_timer_t block_timer;
+  uint32_t saved;
 
   for (;;) {
-    uint32_t saved = critical_enter();
+    saved = critical_enter();
     if (source_que->msg_count > 0) {
       copy_msg_from_queue(source_que, msg_buf);
       source_que->msg_count--;
@@ -143,7 +144,22 @@ uint32_t msgque_recieve(msgque_handler source_que, void *msg_buf,
     critical_exit(saved);
   }
 
+  critical_exit(saved);
+}
+
+uint32_t msgque_recieve_isr(msgque_handler source_que, void *msg_buf) {
   uint32_t saved = critical_enter();
+  if (source_que->msg_count > 0) {
+    copy_msg_from_queue(source_que, msg_buf);
+    source_que->msg_count--;
+
+    if (!LIST_IS_EMPTY(&(source_que->send_waiting_list))) {
+      task_resume_from_block(&(source_que->send_waiting_list));
+    }
+
+    critical_exit(saved);
+    return TRUE;
+  }
   critical_exit(saved);
 }
 
