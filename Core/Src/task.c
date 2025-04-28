@@ -12,39 +12,59 @@ __attribute__((used)) tcb_t *volatile current_tcb = NULL;
 // Task Handler for the idle task
 static task_handler_t idle_task_handler = NULL;
 
-// ready lists
+// Task Ready lists
 static list_t ready_lists[configMaxPriority];
-// ready bits for task table
+
+// Ready bits for task table
 uint32_t ready_bits = 0;
-// zombie list
+
+// Zombie task list
 static list_t zombie_list;
-// suspended_list
+
+// Suspended task list
 static list_t suspended_list;
-// delay lists
+
+// Delay lists
 static list_t actual_delay_list;
 static list_t actual_delay_overflow_list;
 static list_t *delay_list = NULL;
 static list_t *delay_overflow_list = NULL;
-// tick count
+
+// Current tick count
 static uint32_t current_tick_count = 0;
+
 // scheduelr suspended or not
 static uint32_t scheduler_is_suspending = 0;
 static uint32_t scheduler_is_running = FALSE;
+
 // Static functions
 
-// task port
+// Init the stack of the new task
 static uint32_t *stack_init(uint32_t *stack_top, task_func_t func,
                             void *parameters);
-static void free_tcb(tcb_t *tcb);
-// Schduler part
-static void ready_lists_init(void);
-static void delay_list_init(void);
-static uint32_t add_new_tcb_to_ready_lists(tcb_t *tcb);
-static inline uint8_t get_highest_priority(void);
-static void increment_tick(void);
-static void check_stack_overflow();
 
-// Used for context switch, from freertos
+// Free the tcb of the deleted task
+static void free_tcb(tcb_t *tcb);
+
+// Init the ready list
+static void ready_lists_init(void);
+
+// Init the delay list
+static void delay_list_init(void);
+
+// Add the new tcb to the corresponding ready list
+static uint32_t add_new_tcb_to_ready_lists(tcb_t *tcb);
+
+// Get the current highest priority
+static inline uint8_t get_highest_priority(void);
+
+// Increment the Current Tick count
+static void increment_tick(void);
+
+// Check stack overflow
+static void check_stack_overflow(void);
+
+// Used for context switch, modified from freertos code
 __attribute__((naked)) void xPortPendSVHandler(void) {
   __asm volatile("   mrs r0, psp                         \n"
                  "   isb                                 \n"
