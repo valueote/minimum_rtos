@@ -38,7 +38,7 @@ uint32_t semaphore_lock(sem_handler sem, uint32_t block_ticks) {
       if (sem->count == 0) {
         list_insert_node(&(sem->block_list), &(current_tcb->event_node));
         add_tcb_to_delay_list(current_tcb, block_ticks);
-        task_switch();
+        task_yield();
       }
     } else {
       critical_exit(saved);
@@ -49,7 +49,6 @@ uint32_t semaphore_lock(sem_handler sem, uint32_t block_ticks) {
 }
 
 void semaphore_release(sem_handler sem) {
-  uint32_t yield = FALSE;
   uint32_t saved = critical_enter();
 
   sem->count++;
@@ -57,12 +56,10 @@ void semaphore_release(sem_handler sem) {
     list_node_t *block_node = list_remove_next_node(&(sem->block_list));
     tcb_t *block_tcb = block_node->owner;
     list_remove_node(&(block_tcb->state_node));
-    yield = add_tcb_to_ready_lists(block_tcb);
+    if (add_tcb_to_ready_lists(block_tcb)) {
+      task_yield();
+    }
   }
 
   critical_exit(saved);
-
-  if (yield) {
-    task_switch();
-  }
 }

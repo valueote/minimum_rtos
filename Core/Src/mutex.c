@@ -42,7 +42,7 @@ uint32_t mutex_lock(mutex_handler mutex, uint32_t block_ticks) {
         list_insert_node(&(mutex->block_list), &(current_tcb->event_node));
         task_priority_inherit(mutex);
         add_tcb_to_delay_list(current_tcb, block_ticks);
-        task_switch();
+        task_yield();
       }
     } else {
       task_priority_disinherit_timeout(mutex);
@@ -64,12 +64,10 @@ void mutex_release(mutex_handler mutex) {
     list_node_t *block_node = list_remove_next_node(&(mutex->block_list));
     tcb_t *block_tcb = block_node->owner;
     list_remove_node(&(block_tcb->state_node));
-    yield = add_tcb_to_ready_lists(block_tcb);
+    if (add_tcb_to_ready_lists(block_tcb)) {
+      task_yield();
+    }
   }
 
   critical_exit(saved);
-
-  if (yield) {
-    task_switch();
-  }
 }

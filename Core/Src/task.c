@@ -197,7 +197,7 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
   // add the new tcb to the ready list
   yield = add_new_tcb_to_ready_lists(new_tcb);
   if (yield) {
-    task_switch();
+    task_yield();
   }
 }
 
@@ -229,7 +229,7 @@ void task_delete(task_handler_t *handler) {
   }
 
   if (yield) {
-    task_switch();
+    task_yield();
   }
 }
 
@@ -256,7 +256,7 @@ void task_delay(uint32_t ticks) {
   uint32_t saved = critical_enter();
   add_tcb_to_delay_list(current_tcb, ticks);
   critical_exit(saved);
-  task_switch();
+  task_yield();
 }
 
 // Suspend the task, if the handler is NULL, suspend the current running task
@@ -281,7 +281,7 @@ void task_suspend(task_handler_t *handler) {
   critical_exit(saved);
   // we suspend current running tcb, so switch to another task
   if (yield)
-    task_switch();
+    task_yield();
 }
 
 void task_resume(task_handler_t *handler) {
@@ -296,7 +296,7 @@ void task_resume(task_handler_t *handler) {
 
     critical_exit(saved);
     if (yield) {
-      task_switch();
+      task_yield();
     }
   }
 }
@@ -510,7 +510,7 @@ static void increment_tick(void) {
     }
   }
 
-  task_switch();
+  task_yield();
 }
 
 uint32_t get_current_tick(void) { return current_tick_count; }

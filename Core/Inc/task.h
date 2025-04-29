@@ -11,7 +11,7 @@
 #define START_ADDRESS_MASK (0xfffffffeUL)
 #define vPortSVCHandler SVC_Handler
 #define xPortPendSVHandler PendSV_Handler
-#define task_switch() *((volatile uint32_t *)0xe000ed04) = 1UL << 28UL
+#define task_yield() *((volatile uint32_t *)0xe000ed04) = 1UL << 28UL
 #define STACK_GUARD_SIZE (uint32_t)4
 #define STACK_GUARD_MAGIC (uint32_t)0xdeadbeee
 

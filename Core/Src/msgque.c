@@ -41,7 +41,6 @@ uint32_t msgque_send(msgque_handler target_que, const void *const msg,
                      uint32_t block_ticks) {
   uint32_t timer_set = FALSE;
   block_timer_t block_timer;
-
   for (;;) {
     uint32_t saved = critical_enter();
     if (target_que->msg_count < target_que->length) {
@@ -70,7 +69,7 @@ uint32_t msgque_send(msgque_handler target_que, const void *const msg,
         list_insert_node(&(target_que->send_waiting_list),
                          &(current_tcb->event_node));
         add_tcb_to_delay_list(current_tcb, block_ticks);
-        task_switch();
+        task_yield();
       }
     } else {
       critical_exit(saved);
@@ -131,7 +130,7 @@ uint32_t msgque_recieve(msgque_handler source_que, void *msg_buf,
         list_insert_node(&(source_que->read_waiting_list),
                          &(current_tcb->event_node));
         add_tcb_to_delay_list(current_tcb, block_ticks);
-        task_switch();
+        task_yield();
       }
     } else {
       critical_exit(saved);
