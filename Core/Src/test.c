@@ -308,6 +308,7 @@ void proc_ps() {
       }
     }
   }
+  printf_(" \r\n");
 }
 
 void ps_task() {
