@@ -1,5 +1,6 @@
 #include "list.h"
 #include "config.h"
+#include "printf.h"
 
 void list_node_init(list_node_t *const new_node) {
   new_node->val = 0;
@@ -86,11 +87,11 @@ uint32_t list_contain(list_t *list, list_node_t *node) {
 }
 
 void list_debug_print_list(list_t *const list) {
-  printf("List:\r\n");
+  printf_("List:\r\n");
   list_node_t *node = list->head.next;
   while (node != &(list->head)) {
-    printf("Node @%p: val=%lu, next=%p\r\n", (void *)node, node->val,
-           (void *)node->next);
+    printf_("Node @%p: val=%lu, next=%p\r\n", (void *)node, node->val,
+            (void *)node->next);
     node = node->next;
   }
 }

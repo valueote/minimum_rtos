@@ -43,7 +43,7 @@ uint32_t resource = 0;
 void sem_consumer_first() {
   while (1) {
     printf_("consumer: try to get semaphore\r\n");
-    if (semaphore_lock(sem, 2000)) {
+    if (semaphore_acquire(sem, 2000)) {
       printf_("consumer: get semaphore\r\n");
       if (resource > 0) {
         resource--;
@@ -62,7 +62,7 @@ void sem_consumer_first() {
 void sem_consumer_second() {
   while (1) {
     printf_("consumer 2: try to get semaphore\r\n");
-    if (semaphore_lock(sem, 2000)) {
+    if (semaphore_acquire(sem, 2000)) {
       printf_("consumer 2: get semaphore\r\n");
       if (resource > 0) {
         resource--;
@@ -81,7 +81,7 @@ void sem_consumer_second() {
 void sem_producer() {
   while (1) {
     printf_("producer: try to get semaphore\r\n");
-    if (semaphore_lock(sem, 2000)) {
+    if (semaphore_acquire(sem, 2000)) {
       printf_("producer: get semaphore\r\n");
       resource++;
       printf_("producer: produce resoure\r\n");
@@ -107,7 +107,7 @@ static uint32_t mutex_resource = 0;
 void mutex_consumer_a(void *mutex) {
   int loop_val = 0;
   while (1) {
-    if (mutex_lock(mutex, 1000)) {
+    if (mutex_acquire(mutex, 1000)) {
       printf_("consumer a get mutex\r\n");
       if (mutex_resource > 0) {
         mutex_resource--;
@@ -125,7 +125,7 @@ void mutex_consumer_a(void *mutex) {
 void mutex_consumer_b(void *mutex) {
   int loop_val = 0;
   while (1) {
-    if (mutex_lock(mutex, 1000)) {
+    if (mutex_acquire(mutex, 1000)) {
       printf_("consumer b get mutex\r\n");
       if (mutex_resource > 0) {
         mutex_resource--;
@@ -143,7 +143,7 @@ void mutex_consumer_b(void *mutex) {
 void mutex_consumer_c(void *mutex) {
   int loop_val = 0;
   while (1) {
-    if (mutex_lock(mutex, 1000)) {
+    if (mutex_acquire(mutex, 1000)) {
       printf_("consumer c get mutex\r\n");
       if (mutex_resource > 0) {
         mutex_resource--;
@@ -161,7 +161,7 @@ void mutex_producer(void *mutex) {
   while (1) {
     mutex_release(mutex);
     uint32_t loop_val = 0;
-    if (mutex_lock(mutex, 1000)) {
+    if (mutex_acquire(mutex, 1000)) {
       printf_("producer get mutex\r\n");
       mutex_resource++;
       CONSUME_TIME(loop_val);
@@ -187,7 +187,7 @@ static mutex_handler test_mutex;
 
 void Low_Task(void *arg) {
   (void)arg;
-  mutex_lock(test_mutex, MAX_DELAY);
+  mutex_acquire(test_mutex, MAX_DELAY);
   printf_("Low_Task: Holding mutex...\r\n");
   for (int i = 0; i < 5000000; i++) {
     if (i % 100000 == 0) {
@@ -219,7 +219,7 @@ void High_Task(void *arg) {
   task_delay(50);
 
   printf_("High_Task: Trying to get mutex...\r\n");
-  mutex_lock(test_mutex, MAX_DELAY);
+  mutex_acquire(test_mutex, MAX_DELAY);
   printf_("High_Task: Acquired mutex!\r\n");
   mutex_release(test_mutex);
   while (1) {

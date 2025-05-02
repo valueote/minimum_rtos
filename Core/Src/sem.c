@@ -98,3 +98,9 @@ uint32_t semaphore_release_isr(sem_handler sem) {
 
   return yield;
 }
+
+void semaphore_clear(sem_handler sem) {
+  uint32_t saved = critical_enter();
+  sem->count = 0;
+  critical_exit(saved);
+}

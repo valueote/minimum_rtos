@@ -15,7 +15,7 @@ void mutex_delete(mutex_handler mutex) {
   return;
 }
 
-uint32_t mutex_lock(mutex_handler mutex, uint32_t block_ticks) {
+uint32_t mutex_acquire(mutex_handler mutex, uint32_t block_ticks) {
   uint32_t timer_set = FALSE;
   block_timer_t block_timer;
   for (;;) {

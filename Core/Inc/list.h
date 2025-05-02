@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 struct list;
 typedef struct list_node {
   uint32_t val;

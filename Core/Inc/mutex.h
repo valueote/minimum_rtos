@@ -16,7 +16,7 @@ typedef mutex_t *mutex_handler;
 
 mutex_handler mutex_create(void);
 void mutex_delete(mutex_handler mutex);
-uint32_t mutex_lock(mutex_handler mutex, uint32_t block_ticks);
+uint32_t mutex_acquire(mutex_handler mutex, uint32_t block_ticks);
 void mutex_release(mutex_handler mutex);
 
 #endif /*__MUTEX_H*/

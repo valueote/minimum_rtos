@@ -16,7 +16,6 @@ sem_handler semaphore_create(const uint32_t count);
 void semaphore_delete(sem_handler sem);
 uint32_t semaphore_acquire(sem_handler sem, uint32_t block_ticks);
 void semaphore_release(sem_handler sem);
-
 uint32_t semaphore_acquire_isr(sem_handler sem);
 uint32_t semaphore_release_isr(sem_handler sem);
 void semaphore_clear(sem_handler sem);

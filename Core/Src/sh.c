@@ -4,6 +4,7 @@
 #include "sem.h"
 #include "stm32f1xx.h"
 #include "stm32f1xx_hal_uart.h"
+#include "task.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -12,8 +13,26 @@
 
 extern UART_HandleTypeDef huart1;
 
+int cmd_ps(int argc, char **argv) {
+  (void)argc;
+  (void)argv;
+  printf_("Current ready tasks:\r\n");
+  for (size_t i = 0; i < configMaxPriority; i++) {
+    list_t *list = get_ready_list(i);
+    if (!LIST_IS_EMPTY(list)) {
+      list_node_t *node = list->head.next;
+      while (node != &(list->head)) {
+        tcb_t *tcb = (tcb_t *)node->owner;
+        printf_("Task name:%s  Priority:%u\r\n", tcb->name, i);
+        node = node->next;
+      }
+    }
+  }
+  printf_(" \r\n");
+  return 0;
+}
+
 int cmd_help(int argc, char **argv);
-int cmd_ps(int argc, char **argv);
 int cmd_mem(int argc, char **argv);
 
 const shcmd_t cmd_table[] = {
@@ -49,15 +68,18 @@ uint8_t sh_buf[configSHELL_MAX_CMD_LEN];
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
   if (huart == &huart1) {
+    semaphore_release_isr(sh_sem);
   }
-
-  return;
 }
 
-void shell_task(void *param) {
+void shell_task(void *arg) {
+  (void)arg;
   sh_sem = semaphore_create(3);
+  semaphore_clear(sh_sem);
   while (1) {
     HAL_UART_Receive_DMA(&huart1, sh_buf, configSHELL_MAX_CMD_LEN);
-    shell_execute((char *)sh_buf); // 执行命令
+    if (semaphore_acquire(sh_sem, 500)) {
+      shell_execute((char *)sh_buf);
+    }
   }
 }
