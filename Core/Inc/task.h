@@ -1,6 +1,7 @@
 #ifndef __TASK_H
 #define __TASK_H
 
+#include "config.h"
 #include "list.h"
 #include "mutex.h"
 #include "stm32f1xx.h"
@@ -24,6 +25,7 @@ typedef struct tcb {
   uint32_t *stack;
   list_node_t state_node;
   list_node_t event_node;
+  char name[configMAX_TASK_NAME_LEN];
 } tcb_t;
 
 typedef struct block_timer {
@@ -34,7 +36,8 @@ typedef void (*task_func_t)(void *);
 typedef tcb_t *task_handler_t;
 
 void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
-                 uint32_t priority, task_handler_t *handler);
+                 uint32_t priority, const char *const name,
+                 task_handler_t *handler);
 void task_delete(task_handler_t *handler);
 void task_delay(uint32_t ticks);
 void task_suspend(task_handler_t *handler);

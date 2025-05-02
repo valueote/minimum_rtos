@@ -30,7 +30,9 @@ void led_close() {
   }
 }
 
-void led_basic_test() { task_create(led_toggle, NULL, 128, 5, NULL); }
+void led_basic_test() {
+  task_create(led_toggle, NULL, 128, 5, "basic_led_test", NULL);
+}
 
 // SEMAPHORE TEST
 sem_handler sem = NULL;
@@ -171,10 +173,10 @@ void mutex_producer(void *mutex) {
 void mutex_basic_test() {
   mutex_handler mutex = mutex_create();
   led_basic_test();
-  task_create(mutex_consumer_a, mutex, 256, 1, NULL);
-  task_create(mutex_consumer_b, mutex, 128, 1, NULL);
-  task_create(mutex_consumer_c, mutex, 128, 1, NULL);
-  task_create(mutex_producer, mutex, 256, 1, NULL);
+  task_create(mutex_consumer_a, mutex, 256, 1, "mutex_consumer_a", NULL);
+  task_create(mutex_consumer_b, mutex, 128, 1, "mutex_consumer_b", NULL);
+  task_create(mutex_consumer_c, mutex, 128, 1, "mutex_consumer_c", NULL);
+  task_create(mutex_producer, mutex, 256, 1, "mutex_producer", NULL);
 }
 
 // MUTEX TEST for pirority inheritance test
@@ -227,9 +229,9 @@ void High_Task(void *arg) {
 void mutex_priority_inheritance_test(void) {
   test_mutex = mutex_create();
   led_basic_test();
-  task_create(High_Task, NULL, 256, 3, NULL);
-  task_create(Med_Task, NULL, 256, 2, NULL);
-  task_create(Low_Task, NULL, 256, 1, NULL);
+  task_create(High_Task, NULL, 256, 3, "mutex_high_task", NULL);
+  task_create(Med_Task, NULL, 256, 2, "mutex_mid_task", NULL);
+  task_create(Low_Task, NULL, 256, 1, "mutex_low_task", NULL);
 }
 
 /*Msgque test*/
@@ -266,8 +268,9 @@ void msgque_basic_reciever(void *arg) {
 void msgque_basic_test() {
   led_basic_test();
   basic_test_que = msgque_create(10, sizeof(uint32_t));
-  task_create(msgque_basic_reciever, NULL, 256, 1, NULL);
-  task_create(msgque_basic_sender, NULL, 256, 1, NULL);
+  task_create(msgque_basic_reciever, NULL, 256, 1, "msgque_basic_reciever",
+              NULL);
+  task_create(msgque_basic_sender, NULL, 256, 1, "msgque_basic_sender", NULL);
 }
 
 // Test for stack checker
@@ -284,6 +287,6 @@ void overflow_func(void *arg) {
 
 void stack_checker_test() {
   led_basic_test();
-  task_create(overflow_func, 0, 32, 1, NULL);
+  task_create(overflow_func, 0, 32, 1, "overflow_func", NULL);
   return;
 }

@@ -83,7 +83,6 @@ void hello() {
     printf("hello, %lu\r\n", count);
     task_delay(1000);
     if (count == 100) {
-      task_create(high, NULL, 128, 7, &higher);
     }
   }
 }

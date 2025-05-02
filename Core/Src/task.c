@@ -160,43 +160,56 @@ void SysTick_Handler(void) {
 
 // Create a new task
 void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
-                 uint32_t priority, task_handler_t *handler) {
+                 uint32_t priority, const char *const name,
+                 task_handler_t *handler) {
   tcb_t *new_tcb;
   uint32_t *stack_top;
   uint32_t yield;
-  // allocate memory for the tcb and stack
+
+  // Allocate memory for the tcb
   new_tcb = (tcb_t *)halloc(sizeof(tcb_t));
 
+  // Allocate memory for the task stack
   uint32_t stack_size = stack_depth + STACK_GUARD_SIZE;
   new_tcb->stack = (uint32_t *)halloc((size_t)stack_size * sizeof(uint32_t));
 
+  // Set the guard bytes to detect stack overflow
   for (uint32_t i = 0; i < STACK_GUARD_SIZE; i++) {
     new_tcb->stack[i] = STACK_GUARD_MAGIC;
   }
 
+  // Set stack top and align
   uint32_t *real_stack = new_tcb->stack + STACK_GUARD_SIZE;
   stack_top = real_stack + stack_depth - 1;
-  // get the stack top addresss and align
-  // stack_top = new_tcb->stack + (stack_depth - (uint32_t)1);
   stack_top = (uint32_t *)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
 
   // initialize the stack
   new_tcb->stack_top = stack_init(stack_top, func, func_parameters);
   new_tcb->priority = priority;
   new_tcb->base_priority = priority;
-  // put the tcb into ready_lists
+
+  // Initialize the state node and event node
   list_node_init(&(new_tcb->state_node));
   list_node_init(&(new_tcb->event_node));
   new_tcb->state_node.owner = new_tcb;
   new_tcb->event_node.val = configMaxPriority - priority;
   new_tcb->event_node.owner = new_tcb;
+
+  // Set the name of the task
+  for (size_t i = 0; i < configMAX_TASK_NAME_LEN; i++) {
+    new_tcb->name[i] = name[i];
+    if (name[i] == (char)0x00) {
+      break;
+    }
+  }
+
   // set the task handler
   if (handler != NULL) {
     *handler = (task_handler_t)new_tcb;
   }
+
   // add the new tcb to the ready list
-  yield = add_new_tcb_to_ready_lists(new_tcb);
-  if (yield) {
+  if ((yield = add_new_tcb_to_ready_lists(new_tcb))) {
     task_yield();
   }
 }
@@ -390,7 +403,7 @@ void scheduler_init(void) {
   delay_list_init();
   list_init(&suspended_list);
   list_init(&zombie_list);
-  task_create(idle_task, NULL, 128, 0, &idle_task_handler);
+  task_create(idle_task, NULL, 128, 0, "idle_task", &idle_task_handler);
 }
 
 // Start

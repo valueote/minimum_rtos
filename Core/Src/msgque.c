@@ -155,8 +155,8 @@ uint32_t msgque_recieve_isr(msgque_handler source_que, void *msg_buf) {
     critical_exit(saved);
     return TRUE;
   }
-
   critical_exit(saved);
+  return FALSE;
 }
 
 static void copy_msg_to_queue(msgque_t *target_que, const void *msg) {
