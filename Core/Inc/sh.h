@@ -8,9 +8,6 @@ typedef struct shcmd {
   const char *help;
 } shcmd_t;
 
-typedef struct sh_buf {
-  char buf[16];
-  uint32_t index;
-} sh_buf_t;
+void shell_task(void *arg);
 
 #endif /* __SH_H*/

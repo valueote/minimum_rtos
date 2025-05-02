@@ -170,16 +170,16 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
   new_tcb = (tcb_t *)halloc(sizeof(tcb_t));
 
   // Allocate memory for the task stack
-  uint32_t stack_size = stack_depth + STACK_GUARD_SIZE;
+  uint32_t stack_size = stack_depth + configSTACK_GUARD_SIZE;
   new_tcb->stack = (uint32_t *)halloc((size_t)stack_size * sizeof(uint32_t));
 
   // Set the guard bytes to detect stack overflow
-  for (uint32_t i = 0; i < STACK_GUARD_SIZE; i++) {
-    new_tcb->stack[i] = STACK_GUARD_MAGIC;
+  for (uint32_t i = 0; i < configSTACK_GUARD_SIZE; i++) {
+    new_tcb->stack[i] = configSTACK_GUARD_MAGIC;
   }
 
   // Set stack top and align
-  uint32_t *real_stack = new_tcb->stack + STACK_GUARD_SIZE;
+  uint32_t *real_stack = new_tcb->stack + configSTACK_GUARD_SIZE;
   stack_top = real_stack + stack_depth - 1;
   stack_top = (uint32_t *)((uint32_t)stack_top & ~(uint32_t)(alignment_byte));
 
@@ -623,8 +623,8 @@ static void task_overflow_hander() {
 }
 
 static void check_stack_overflow() {
-  for (uint32_t i = 0; i < STACK_GUARD_SIZE; i++) {
-    if (current_tcb->stack[i] != STACK_GUARD_MAGIC) {
+  for (uint32_t i = 0; i < configSTACK_GUARD_SIZE; i++) {
+    if (current_tcb->stack[i] != configSTACK_GUARD_MAGIC) {
       task_overflow_hander();
     }
   }

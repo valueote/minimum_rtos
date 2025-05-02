@@ -1,4 +1,5 @@
 #include "sh.h"
+#include "config.h"
 #include "msgque.h"
 #include "printf.h"
 #include "sem.h"
@@ -32,12 +33,20 @@ int cmd_ps(int argc, char **argv) {
   return 0;
 }
 
-int cmd_help(int argc, char **argv);
-int cmd_mem(int argc, char **argv);
+int cmd_help(int argc, char **argv) {
+  (void)argc;
+  (void)argv;
+  return 0;
+}
+int cmd_mem(int argc, char **argv) {
+  (void)argc;
+  (void)argv;
+  return 0;
+}
 
 const shcmd_t cmd_table[] = {
     {"help", cmd_help, "Show all commands"},
-    {"task", cmd_ps, "Task management"},
+    {"ps", cmd_ps, "Task management"},
     {"mem", cmd_mem, "Memory usage"},
     {NULL, NULL, NULL} // 结束标记
 };
@@ -52,7 +61,6 @@ void shell_execute(char *buf) {
     token = strtok(NULL, " ");
   }
 
-  // 查找命令
   for (int i = 0; cmd_table[i].name != NULL; i++) {
     if (strcmp(argv[0], cmd_table[i].name) == 0) {
       cmd_table[i].handler(argc, argv);
@@ -68,7 +76,8 @@ uint8_t sh_buf[configSHELL_MAX_CMD_LEN];
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
   if (huart == &huart1) {
-    semaphore_release_isr(sh_sem);
+    task_yield_isr(semaphore_release_isr(sh_sem));
+    HAL_UART_Receive_DMA(&huart1, sh_buf, configSHELL_MAX_CMD_LEN);
   }
 }
 
@@ -76,9 +85,11 @@ void shell_task(void *arg) {
   (void)arg;
   sh_sem = semaphore_create(3);
   semaphore_clear(sh_sem);
+  HAL_UART_Receive_DMA(&huart1, sh_buf, 2);
+
   while (1) {
-    HAL_UART_Receive_DMA(&huart1, sh_buf, configSHELL_MAX_CMD_LEN);
-    if (semaphore_acquire(sh_sem, 500)) {
+    if (semaphore_acquire(sh_sem, MAX_DELAY)) {
+      printf_("receive: %s\r\n", sh_buf);
       shell_execute((char *)sh_buf);
     }
   }
