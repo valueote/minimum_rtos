@@ -2,10 +2,12 @@
 #include "config.h"
 #include "list.h"
 #include "task.h"
+#include <stdint.h>
 
 semaphore_t *semaphore_create(const uint32_t count) {
   semaphore_t *new_sem = (semaphore_t *)halloc(sizeof(semaphore_t));
   new_sem->count = count;
+  new_sem->limit = count;
   list_init(&(new_sem->block_list));
   return new_sem;
 }
@@ -15,7 +17,7 @@ void semaphore_delete(sem_handler sem) {
   return;
 }
 
-uint32_t semaphore_lock(sem_handler sem, uint32_t block_ticks) {
+uint32_t semaphore_acquire(sem_handler sem, uint32_t block_ticks) {
   uint32_t timer_set = FALSE;
   block_timer_t block_timer;
   for (;;) {
@@ -48,8 +50,22 @@ uint32_t semaphore_lock(sem_handler sem, uint32_t block_ticks) {
   }
 }
 
+uint32_t semaphore_acquire_isr(sem_handler sem) {
+  uint32_t saved = critical_enter();
+  if (sem->count > 0) {
+    sem->count--;
+    critical_exit(saved);
+    return TRUE;
+  }
+  critical_exit(saved);
+  return FALSE;
+}
+
 void semaphore_release(sem_handler sem) {
   uint32_t saved = critical_enter();
+  if (sem->count == sem->limit) {
+    return;
+  }
 
   sem->count++;
   if (!LIST_IS_EMPTY(&(sem->block_list))) {
@@ -62,4 +78,23 @@ void semaphore_release(sem_handler sem) {
   }
 
   critical_exit(saved);
+}
+
+uint32_t semaphore_release_isr(sem_handler sem) {
+  uint32_t saved = critical_enter();
+  uint32_t yield = FALSE;
+  if (sem->count == sem->limit) {
+    return yield;
+  }
+  sem->count++;
+  if (!LIST_IS_EMPTY(&(sem->block_list))) {
+    list_node_t *block_node = list_remove_next_node(&(sem->block_list));
+    tcb_t *block_tcb = block_node->owner;
+    list_remove_node(&(block_tcb->state_node));
+    yield = add_tcb_to_ready_lists(block_tcb);
+  }
+
+  critical_exit(saved);
+
+  return yield;
 }
