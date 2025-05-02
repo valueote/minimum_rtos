@@ -1,4 +1,6 @@
 #include "test.h"
+#include "config.h"
+#include "list.h"
 #include "msgque.h"
 #include "mutex.h"
 #include "printf.h"
@@ -12,7 +14,7 @@
 void led_toggle() {
   while (1) {
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
-    task_delay(5000);
+    task_delay(10000);
   }
 }
 
@@ -273,7 +275,7 @@ void msgque_basic_test() {
   task_create(msgque_basic_sender, NULL, 256, 1, "msgque_basic_sender", NULL);
 }
 
-// Test for stack checker
+/* Stack checker test */
 
 void overflow_func(void *arg) {
   (void)arg;
@@ -288,5 +290,35 @@ void overflow_func(void *arg) {
 void stack_checker_test() {
   led_basic_test();
   task_create(overflow_func, 0, 32, 1, "overflow_func", NULL);
+  return;
+}
+
+/* Task name test */
+
+void proc_ps() {
+  printf_("Current ready tasks:\r\n");
+  for (size_t i = 0; i < configMaxPriority; i++) {
+    list_t *list = get_ready_list(i);
+    if (!LIST_IS_EMPTY(list)) {
+      list_node_t *node = list->head.next;
+      while (node != &(list->head)) {
+        tcb_t *tcb = (tcb_t *)node->owner;
+        printf_("Task name:%s  Priority:%u\r\n", tcb->name, i);
+        node = node->next;
+      }
+    }
+  }
+}
+
+void ps_task() {
+  while (1) {
+    proc_ps();
+    task_delay(5000);
+  }
+}
+
+void ps_test() {
+  led_basic_test();
+  task_create(ps_task, NULL, 256, 2, "ps", NULL);
   return;
 }

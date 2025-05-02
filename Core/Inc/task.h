@@ -62,4 +62,5 @@ void critical_exit(uint32_t saved);
 uint32_t block_timer_set(block_timer_t *timer);
 uint32_t block_timer_check(block_timer_t *timer, uint32_t *block_ticks);
 
+list_t *get_ready_list(uint32_t priority);
 #endif

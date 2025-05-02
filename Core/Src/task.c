@@ -629,3 +629,11 @@ static void check_stack_overflow() {
     }
   }
 }
+
+list_t *get_ready_list(uint32_t priority) {
+  if (priority > configMaxPriority) {
+    return NULL;
+  }
+
+  return &ready_lists[priority];
+}
