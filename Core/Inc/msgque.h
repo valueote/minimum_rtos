@@ -23,4 +23,7 @@ uint32_t msgque_send(msgque_handler target_que, const void *const msg,
                      uint32_t block_ticks);
 uint32_t msgque_recieve(msgque_handler source_que, void *msg_buf,
                         uint32_t block_ticks);
+
+uint32_t msgque_send_isr(msgque_handler target_que, const void *const msg);
+uint32_t msgque_recieve_isr(msgque_handler source_que, void *msg_buf);
 #endif /*__MSGQUE_H*/

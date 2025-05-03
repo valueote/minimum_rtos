@@ -13,6 +13,8 @@
 #define configMAX_TASK_NAME_LEN 30
 #define configSTACK_GUARD_SIZE (uint32_t)4
 #define configSTACK_GUARD_MAGIC (uint32_t)0xdeadbeee
+#define configSHELL_MAX_ARGS 5
+#define configSHELL_MAX_CMD_LEN 16
 #define configSysTickClockHz ((unsigned long)7200000)
 #define configSysTickClockRateHz ((uint32_t)1000)
 

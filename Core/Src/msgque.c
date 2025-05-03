@@ -81,19 +81,20 @@ uint32_t msgque_send(msgque_handler target_que, const void *const msg,
 
 uint32_t msgque_send_isr(msgque_handler target_que, const void *const msg) {
   uint32_t saved = critical_enter();
+  uint32_t yield = FALSE;
   if (target_que->msg_count < target_que->length) {
     copy_msg_to_queue(target_que, msg);
     target_que->msg_count++;
 
     if (!LIST_IS_EMPTY(&(target_que->read_waiting_list))) {
-      task_resume_from_block(&(target_que->read_waiting_list));
+      yield = task_resume_from_block(&(target_que->read_waiting_list));
     }
 
     critical_exit(saved);
-    return TRUE;
+    return yield;
   }
   critical_exit(saved);
-  return FALSE;
+  return yield;
 }
 
 uint32_t msgque_recieve(msgque_handler source_que, void *msg_buf,
