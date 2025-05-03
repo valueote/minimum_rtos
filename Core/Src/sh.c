@@ -1,5 +1,6 @@
 #include "sh.h"
 #include "config.h"
+#include "list.h"
 #include "msgque.h"
 #include "printf.h"
 #include "sem.h"
@@ -14,9 +15,8 @@
 
 extern UART_HandleTypeDef huart1;
 
-int cmd_ps(int argc, char **argv) {
-  (void)argc;
-  (void)argv;
+static void ps_ready(void) {
+  uint32_t found = 0;
   printf_("Current ready tasks:\r\n");
   for (size_t i = 0; i < configMaxPriority; i++) {
     list_t *list = get_ready_list(i);
@@ -24,13 +24,31 @@ int cmd_ps(int argc, char **argv) {
       list_node_t *node = list->head.next;
       while (node != &(list->head)) {
         tcb_t *tcb = (tcb_t *)node->owner;
-        printf_("Task name:%s  Priority:%u\r\n", tcb->name, i);
+        printf_("[ready] Task name:%s  Priority:%u\r\n", tcb->name, i);
         node = node->next;
+        found++;
       }
     }
   }
-  printf_(" \r\n");
+  printf_("Total: %u\r\n", found);
+  return;
+}
+
+static void ps_suspend(void) {
+  uint32_t found = 0;
+  printf_("Current suspend tasks:\r\n");
+  if (!LIST_IS_EMPTY(suspended_list)) {
+  }
+  printf_("Total: %u \r\n", found);
+
+  return;
+}
+
+int cmd_ps(int argc, char **argv) {
+  (void)argc;
+  (void)argv;
   return 0;
+  ps_ready();
 }
 
 int cmd_help(int argc, char **argv) {
@@ -85,6 +103,7 @@ void shell_task(void *arg) {
   (void)arg;
   sh_sem = semaphore_create(3);
   semaphore_clear(sh_sem);
+  memset(sh_sem, 0, configSHELL_MAX_CMD_LEN);
   HAL_UART_Receive_DMA(&huart1, sh_buf, 2);
 
   while (1) {
