@@ -637,3 +637,5 @@ list_t *get_ready_list(uint32_t priority) {
 
   return &ready_lists[priority];
 }
+
+list_t *get_suspended_list(void) { return &suspended_list; }

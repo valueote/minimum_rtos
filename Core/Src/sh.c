@@ -37,6 +37,7 @@ static void ps_ready(void) {
 static void ps_suspend(void) {
   uint32_t found = 0;
   printf_("Current suspend tasks:\r\n");
+  list_t *suspended_list = get_suspended_list();
   if (!LIST_IS_EMPTY(suspended_list)) {
   }
   printf_("Total: %u \r\n", found);
@@ -47,8 +48,8 @@ static void ps_suspend(void) {
 int cmd_ps(int argc, char **argv) {
   (void)argc;
   (void)argv;
-  return 0;
   ps_ready();
+  return 0;
 }
 
 int cmd_help(int argc, char **argv) {
@@ -90,12 +91,16 @@ void shell_execute(char *buf) {
 }
 
 sem_handler sh_sem;
-uint8_t sh_buf[configSHELL_MAX_CMD_LEN];
+uint8_t sh_cmd_buf[configSHELL_MAX_CMD_LEN];
+extern DMA_HandleTypeDef hdma_usart1_rx;
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart == &huart1) {
+    sh_cmd_buf[Size] = '\0';
     task_yield_isr(semaphore_release_isr(sh_sem));
-    HAL_UART_Receive_DMA(&huart1, sh_buf, configSHELL_MAX_CMD_LEN);
+    printf_("Receive: %s", sh_cmd_buf);
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart1, sh_cmd_buf, configSHELL_MAX_CMD_LEN);
+    __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
   }
 }
 
@@ -103,13 +108,13 @@ void shell_task(void *arg) {
   (void)arg;
   sh_sem = semaphore_create(3);
   semaphore_clear(sh_sem);
-  memset(sh_sem, 0, configSHELL_MAX_CMD_LEN);
-  HAL_UART_Receive_DMA(&huart1, sh_buf, 2);
-
+  memset(sh_cmd_buf, 0, configSHELL_MAX_CMD_LEN);
+  // HAL_UART_Receive_DMA(&huart1, sh_buf, 2);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart1, sh_cmd_buf, configSHELL_MAX_CMD_LEN);
   while (1) {
     if (semaphore_acquire(sh_sem, MAX_DELAY)) {
-      printf_("receive: %s\r\n", sh_buf);
-      shell_execute((char *)sh_buf);
+      printf_("receive: %s\r\n", sh_cmd_buf);
+      shell_execute((char *)sh_cmd_buf);
     }
   }
 }

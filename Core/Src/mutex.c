@@ -1,7 +1,9 @@
 #include "mutex.h"
+#include "config.h"
 #include "list.h"
 #include "mem.h"
 #include "task.h"
+#include <stdint.h>
 
 mutex_handler mutex_create(void) {
   mutex_t *new_mutex = halloc(sizeof(mutex_t));
@@ -53,6 +55,22 @@ uint32_t mutex_acquire(mutex_handler mutex, uint32_t block_ticks) {
   }
 }
 
+uint32_t mutex_acquire_isr(mutex_handler mutex) {
+  uint32_t saved = critical_enter();
+
+  tcb_t *current_tcb = get_current_tcb();
+  if (mutex->locked == FALSE) {
+    mutex->locked = TRUE;
+    mutex->holder = current_tcb;
+    critical_exit(saved);
+    return TRUE;
+  }
+
+  critical_exit(saved);
+
+  return FALSE;
+}
+
 void mutex_release(mutex_handler mutex) {
   uint32_t saved = critical_enter();
   uint32_t yield;
@@ -70,4 +88,22 @@ void mutex_release(mutex_handler mutex) {
   }
 
   critical_exit(saved);
+}
+
+uint32_t mutex_release_isr(mutex_handler mutex) {
+  uint32_t saved = critical_enter();
+  uint32_t yield = FALSE;
+
+  task_priority_disinherit(mutex);
+  mutex->locked = FALSE;
+  mutex->holder = NULL;
+  if (!LIST_IS_EMPTY(&(mutex->block_list))) {
+    list_node_t *block_node = list_remove_next_node(&(mutex->block_list));
+    tcb_t *block_tcb = block_node->owner;
+    list_remove_node(&(block_tcb->state_node));
+    yield = add_tcb_to_ready_lists(block_tcb);
+  }
+  critical_exit(saved);
+
+  return yield;
 }
