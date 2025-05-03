@@ -67,9 +67,13 @@ const shcmd_t cmd_table[] = {
     {NULL, NULL, NULL} // 结束标记
 };
 
-void shell_execute(uint8_t *buf) {
+void shell_execute(uint8_t *buf, uint32_t len) {
   int argc = 0;
   char *argv[configSHELL_MAX_ARGS];
+
+  while (len > 0 && (buf[len - 1] == '\n' || buf[len - 1] == '\r')) {
+    buf[--len] = '\0';
+  }
 
   char *token = strtok((char *)buf, " ");
   while (token != NULL && argc < configSHELL_MAX_ARGS) {
@@ -128,10 +132,10 @@ void shell_task(void *arg) {
     if (msgque_recieve(sh_msgque, sh_cmd_msg_buf, MAX_DELAY)) {
       semaphore_acquire(sh_sem, MAX_DELAY);
       sh_cmd_msg *msg = (sh_cmd_msg *)sh_cmd_msg_buf;
-      printf_("receive: %.*s, size is %u\r\n", (int)msg->size, msg->buf,
-              msg->size);
+      // printf_("receive: %.*s, size is %u\r\n", (int)msg->size, msg->buf,
+      // msg->size);
+      shell_execute(msg->buf, msg->size);
       semaphore_release(sh_sem);
-      // shell_execute(((sh_cmd_msg *)sh_cmd_msg_buf)->buf);
     }
   }
 }
