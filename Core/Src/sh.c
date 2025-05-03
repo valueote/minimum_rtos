@@ -98,7 +98,6 @@ typedef struct {
 
 extern DMA_HandleTypeDef hdma_usart1_rx;
 
-sem_handler sh_sem;
 msgque_handler sh_msgque;
 static uint8_t sh_cmd_msg_buf[sizeof(sh_cmd_msg)];
 static uint8_t sh_uart_rx_buf[configSHELL_MAX_CMD_LEN];
@@ -106,10 +105,8 @@ static uint8_t sh_uart_rx_buf[configSHELL_MAX_CMD_LEN];
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart == &huart1) {
 
-    semaphore_acquire_isr(sh_sem);
     sh_cmd_msg msg;
     memcpy(msg.buf, sh_uart_rx_buf, Size);
-    semaphore_release_isr(sh_sem);
 
     msg.buf[Size] = '\0';
     msg.size = Size;
@@ -124,18 +121,15 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 void shell_task(void *arg) {
   (void)arg;
   sh_msgque = msgque_create(1, sizeof(sh_cmd_msg));
-  sh_sem = semaphore_create(1);
   memset(sh_cmd_msg_buf, 0, sizeof(sh_cmd_msg));
   HAL_UARTEx_ReceiveToIdle_DMA(&huart1, sh_uart_rx_buf,
                                configSHELL_MAX_CMD_LEN);
   while (1) {
     if (msgque_recieve(sh_msgque, sh_cmd_msg_buf, MAX_DELAY)) {
-      semaphore_acquire(sh_sem, MAX_DELAY);
       sh_cmd_msg *msg = (sh_cmd_msg *)sh_cmd_msg_buf;
       // printf_("receive: %.*s, size is %u\r\n", (int)msg->size, msg->buf,
       // msg->size);
       shell_execute(msg->buf, msg->size);
-      semaphore_release(sh_sem);
     }
   }
 }
