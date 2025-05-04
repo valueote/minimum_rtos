@@ -135,13 +135,19 @@ void hfree(void *addr) {
 }
 
 void mem_debug_print_free_list(void) {
-  printf("Free List:\r\n");
+  printf_("Free List:\r\n");
   heap_node *node = heap.head.next;
   while (node != heap.tail) {
-    printf("  Node @%p: size=%u, next=%p\r\n", (void *)node, node->node_size,
-           (void *)node->next);
+    printf_("  Node @%p: size=%u, next=%p\r\n", (void *)node, node->node_size,
+            (void *)node->next);
     node = node->next;
   }
-  printf("Total heap size: %u\r\n", heap.heap_size);
-  printf("----------------------------\r\n");
+  printf_("Total heap size: %u\r\n", heap.heap_size);
+  printf_("----------------------------\r\n");
+}
+
+void print_mem(void) {
+  printf_("Total heap mem: %u\n", configHeapSize);
+  printf_("Used memmory: %u\n", configHeapSize - heap.heap_size);
+  printf_("Free memmory: %u\n", heap.heap_size);
 }

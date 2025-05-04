@@ -1,6 +1,7 @@
 #include "sh.h"
 #include "config.h"
 #include "list.h"
+#include "mem.h"
 #include "msgque.h"
 #include "mutex.h"
 #include "printf.h"
@@ -26,9 +27,11 @@ int cmd_help(int argc, char **argv) {
   (void)argv;
   return 0;
 }
+
 int cmd_mem(int argc, char **argv) {
   (void)argc;
   (void)argv;
+  print_mem();
   return 0;
 }
 
