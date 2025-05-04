@@ -15,9 +15,9 @@ extern UART_HandleTypeDef huart1;
 int cmd_ps(int argc, char **argv) {
   (void)argc;
   (void)argv;
-  print_ready_tasks();
-  print_suspended_tasks();
-  print_delayed_tasks();
+  print_tasks(PRINT_READY);
+  print_tasks(PRINT_SUSPENDED);
+  print_tasks(PRINT_DELAY);
   return 0;
 }
 
@@ -88,7 +88,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
     __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
   }
 }
-void print_start_prompt(void) {
+
+void print_logo(void) {
   const char *logo = "__  __ _____ _   _ _____ _______ ____   _____\n"
                      "|  \\/  |_   _| \\ | |  __ \\__   __/ __ \\ / ____|\n"
                      "| \\  / | | | |  \\| | |__) | | | | |  | | (___  \n"
@@ -107,11 +108,9 @@ void shell_task(void *arg) {
   HAL_UARTEx_ReceiveToIdle_DMA(&huart1, sh_uart_rx_buf,
                                configSHELL_MAX_CMD_LEN);
   while (1) {
-    print_start_prompt();
+    print_logo();
     if (msgque_recieve(sh_msgque, sh_cmd_msg_buf, MAX_DELAY)) {
       sh_cmd_msg *msg = (sh_cmd_msg *)sh_cmd_msg_buf;
-      // printf_("receive: %.*s, size is %u\r\n", (int)msg->size, msg->buf,
-      // msg->size);
       shell_execute(msg->buf, msg->size);
     }
   }

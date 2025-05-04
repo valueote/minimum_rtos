@@ -664,38 +664,25 @@ uint32_t print_tasks_of_list(list_t *list, char *list_name) {
   return found;
 }
 
-void print_ready_tasks(void) {
+void print_tasks(int type) {
   uint32_t found = 0;
-  printf_("Current ready tasks:\r\n");
-  for (size_t i = 0; i < configMaxPriority; i++) {
-    found += print_tasks_of_list(&(ready_lists[i]), "ready");
+  switch (type) {
+  case PRINT_READY:
+    printf_("Current ready tasks:\r\n");
+    for (size_t i = 0; i < configMaxPriority; i++) {
+      found += print_tasks_of_list(&(ready_lists[i]), "ready");
+    }
+    break;
+  case PRINT_DELAY:
+    printf_("Current delayed tasks:\r\n");
+    found += print_tasks_of_list(delay_list, "delayed");
+    found += print_tasks_of_list(delay_overflow_list, "delayed");
+    break;
+  case PRINT_SUSPENDED:
+    printf_("Current suspended tasks:\r\n");
+    found += print_tasks_of_list(&suspended_list, "suspended");
+    break;
   }
-
-  if (found == 0) {
-    printf_("None\r\n");
-  } else {
-    printf_("Total: %u \r\n", found);
-  }
-}
-
-void print_suspended_tasks(void) {
-  uint32_t found;
-
-  printf_("Current suspended tasks:\r\n");
-  found = print_tasks_of_list(&suspended_list, "suspended");
-  if (found == 0) {
-    printf_("None\r\n");
-  } else {
-    printf_("Total: %u", found);
-  }
-}
-
-void print_delayed_tasks(void) {
-  uint32_t found = 0;
-
-  printf_("Current delayed tasks:\r\n");
-  found += print_tasks_of_list(delay_list, "delayed");
-  found += print_tasks_of_list(delay_overflow_list, "delayed");
 
   if (found == 0) {
     printf_("None\r\n");

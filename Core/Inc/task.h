@@ -4,6 +4,7 @@
 #include "config.h"
 #include "list.h"
 #include "mutex.h"
+#include "printf.h"
 #include "stm32f1xx.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -19,6 +20,9 @@
       task_yield();                                                            \
     }                                                                          \
   } while (0)
+#define PRINT_READY 1
+#define PRINT_SUSPENDED 2
+#define PRINT_DELAY 3
 
 typedef struct mutex mutex_t;
 
@@ -69,7 +73,6 @@ uint32_t block_timer_check(block_timer_t *timer, uint32_t *block_ticks);
 list_t *get_ready_list(uint32_t priority);
 list_t *get_suspended_list(void);
 
-void print_ready_tasks(void);
-void print_suspended_tasks(void);
-void print_delayed_tasks(void);
+void print_tasks(int type);
+
 #endif
