@@ -3,6 +3,7 @@
 #include "core_cm3.h"
 #include "list.h"
 #include "mem.h"
+#include "printf.h"
 #include "stm32f103xe.h"
 #include <stdint.h>
 
@@ -528,6 +529,8 @@ static void increment_tick(void) {
 
 uint32_t get_current_tick(void) { return current_tick_count; }
 
+/* Util for ipc*/
+
 uint32_t block_timer_check(block_timer_t *timer, uint32_t *block_ticks) {
   if (*block_ticks == MAX_DELAY) {
     return FALSE;
@@ -617,18 +620,22 @@ void task_priority_disinherit_timeout(mutex_t *mutex) {
   }
 }
 
-static void task_overflow_hander() {
+/* Util for stack overflow checking */
+
+static void task_overflow_hander(void) {
   while (1)
     ;
 }
 
-static void check_stack_overflow() {
+static void check_stack_overflow(void) {
   for (uint32_t i = 0; i < configSTACK_GUARD_SIZE; i++) {
     if (current_tcb->stack[i] != configSTACK_GUARD_MAGIC) {
       task_overflow_hander();
     }
   }
 }
+
+/* Functions that make other files can access task lists*/
 
 list_t *get_ready_list(uint32_t priority) {
   if (priority > configMaxPriority) {
@@ -639,3 +646,60 @@ list_t *get_ready_list(uint32_t priority) {
 }
 
 list_t *get_suspended_list(void) { return &suspended_list; }
+
+/* Functions to print task lists  */
+
+uint32_t print_tasks_of_list(list_t *list, char *list_name) {
+  uint32_t found = 0;
+  if (!LIST_IS_EMPTY(list)) {
+    list_node_t *node = list->head.next;
+    while (node != &(list->head)) {
+      tcb_t *tcb = (tcb_t *)node->owner;
+      printf_("[%s] Task name: %s  Priority:%u\r\n", list_name, tcb->name,
+              tcb->priority);
+      node = node->next;
+      found++;
+    }
+  }
+  return found;
+}
+
+void print_ready_tasks(void) {
+  uint32_t found = 0;
+  printf_("Current ready tasks:\r\n");
+  for (size_t i = 0; i < configMaxPriority; i++) {
+    found += print_tasks_of_list(&(ready_lists[i]), "ready");
+  }
+
+  if (found == 0) {
+    printf_("None\r\n");
+  } else {
+    printf_("Total: %u \r\n", found);
+  }
+}
+
+void print_suspended_tasks(void) {
+  uint32_t found;
+
+  printf_("Current suspended tasks:\r\n");
+  found = print_tasks_of_list(&suspended_list, "suspended");
+  if (found == 0) {
+    printf_("None\r\n");
+  } else {
+    printf_("Total: %u", found);
+  }
+}
+
+void print_delayed_tasks(void) {
+  uint32_t found = 0;
+
+  printf_("Current delayed tasks:\r\n");
+  found += print_tasks_of_list(delay_list, "delayed");
+  found += print_tasks_of_list(delay_overflow_list, "delayed");
+
+  if (found == 0) {
+    printf_("None\r\n");
+  } else {
+    printf_("Total: %u \r\n", found);
+  }
+}

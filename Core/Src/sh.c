@@ -12,75 +12,12 @@
 #include <string.h>
 extern UART_HandleTypeDef huart1;
 
-static uint32_t ps_tasks_of_list(list_t *list, char *list_name) {
-  uint32_t found = 0;
-  if (!LIST_IS_EMPTY(list)) {
-    list_node_t *node = list->head.next;
-    while (node != &(list->head)) {
-      tcb_t *tcb = (tcb_t *)node->owner;
-      printf_("[%s] Task name: %s  Priority:%u\r\n", list_name, tcb->name,
-              tcb->priority);
-      node = node->next;
-      found++;
-    }
-  }
-  return found;
-}
-
-static void ps_ready(void) {
-  uint32_t found = 0;
-  printf_("Current ready tasks:\r\n");
-  for (size_t i = 0; i < configMaxPriority; i++) {
-    list_t *list = get_ready_list(i);
-    found += ps_tasks_of_list(list, "ready");
-  }
-
-  if (found == 0) {
-    printf_("None\r\n");
-  } else {
-    printf_("Total: %u \r\n", found);
-  }
-}
-
-static void ps_suspend(void) {
-  uint32_t found;
-
-  printf_("Current suspend tasks:\r\n");
-  list_t *suspended_list = get_suspended_list();
-  found = ps_tasks_of_list(suspended_list, "suspended");
-  if (found == 0) {
-    printf_("None\r\n");
-  } else {
-    printf_("Total: %u", found);
-  }
-}
-
-void ps_delay(void) {
-  uint32_t found = 0;
-  printf_("Current suspend tasks:\r\n");
-  list_t *suspended_list = get_suspended_list();
-  if (!LIST_IS_EMPTY(suspended_list)) {
-    list_node_t *node = suspended_list->head.next;
-    while (node != &(suspended_list->head)) {
-      tcb_t *tcb = (tcb_t *)node->owner;
-      printf_("[suspended] Task name: %s  Priority:%u\r\n", tcb->name,
-              tcb->priority);
-    }
-  }
-
-  if (found == 0) {
-    printf_("None\r\n");
-  } else {
-    printf_("Total: %u \r\n", found);
-  }
-}
-
 int cmd_ps(int argc, char **argv) {
   (void)argc;
   (void)argv;
-  ps_ready();
-  ps_suspend();
-  // ps_delay();
+  print_ready_tasks();
+  print_suspended_tasks();
+  print_delayed_tasks();
   return 0;
 }
 
@@ -132,8 +69,7 @@ typedef struct {
 } sh_cmd_msg;
 
 extern DMA_HandleTypeDef hdma_usart1_rx;
-
-msgque_handler sh_msgque;
+static msgque_handler sh_msgque;
 static uint8_t sh_cmd_msg_buf[sizeof(sh_cmd_msg)];
 static uint8_t sh_uart_rx_buf[configSHELL_MAX_CMD_LEN];
 

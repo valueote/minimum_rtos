@@ -31,9 +31,21 @@
 },
 {
   "directory": "/home/vivy/Embedded/minimum_rtos/build",
+  "command": "/usr/bin/arm-none-eabi-gcc -DDEBUG -DSTM32F103xE -DUSE_HAL_DRIVER -I/home/vivy/Embedded/minimum_rtos/Core/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Core/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/STM32F1xx_HAL_Driver/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/CMSIS/Include  -mcpu=cortex-m3  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -g -std=gnu11 -o CMakeFiles/minimum_rtos.dir/Core/Src/printf.c.obj -c /home/vivy/Embedded/minimum_rtos/Core/Src/printf.c",
+  "file": "/home/vivy/Embedded/minimum_rtos/Core/Src/printf.c",
+  "output": "CMakeFiles/minimum_rtos.dir/Core/Src/printf.c.obj"
+},
+{
+  "directory": "/home/vivy/Embedded/minimum_rtos/build",
   "command": "/usr/bin/arm-none-eabi-gcc -DDEBUG -DSTM32F103xE -DUSE_HAL_DRIVER -I/home/vivy/Embedded/minimum_rtos/Core/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Core/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/STM32F1xx_HAL_Driver/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/CMSIS/Include  -mcpu=cortex-m3  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -g -std=gnu11 -o CMakeFiles/minimum_rtos.dir/Core/Src/sem.c.obj -c /home/vivy/Embedded/minimum_rtos/Core/Src/sem.c",
   "file": "/home/vivy/Embedded/minimum_rtos/Core/Src/sem.c",
   "output": "CMakeFiles/minimum_rtos.dir/Core/Src/sem.c.obj"
+},
+{
+  "directory": "/home/vivy/Embedded/minimum_rtos/build",
+  "command": "/usr/bin/arm-none-eabi-gcc -DDEBUG -DSTM32F103xE -DUSE_HAL_DRIVER -I/home/vivy/Embedded/minimum_rtos/Core/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Core/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/STM32F1xx_HAL_Driver/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/CMSIS/Include  -mcpu=cortex-m3  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -g -std=gnu11 -o CMakeFiles/minimum_rtos.dir/Core/Src/sh.c.obj -c /home/vivy/Embedded/minimum_rtos/Core/Src/sh.c",
+  "file": "/home/vivy/Embedded/minimum_rtos/Core/Src/sh.c",
+  "output": "CMakeFiles/minimum_rtos.dir/Core/Src/sh.c.obj"
 },
 {
   "directory": "/home/vivy/Embedded/minimum_rtos/build",
@@ -82,12 +94,6 @@
   "command": "/usr/bin/arm-none-eabi-gcc -DDEBUG -DSTM32F103xE -DUSE_HAL_DRIVER -I/home/vivy/Embedded/minimum_rtos/Core/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Core/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/STM32F1xx_HAL_Driver/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/CMSIS/Include  -mcpu=cortex-m3  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -g -std=gnu11 -o CMakeFiles/minimum_rtos.dir/Core/Src/test.c.obj -c /home/vivy/Embedded/minimum_rtos/Core/Src/test.c",
   "file": "/home/vivy/Embedded/minimum_rtos/Core/Src/test.c",
   "output": "CMakeFiles/minimum_rtos.dir/Core/Src/test.c.obj"
-},
-{
-  "directory": "/home/vivy/Embedded/minimum_rtos/build",
-  "command": "/usr/bin/arm-none-eabi-gcc -DDEBUG -DSTM32F103xE -DUSE_HAL_DRIVER -I/home/vivy/Embedded/minimum_rtos/Core/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Core/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/STM32F1xx_HAL_Driver/Inc -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I/home/vivy/Embedded/minimum_rtos/cmake/stm32cubemx/../../Drivers/CMSIS/Include  -mcpu=cortex-m3  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -g -std=gnu11 -o CMakeFiles/minimum_rtos.dir/Core/Src/util.c.obj -c /home/vivy/Embedded/minimum_rtos/Core/Src/util.c",
-  "file": "/home/vivy/Embedded/minimum_rtos/Core/Src/util.c",
-  "output": "CMakeFiles/minimum_rtos.dir/Core/Src/util.c.obj"
 },
 {
   "directory": "/home/vivy/Embedded/minimum_rtos/build",
