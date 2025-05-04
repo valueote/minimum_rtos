@@ -88,6 +88,17 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
     __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
   }
 }
+void print_start_prompt(void) {
+  const char *logo = "__  __ _____ _   _ _____ _______ ____   _____\n"
+                     "|  \\/  |_   _| \\ | |  __ \\__   __/ __ \\ / ____|\n"
+                     "| \\  / | | | |  \\| | |__) | | | | |  | | (___  \n"
+                     "| |\\/| | | | | . ` |  _  /  | | | |  | |\\___ \\ \n"
+                     "| |  | |_| |_| |\\  | | \\ \\  | | | |__| |____) |\n"
+                     "|_|  |_|_____|_| \\_|_|  \\_\\ |_|  \\____/|_____/ \n";
+
+  printf_("%s\n", logo); // 使用标准 printf
+  return;
+}
 
 void shell_task(void *arg) {
   (void)arg;
@@ -96,6 +107,7 @@ void shell_task(void *arg) {
   HAL_UARTEx_ReceiveToIdle_DMA(&huart1, sh_uart_rx_buf,
                                configSHELL_MAX_CMD_LEN);
   while (1) {
+    print_start_prompt();
     if (msgque_recieve(sh_msgque, sh_cmd_msg_buf, MAX_DELAY)) {
       sh_cmd_msg *msg = (sh_cmd_msg *)sh_cmd_msg_buf;
       // printf_("receive: %.*s, size is %u\r\n", (int)msg->size, msg->buf,
