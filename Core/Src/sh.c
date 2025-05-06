@@ -3,14 +3,14 @@
 #include "list.h"
 #include "mem.h"
 #include "msgque.h"
-#include "mutex.h"
 #include "printf.h"
-#include "sem.h"
 #include "stm32f1xx.h"
+#include "stm32f1xx_hal.h"
 #include "stm32f1xx_hal_uart.h"
 #include "task.h"
 #include <stdint.h>
 #include <string.h>
+
 extern UART_HandleTypeDef huart1;
 typedef struct {
   uint8_t buf[configSHELL_MAX_CMD_LEN];
@@ -29,8 +29,8 @@ static void print_logo(void);
 
 static const shcmd_t cmd_table[] = {
     {"help", cmd_help, "Show all commands"},
-    {"ps", cmd_ps, "Task management"},
-    {"mem", cmd_mem, "Memory usage"},
+    {"ps", cmd_ps, "Show all the running tasks"},
+    {"mem", cmd_mem, "Show the heap memory usage"},
     {NULL, NULL, NULL} // 结束标记
 };
 
@@ -55,7 +55,8 @@ static void shell_execute(uint8_t *buf, uint32_t len) {
     }
   }
 
-  printf_("Unknown command: %s\r\n", argv[0]);
+  printf_("Unknown command: %s, use 'help' to see all available commands\r\n",
+          argv[0]);
 }
 
 void shell_task(void *arg) {
@@ -85,6 +86,9 @@ static int cmd_ps(int argc, char **argv) {
 static int cmd_help(int argc, char **argv) {
   (void)argc;
   (void)argv;
+  for (int i = 0; cmd_table[i].name != NULL; i++) {
+    printf_("%s: %s\n", cmd_table[i].name, cmd_table[i].help);
+  }
   return 0;
 }
 
