@@ -6,6 +6,7 @@
 #include "msgque.h"
 #include "printf.h"
 #include "stm32f1xx_hal_uart.h"
+#include "system_stm32f1xx.h"
 #include "task.h"
 #include <stdint.h>
 #include <string.h>
@@ -99,11 +100,23 @@ static int cmd_mem(int argc, char **argv) {
   print_mem();
   return 0;
 }
+#define SCB_AIRCR (*(volatile uint32_t *)0xE000ED0C)
+#define AIRCR_VECTKEY_MASK (0x5FA << 16)
+#define AIRCR_SYSRESETREQ (1 << 2)
+
+static __INLINE void system_reboot(void) {
+  SCB->AIRCR = ((0x5FA << SCB_AIRCR_VECTKEY_Pos) |
+                (SCB->AIRCR & SCB_AIRCR_PRIGROUP_Msk) |
+                SCB_AIRCR_VECTRESET_Msk); /* Keep priority group unchanged */
+  __DSB(); /* Ensure completion of memory access */
+  while (1)
+    ; /* wait until reset */
+}
 
 static int cmd_reboot(int argc, char **argv) {
   (void)argc;
   (void)argv;
-  HAL_NVIC_SystemReset();
+  system_reboot();
   return 0;
 }
 
