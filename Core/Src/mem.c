@@ -146,7 +146,9 @@ void mem_debug_print_free_list(void) {
 }
 
 void print_mem(void) {
-  printf_("Total heap mem: %u\n", configHeapSize);
-  printf_("Used memmory: %u\n", configHeapSize - heap.heap_size);
-  printf_("Free memmory: %u\n", heap.heap_size);
+  printf_("\n========== Heap Memory Info ==========\n");
+  printf_("%-20s: %u bytes\n", "Total Heap Size", configHeapSize);
+  printf_("%-20s: %u bytes\n", "Used Memory", configHeapSize - heap.heap_size);
+  printf_("%-20s: %u bytes\n", "Free Memory", heap.heap_size);
+  printf_("======================================\n\n");
 }

@@ -655,7 +655,7 @@ uint32_t print_tasks_of_list(list_t *list, char *list_name) {
     list_node_t *node = list->head.next;
     while (node != &(list->head)) {
       tcb_t *tcb = (tcb_t *)node->owner;
-      printf_("[%s] Task name: %s  Priority:%u\r\n", list_name, tcb->name,
+      printf_("Task: %s | Priority: %u\r\n", list_name, tcb->name,
               tcb->priority);
       node = node->next;
       found++;
@@ -666,27 +666,43 @@ uint32_t print_tasks_of_list(list_t *list, char *list_name) {
 
 void print_tasks(int type) {
   uint32_t found = 0;
+  const char *header = NULL;
+
   switch (type) {
   case PRINT_READY:
-    printf_("Current ready tasks:\r\n");
+    header = "READY TASKS";
+    break;
+  case PRINT_DELAY:
+    header = "DELAYED TASKS";
+    break;
+  case PRINT_SUSPENDED:
+    header = "SUSPENDED TASKS";
+    break;
+  }
+
+  if (header) {
+    printf_("\n========== %s ==========\n", header);
+  }
+
+  switch (type) {
+  case PRINT_READY:
     for (size_t i = 0; i < configMaxPriority; i++) {
       found += print_tasks_of_list(&(ready_lists[i]), "ready");
     }
     break;
   case PRINT_DELAY:
-    printf_("Current delayed tasks:\r\n");
     found += print_tasks_of_list(delay_list, "delayed");
     found += print_tasks_of_list(delay_overflow_list, "delayed");
     break;
   case PRINT_SUSPENDED:
-    printf_("Current suspended tasks:\r\n");
     found += print_tasks_of_list(&suspended_list, "suspended");
     break;
   }
 
   if (found == 0) {
-    printf_("None\r\n");
+    printf_("None\n");
   } else {
-    printf_("Total: %u \r\n", found);
+    printf_("Total tasks found: %u\n", found);
   }
+  printf_("=====================================\n");
 }

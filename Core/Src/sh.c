@@ -26,7 +26,7 @@ static int cmd_ps(int argc, char **argv);
 static int cmd_help(int argc, char **argv);
 static int cmd_mem(int argc, char **argv);
 static int cmd_reboot(int argc, char **argv);
-static void print_logo(void);
+static void print_sys_info(void);
 
 static const shcmd_t cmd_table[] = {
     {"help", cmd_help, "Show all commands"},
@@ -65,7 +65,7 @@ void shell_task(void *arg) {
   (void)arg;
   sh_msgque = msgque_create(1, sizeof(cmd_msg_t));
   memset(sh_cmd_msg_buf, 0, sizeof(cmd_msg_t));
-  print_logo();
+  print_sys_info();
   HAL_UARTEx_ReceiveToIdle_DMA(&huart1, sh_uart_rx_buf,
                                configSHELL_MAX_CMD_LEN);
   while (1) {
@@ -88,9 +88,11 @@ static int cmd_ps(int argc, char **argv) {
 static int cmd_help(int argc, char **argv) {
   (void)argc;
   (void)argv;
+  printf_("\n========== Shell Commands ==========\n");
   for (int i = 0; cmd_table[i].name != NULL; i++) {
-    printf_("%s: %s\n", cmd_table[i].name, cmd_table[i].help);
+    printf_("  %-10s : %s\n", cmd_table[i].name, cmd_table[i].help);
   }
+  printf_("===================================\n\n");
   return 0;
 }
 
@@ -120,15 +122,18 @@ static int cmd_reboot(int argc, char **argv) {
   return 0;
 }
 
-static void print_logo(void) {
-  const char *logo = "__  __ _____ _   _ _____ _______ ____   _____\n"
-                     "|  \\/  |_   _| \\ | |  __ \\__   __/ __ \\ / ____|\n"
-                     "| \\  / | | | |  \\| | |__) | | | | |  | | (___  \n"
-                     "| |\\/| | | | | . ` |  _  /  | | | |  | |\\___ \\ \n"
-                     "| |  | |_| |_| |\\  | | \\ \\  | | | |__| |____) |\n"
-                     "|_|  |_|_____|_| \\_|_|  \\_\\ |_|  \\____/|_____/ \n";
-
-  printf_("%s\n", logo);
+static void print_sys_info(void) {
+  const char *logo1 = "             __  ___  __   __\n"
+                      "|\\/| | |\\ | |__)  |  /  \\ /__` \n"
+                      "|  | | | \\| |  \\  |  \\__/ .__/ \n";
+  const char *logo2 = "__  __ _____ _   _ _____ _______ ____   _____\n"
+                      "|  \\/  |_   _| \\ | |  __ \\__   __/ __ \\ / ____|\n"
+                      "| \\  / | | | |  \\| | |__) | | | | |  | | (___  \n"
+                      "| |\\/| | | | | . ` |  _  /  | | | |  | |\\___ \\ \n"
+                      "| |  | |_| |_| |\\  | | \\ \\  | | | |__| |____) |\n"
+                      "|_|  |_|_____|_| \\_|_|  \\_\\ |_|  \\____/|_____/ \n";
+  (void)logo2;
+  printf_("%s\n", logo1);
   return;
 }
 
