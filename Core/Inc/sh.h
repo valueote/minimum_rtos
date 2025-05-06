@@ -1,5 +1,7 @@
 #ifndef __SH_H
 #define __SH_H
+#include "stm32f1xx.h"
+#include "stm32f1xx_hal.h"
 #include <stdint.h>
 
 typedef struct shcmd {

@@ -1,11 +1,10 @@
 #include "sh.h"
 #include "config.h"
+#include "core_cm3.h"
 #include "list.h"
 #include "mem.h"
 #include "msgque.h"
 #include "printf.h"
-#include "stm32f1xx.h"
-#include "stm32f1xx_hal.h"
 #include "stm32f1xx_hal_uart.h"
 #include "task.h"
 #include <stdint.h>
@@ -25,12 +24,14 @@ static uint8_t sh_uart_rx_buf[configSHELL_MAX_CMD_LEN];
 static int cmd_ps(int argc, char **argv);
 static int cmd_help(int argc, char **argv);
 static int cmd_mem(int argc, char **argv);
+static int cmd_reboot(int argc, char **argv);
 static void print_logo(void);
 
 static const shcmd_t cmd_table[] = {
     {"help", cmd_help, "Show all commands"},
     {"ps", cmd_ps, "Show all the running tasks"},
     {"mem", cmd_mem, "Show the heap memory usage"},
+    {"reboot", cmd_reboot, " Reboot the system "},
     {NULL, NULL, NULL} // 结束标记
 };
 
@@ -63,10 +64,10 @@ void shell_task(void *arg) {
   (void)arg;
   sh_msgque = msgque_create(1, sizeof(cmd_msg_t));
   memset(sh_cmd_msg_buf, 0, sizeof(cmd_msg_t));
+  print_logo();
   HAL_UARTEx_ReceiveToIdle_DMA(&huart1, sh_uart_rx_buf,
                                configSHELL_MAX_CMD_LEN);
   while (1) {
-    print_logo();
     if (msgque_recieve(sh_msgque, sh_cmd_msg_buf, MAX_DELAY)) {
       cmd_msg_t *msg = (cmd_msg_t *)sh_cmd_msg_buf;
       shell_execute(msg->buf, msg->size);
@@ -96,6 +97,13 @@ static int cmd_mem(int argc, char **argv) {
   (void)argc;
   (void)argv;
   print_mem();
+  return 0;
+}
+
+static int cmd_reboot(int argc, char **argv) {
+  (void)argc;
+  (void)argv;
+  HAL_NVIC_SystemReset();
   return 0;
 }
 
