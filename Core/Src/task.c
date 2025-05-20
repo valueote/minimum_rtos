@@ -211,7 +211,11 @@ void task_create(task_func_t func, void *func_parameters, uint32_t stack_depth,
 
   // add the new tcb to the ready list
   if ((yield = add_new_tcb_to_ready_lists(new_tcb))) {
-    task_yield();
+    if (scheduler_is_running == FALSE) {
+      current_tcb = new_tcb;
+    } else {
+      task_yield();
+    }
   }
 }
 

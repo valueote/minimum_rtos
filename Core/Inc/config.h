@@ -7,7 +7,7 @@
 #define alignment_byte 0x07
 #define MAX_DELAY 0xffffffffUL
 
-#define configHeapSize 32 * 1023
+#define configHeapSize 32 * 1024
 #define configMaxPriority 32
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY 191
 #define configMAX_TASK_NAME_LEN 30
@@ -15,7 +15,7 @@
 #define configSTACK_GUARD_MAGIC (uint32_t)0xdeadbeee
 #define configSHELL_MAX_ARGS 5
 #define configSHELL_MAX_CMD_LEN 16
-#define configSysTickClockHz ((unsigned long)7200000)
-#define configSysTickClockRateHz ((uint32_t)1000)
+#define configSysTickClockHz ((unsigned long)72000000)
+#define configSysTickClockRateHz ((uint32_t)10000)
 
 #endif
