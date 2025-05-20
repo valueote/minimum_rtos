@@ -246,7 +246,7 @@ void task_delete(task_handler_t *handler) {
     free_tcb(tcb);
   }
 
-  if (yield) {
+  if (yield && scheduler_is_running) {
     task_yield();
   }
 }
@@ -298,7 +298,7 @@ void task_suspend(task_handler_t *handler) {
 
   critical_exit(saved);
   // we suspend current running tcb, so switch to another task
-  if (yield)
+  if (yield && scheduler_is_running)
     task_yield();
 }
 
@@ -313,7 +313,7 @@ void task_resume(task_handler_t *handler) {
     yield = add_tcb_to_ready_lists(tcb);
 
     critical_exit(saved);
-    if (yield) {
+    if (yield && scheduler_is_running) {
       task_yield();
     }
   }
