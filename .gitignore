@@ -4,3 +4,6 @@ Core/Src/.cache/
 build
 .gdb_history
 compile_commands.json
+build
+.cache
+build
