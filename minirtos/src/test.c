@@ -320,7 +320,7 @@ void ps_task() {
 }
 
 void ps_test() {
-  led_basic_test();
+  // led_basic_test();
   task_create(shell_task, NULL, 256, 2, "ps", NULL);
   return;
 }

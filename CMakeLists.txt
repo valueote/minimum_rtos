@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.22)
-
 #
 # This file is generated only once,
 # and is not re-generated if converter is called multiple times.
@@ -53,12 +52,22 @@ file(GLOB SOURCES
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${SOURCES}
+    "./minirtos/src/task.c"
+    "./minirtos/src/test.c"
+    "./minirtos/src/list.c"
+    "./minirtos/src/mem.c"
+    "./minirtos/src/msgque.c"
+    "./minirtos/src/mutex.c"
+    "./minirtos/src/sem.c"
+    "./minirtos/src/sh.c"
+    "./minirtos/src/printf.c"
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     "${CMAKE_CURRENT_SOURCE_DIR}/Core/Inc/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/minirtos/include"
 )
 
 # Add project symbols (macros)
